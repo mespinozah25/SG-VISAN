@@ -1,0 +1,589 @@
+﻿<head>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
+</head>
+
+<style>
+    table thead th {
+        pointer-events: none; /* Desactiva la interacción con los títulos */
+    }
+</style>
+
+@model PROY.ViewModels.EgresoAlimentosVM
+
+@{
+    ViewData["Title"] = "Despacho Almacén";
+}
+
+<h1>Creación Despacho de Almacén</h1>
+
+<br />
+
+<div>
+    <form id="frmDespacho">
+
+        <input type="hidden" id="idEgresoAlimentos" asp-for="@Model.EgresoAlimentos.IdEgresoAlimentos" />
+        <input type="hidden" id="idEstadoEgreso" asp-for="@Model.EgresoAlimentos.IdEstadoEgreso" />
+        <input type="hidden" id="idTipoSalidaAlimento" asp-for="@Model.EgresoAlimentos.IdTipoSalidaAlimento" />
+
+        <br />
+
+        <div class="row">
+            <div class="col">
+                <label for="txtFechaSolicitud" class="control-label"><b> Fecha de Solicitud </b></label>
+                <input class="form-control" id="txtFechaSolicitud" disabled>
+            </div>
+            <div class="col">
+                <label for="txtTotalRaciones" class="control-label"><b> Total de Raciones </b></label>
+                <input class="form-control" id="txtTotalRaciones" disabled>
+            </div>
+            <div class="col">
+                <label for="txtTipoAsistencia" class="control-label"><b> Tipo de Asistencia </b></label>
+                <input class="form-control" id="txtTipoAsistencia" disabled>
+            </div>
+        </div>
+
+        <br />
+
+        <div class="row">
+            <div class="col">
+                <label for="txtDepartamentoSolicitante" class="control-label"><b> Departamento Solicitante </b></label>
+                <input class="form-control" id="txtDepartamentoSolicitante" disabled>
+            </div>
+            <div class="col">
+                <label for="txtConvenio" class="control-label"><b> Convenio </b></label>
+                <input type="text" class="form-control" id="txtConvenio" disabled>
+            </div>
+        </div>
+
+        <br />
+
+        <div class="row">
+            <div class="col">
+                <label for="noDespachoAlmacen" class="control-label">No. Despacho de Almacén</label>
+                <input type="text" class="form-control" id="noDespachoAlmacen">
+            </div>
+            @* <div class="col">
+                <label for="cbIdDepartamentoCarga" class="control-label">Departamento de Carga</label>
+                <select class="form-select" id="cbIdDepartamentoCarga" asp-for="@Model.EgresoAlimentos.IdDepartamentoCarga" asp-items="ViewBag.Departamentos" required></select>
+                <span asp-validation-for="@Model.EgresoAlimentos.IdDepartamentoCarga" class="text-danger"></span>
+            </div> *@
+            <div class="col">
+                <label for="cbIdBodegaCarga" class="control-label">Bodega de Carga</label>
+                <select class="form-select" id="cbIdBodegaCarga" asp-for="@Model.EgresoAlimentos.IdBodegaCarga" asp-items="ViewBag.Bodegas" required></select>
+                <span asp-validation-for="@Model.EgresoAlimentos.IdBodegaCarga" class="text-danger"></span>
+            </div>
+            <div class="col">
+                <label for="noAutorizacion" class="control-label">No. de Autorizacion</label>
+                <input type="text" class="form-control" id="noAutorizacion">
+            </div>
+        </div>
+
+        <br />
+
+        <div class="row">
+            <div class="col">
+                <label for="cbIdDepartamentoDetino" class="control-label">Departamento de Destino</label>
+                <select class="form-select" id="cbIdDepartamentoDetino" asp-for="@Model.EgresoAlimentos.IdDepartamentoDestino" asp-items="ViewBag.Departamentos" required></select>
+                <span asp-validation-for="@Model.EgresoAlimentos.IdDepartamentoDestino" class="text-danger"></span>
+            </div>
+            @if (@Model.EgresoAlimentos.IdTipoSalidaAlimento == 1) // 1: Egreso de Alimentos
+            {
+                <div class="col">
+                    <label for="cbIdMunicipioDestino" class="control-label">Municipio de Destino</label>
+                    <select class="form-select" id="cbIdMunicipioDestino" asp-for="@Model.EgresoAlimentos.IdMunicipioDestino" asp-items="ViewBag.Municipios" required></select>
+                    <span asp-validation-for="@Model.EgresoAlimentos.IdMunicipioDestino" class="text-danger"></span>
+                </div>
+            }
+            @if (@Model.EgresoAlimentos.IdTipoSalidaAlimento == 2) // 2: Traslado de Alimentos
+            {
+                <div class="col">
+                    <label for="cbIdBodegaDestino" class="control-label">Bodega Destino</label>
+                    <select class="form-select" id="cbIdBodegaDestino" asp-for="@Model.EgresoAlimentos.IdBodegaDestino" asp-items="ViewBag.Bodegas" required></select>
+                    <span asp-validation-for="@Model.EgresoAlimentos.IdBodegaDestino" class="text-danger"></span>
+                </div>
+            }
+            
+            <div class="col">
+                <label for="direccionFinal" class="control-label">Dirección Final</label>
+                <input type="text" class="form-control" id="direccionFinal">
+            </div>
+        </div>
+
+        <br />
+        <br />
+
+        <h3>Detalle de la Carga</h3>
+
+        <br />
+
+        <div class="row" style="display:none">
+            <div class="col">
+                <label for="cbIdProductoAlimenticio" class="control-label">Producto Alimenticio</label>
+                <select class="form-select" id="cbIdProductoAlimenticio" asp-items="ViewBag.ProductoAlimenticio"></select>
+            </div>
+            <div class="col">
+                <label for="cbIdPresentacionPA" class="control-label">Presentación</label>
+                <select class="form-select" id="cbIdPresentacionPA" asp-items="ViewBag.PresentacionPA"></select>
+            </div>
+            <div class="col">
+                <label for="txtCantidadUnidad" class="control-label">Cantidad Unidad</label>
+                <input type="number" class="form-control" min="0" id="txtCantidadUnidad">
+            </div>
+            <div class="col">
+                <label for="cbIdUnidadMedida" class="control-label">Unidad de Medida</label>
+                <select class="form-select" id="cbIdUnidadMedida" asp-items="ViewBag.UnidadMedida"></select>
+            </div>
+            <div class="col">
+                <label for="txtNoUnidades" class="control-label">No. Unidades</label>
+                <input type="number" class="form-control" min="0" id="txtNoUnidades">
+            </div>
+        </div>
+
+        <div class="float-end" style="display:none">
+            <a type="button" href="#" class="btn btn-secondary" onclick="return LimpiarDetalles();">Limpiar</a>
+            <a type="button" href="#" class="btn btn-primary" onclick="return AgregarDetalle();">Agregar Detalle</a>
+        </div>
+
+        <br />
+
+        <divr class="row">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="checkAll">
+                <label class="form-check-label" for="flexSwitchCheckDefault">Seleecionar todo</label>
+            </div>
+        </divr>
+
+        <div class="row col-12">
+            <div class="">
+                <table id="tableDetalle" class="table">
+                    <thead>
+                        <tr>
+                            <th>No.</th>
+                            <th>PRODUCTO</th>
+                            @* <th>PRESENTACIÓN</th> *@
+                            <th>CANT. UNIDAD</th>
+                            <th>UNIDAD MEDIDA</th>
+                            <th>CANT. A RECIBIR</th>
+                            <th>ACCIONES</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+
+        <br />
+
+        <div class="row">
+            <div class="col">
+                <div class="form-group">
+                    <label class="control-label">Comentarios </label>
+                    <textarea class="form-control" rows="3" id="comentarios" asp-for="@Model.EgresoAlimentos.Comentarios" required></textarea>
+                    <span asp-validation-for="@Model.EgresoAlimentos.Comentarios" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+
+        <br />
+
+        <div class="row">
+            <div class="col-6">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="" id="firmaSelloDirectorVisan">
+                    <label class="form-check-label" for="firmaSelloDirectorVisan">
+                        Cuenta con firma y sello de Director VISAN
+                    </label>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="" id="firmaSelloJefeDepartamento">
+                    <label class="form-check-label" for="firmaSelloJefeDepartamento">
+                        Cuenta con firma y sello de Jefe de Departamento
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <br />
+
+        <div class="row float-end">
+            <div class="col">
+                <a type="button" class="btn btn-secondary btn" asp-action="Index">Regresar</a>
+            </div>
+            <div class="col">
+                <input type="button" value="Guardar" class="btn btn-primary" onclick="return ConfirmSave();" />
+            </div>
+        </div>
+
+    </form>
+</div>
+
+
+@section Scripts {
+
+    <script>
+        $( document ).ready(function() {
+
+            $("#tableDetalle tbody").empty();
+            $('#tableDetalle_paginate').hide();
+            $('#tableDetalle_info').hide();
+            $('#tableDetalle_filter').hide();
+
+            var urlObj = new URL(window.location.href);
+            var type = urlObj.searchParams.get("type");
+            var id = window.location.pathname.split('/').pop();
+
+            // Inicializa la tabla (si no está inicializada)
+            var table = $('#tableDetalle').DataTable();
+
+            // Oculta las flechas de ordenamiento
+            $('table.dataTable thead th').removeClass('sorting sorting_asc sorting_desc');
+
+            // Evento de selección de todos los detalles
+            document.getElementById("checkAll").addEventListener("click", function () {
+                let isChecked = this.checked;
+                document.querySelectorAll("#tableDetalle input[name='CheckRow']:not(:disabled)").forEach(checkbox => {
+                    checkbox.checked = isChecked;
+                });
+            });
+
+            if (parseInt(id) != 0){
+                abrirYActualizarUrl(id, type);
+            }
+        });
+
+        function abrirYActualizarUrl(id, tipoApertura) {
+
+            // Se inicia reiniciando la tabla
+             $("#tableDetalle tbody").empty();
+
+            // El tipo de apertura 1 indica que se va almacenar o editar un registro
+            // El tipo de apertura 2 indica solo de observación
+            let disabled = tipoApertura == 1 ? "" : "disabled" ;
+            if(tipoApertura == 1){
+                $('.camposAlmacenamiento').show();
+                $("#frmDespacho input:not([disabled])").attr("disabled", false);  // Hace los inputs solo lectura
+                $("#frmDespacho select").prop("disabled", false); // Deshabilita los selects
+            }else{
+                $('.camposAlmacenamiento').hide();
+                $("#frmDespacho input").attr("disabled", true);  // Hace los inputs solo lectura
+                $("#frmDespacho select").prop("disabled", true); // Deshabilita los selects
+            }
+
+            if (id == 0) {
+
+                $('#txtConvenio').val();
+                $('#noDespachoAlmacen').val();
+                // $('#cbIdDepartamentoCarga').val(0);
+                $('#cbIdBodegaCarga').val(0);
+                $('#noAutorizacion').val();
+                $('#cbIdDepartamentoDetino').val(0);
+                $('#cbIdMunicipioDestino').val(0);
+                $('#direccionFinal').val();
+                $('#comentarios').val();
+
+            }
+            else {
+
+                $.ajax({
+                    url: `@ViewData["rutaApp"]/EgresoAlimentos/ObtenerDespachoAlmacen/${id}`, // URL para obtener los datos
+                    type: 'GET',
+                    success: function (data) {
+
+                        console.log('data' + JSON.stringify(data));
+
+                        var ea = data.egresoAlimentos;
+
+                        // Llenar el formulario con los datos de Egreso de Alimentos
+                        $('#idEgresoAlimentos').val(ea.idEgresoAlimentos);
+                        $('#idEstadoEgreso').val(ea.idEstadoEgreso);
+                        $('#txtFechaSolicitud').val(new Date(ea.fechaSolicitud).toLocaleDateString('es-ES'));
+                        $('#txtTotalRaciones').val(ea.totalRaciones);
+                        $('#txtTipoAsistencia').val(data.tipoAsistencia);
+                        $('#txtDepartamentoSolicitante').val(data.programa);
+                        $('#noDespachoAlmacen').val(ea.noDespachoAlmacen);
+                        $('#txtConvenio').val(data.convenio);
+                        // $('#cbIdDepartamentoCarga').val(ea.idDepartamentoCarga);
+                        $('#cbIdBodegaCarga').val(ea.idBodegaCarga);
+                        $('#noAutorizacion').val(ea.noAutorizacion);
+                        $('#cbIdDepartamentoDetino').val(ea.idDepartamentoDestino);
+                        $('#cbIdMunicipioDestino').val(ea.idMunicipioDestino);
+                        $('#direccionFinal').val(ea.direccionFinal);
+                        $('#comentarios').val(ea.comentarios);
+
+                        if (ea.firmaSelloDirectorVisan == 0)
+                            $('#firmaSelloDirectorVisan').prop('checked', true);
+
+                        if (ea.firmaSelloJefeDepartamento == 0)
+                            $('#firmaSelloJefeDepartamento').prop('checked', true);
+
+                        // Agregar Detalle
+
+                        let tabla = document.getElementById("tableDetalle");
+                        let tbody = tabla.getElementsByTagName("tbody")[0];
+
+                        // si no cuenta con detalles de Egreso, se utiliza la lista de Ración correspondiente al Convenio asignado
+                        let dataList =  (data.detEgresoAlimentos.length > 0) ? data.detEgresoAlimentos : data.detRacion;
+                        let listaUtilizada =  (data.detEgresoAlimentos.length > 0) ? "egreso" : "convenio";
+
+
+                        dataList.forEach((detalle, index) => {
+
+                            let fila = document.createElement("tr");
+
+                            let idDetalleEgresoAlimentos = listaUtilizada == "egreso" ? detalle.idDetalleEgresoAlimentos : 0;
+                            let txtProducto = $("#cbIdProductoAlimenticio option[value='" + detalle.idProductoAlimenticio + "']").text(); // Nombre del producto
+                            // let txtpresentacion = $("#cbIdPresentacionPA option[value='" + detalle.idPresentacion + "']").text(); // Nombre de la presentación
+                            let cantidadUnidad = listaUtilizada == "egreso" ? detalle.cantidadUnidad : detalle.cantidadMedida;
+                            let txtUnidad = $("#cbIdUnidadMedida option[value='" + detalle.idUnidadMedida + "']").text(); // Nombre de la unidad de medida
+                            let noUnidades = listaUtilizada == "egreso" ? detalle.noUnidades : ea.totalRaciones;
+                            
+
+                            var botonEliminar = tipoApertura == 1
+                                ? `<button type="button" class="btn btn-danger btn-sm camposAlmacenamiento" onclick="EliminarFila(this, ${idDetalleEgresoAlimentos})">Eliminar</button>`
+                                : '';
+
+                            let checkear = listaUtilizada == "egreso" ? "checked" : "";
+
+                            var botoncheck = `<input class="form-check-input" type="checkbox" name="CheckRow" ${checkear} ${disabled}>`;
+
+                            var botonNoUnidades = `<input type="number" min="1" class="form-control" name="NoUnidades" value="${noUnidades}" ${disabled}>`
+
+                            fila.innerHTML = `
+                                <td>${index + 1}</td>
+                                <td>${txtProducto}</td>
+                                <td>${cantidadUnidad}</td>
+                                <td>${txtUnidad}</td>
+                                <td>${botonNoUnidades}</td>
+                                <td>
+                                    ${botoncheck}
+                                    <input type="hidden" name="IdDetalleEgresoAlimentos" value="${idDetalleEgresoAlimentos}">
+                                    <input type="hidden" name="IdProductoAlimenticio" value="${detalle.idProductoAlimenticio}">
+                                    <input type="hidden" name="CantidadUnidad" value="${cantidadUnidad}">
+                                    <input type="hidden" name="IdUnidadMedida" value="${detalle.idUnidadMedida}">
+                                </td>
+                            `;
+
+                            tbody.appendChild(fila);
+                        });
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error al obtener los datos de egreso de alimentos: ', error);
+                    }
+                });
+            }
+        }
+
+        function ActualizarContador() {
+            let filas = document.querySelectorAll("#tableDetalle tbody tr");
+            filas.forEach((fila, index) => {
+                fila.cells[0].innerHTML = `${index + 1}`;
+            });
+        }
+
+        function AgregarDetalle() {
+            let productoAlimenticio = $("#cbIdProductoAlimenticio").val();
+            let txtProductoAlimenticio = $("#cbIdProductoAlimenticio option:selected").text();
+            let presentacion = $("#cbIdPresentacionPA").val();
+            let txtpresentacion = $("#cbIdPresentacionPA option:selected").text();
+            let cantidadUnidad = $("#txtCantidadUnidad").val();
+            let unidadMedida = $("#cbIdUnidadMedida").val();
+            let txtUnidad = $("#cbIdUnidadMedida option:selected").text();
+            let noUnidades = $("#txtNoUnidades").val();
+
+            if (!productoAlimenticio || !cantidadUnidad || !presentacion || !noUnidades || !unidadMedida) {
+                alert("Todos los campos son obligatorios.");
+                return false;
+            }
+
+            let tabla = document.getElementById("tableDetalle");
+            let tbody = tabla.getElementsByTagName("tbody")[0];
+
+            if (!tbody) {
+                tbody = document.createElement("tbody");
+                tabla.appendChild(tbody);
+            }
+
+            let fila = document.createElement("tr");
+
+            fila.innerHTML = `
+                <td></td>
+                <td>${txtProductoAlimenticio}</td>
+                <td>${txtpresentacion}</td>
+                <td>${cantidadUnidad}</td>
+                <td>${txtUnidad}</td>
+                <td>${noUnidades}</td>
+                <td>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="EliminarFila(this, 0)">Eliminar</button>
+
+                    <input type="hidden" name="IdDetalleEgresoAlimentos" value="0">
+                    <input type="hidden" name="IdProductoAlimenticio" value="${productoAlimenticio}">
+                    <input type="hidden" name="IdPresentacion" value="${presentacion}">
+                    <input type="hidden" name="CantidadUnidad" value="${cantidadUnidad}">
+                    <input type="hidden" name="IdUnidadMedida" value="${unidadMedida}">
+                    <input type="hidden" name="NoUnidades" value="${noUnidades}">
+                </td>
+            `;
+
+            tbody.appendChild(fila);
+            ActualizarContador();
+
+            LimpiarDetalles();
+            return false;
+        }
+
+        function EliminarFila(boton, idDetalle) {
+
+            // En el escenario en donde el ID de es diferente de cero, se elimina en la BD
+            if (idDetalle != 0){
+
+                if (!confirm("¿Estás seguro de que deseas eliminar este Producto Alimenticio?")) {
+                    return;
+                }
+
+                $.ajax({
+                url: `@ViewData["rutaApp"]/EgresoAlimentos/EliminarDetalleEgresoAlimentos?id=${idDetalle}`,
+                type: "POST",
+                success: function (respuesta) {
+                    alert("Producto eliminado correctamente.");
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error al eliminar:", error);
+                    alert("Ocurrió un error al eliminar el producto.");
+                }
+            });
+            }
+
+            let fila = boton.closest("tr");
+            fila.remove();
+
+            ActualizarContador();
+        }
+
+        function LimpiarDetalles(){
+            $('#cbIdProductoAlimenticio').val();
+            $('#cbIdPresentacionPA').val();
+            $('#cbIdUnidadMedida').val();
+            $('#txtCantidadUnidad').val('');
+            $('#txtNoUnidades').val('');
+        }
+
+        function ConfirmSave(){
+            Swal.fire({
+              title: "Está seguro de almacenar el Despacho de Almacén?",
+              showCancelButton: true,
+              confirmButtonText: "Guardar",
+              icon: "question"
+            }).then((result) => {
+              if (result.isConfirmed) {
+                  GuardarDespacho();
+              }
+            });
+        }
+
+        function GuardarDespacho() {
+            let egresoAlimentos = {
+                IdEgresoAlimentos: $("#idEgresoAlimentos").val(),
+                IdEstadoEgreso: $("#idEstadoEgreso").val(),
+                NoDespachoAlmacen: $('#noDespachoAlmacen').val(),
+                // IdDepartamentoCarga: $('#cbIdDepartamentoCarga').val(),
+                IdBodegaCarga: $('#cbIdBodegaCarga').val(),
+                NoAutorizacion: $('#noAutorizacion').val(),
+                IdDepartamentoDestino: $('#cbIdDepartamentoDetino').val(),
+                IdMunicipioDestino: $('#idTipoSalidaAlimento').val() == 1 ? $('#cbIdMunicipioDestino').val() : null, // 1. Municipo Destino es para Egreso
+                IdBodegaDestino: $('#idTipoSalidaAlimento').val() == 2 ? $('#cbIdBodegaDestino').val() : null, // 2. Bodega Destino es para Traslado
+                DireccionFinal: $('#direccionFinal').val(),
+                Comentarios: $('#comentarios').val(),
+                FirmaSelloDirectorVisan: $('#firmaSelloDirectorVisan').prop('checked') == true ? 0 : 1,
+                FirmaSelloJefeDepartamento: $('#firmaSelloJefeDepartamento').prop('checked') == true ? 0 : 1
+            };
+
+            if (!egresoAlimentos.NoDespachoAlmacen || !egresoAlimentos.NoAutorizacion || !egresoAlimentos.DireccionFinal ||
+                !egresoAlimentos.IdBodegaCarga || !egresoAlimentos.IdDepartamentoDestino || !egresoAlimentos.Comentarios ||
+                egresoAlimentos.FirmaSelloDirectorVisan == 1 || egresoAlimentos.FirmaSelloJefeDepartamento == 1 ){
+                Swal.fire({
+                    title: "Error!",
+                    text: "Debe de completar los campos del Despacho de Almacén.",
+                    icon: "warning"
+                });
+
+                return;
+            }
+
+            if (!egresoAlimentos.IdMunicipioDestino && !egresoAlimentos.IdBodegaDestino){
+                Swal.fire({
+                    title: "Error!",
+                    text: "Debe de ingresa el Destino.",
+                    icon: "warning"
+                });
+
+                return;
+            }
+
+            let tabla = document.getElementById("tableDetalle");
+            let tbody = tabla.getElementsByTagName("tbody")[0];
+
+            let detalles = [];
+            let cantDetallesSeleccionados = 0;
+
+            $("#tableDetalle tbody tr").each(function () {
+                let fila = $(this);
+
+                if (fila.find("input[name='CheckRow']").prop('checked') == true){
+                    cantDetallesSeleccionados += 1;
+                }
+
+                let detalle = {
+                    IdDetalleEgresoAlimentos: fila.find("input[name='IdDetalleEgresoAlimentos']").val(),
+                    IdProductoAlimenticio: fila.find("input[name='IdProductoAlimenticio']").val(),
+                    CantidadUnidad: fila.find("input[name='CantidadUnidad']").val(),
+                    IdUnidadMedida: fila.find("input[name='IdUnidadMedida']").val(),
+                    NoUnidades: fila.find("input[name='NoUnidades']").val(),
+                    CheckRow: fila.find("input[name='CheckRow']").prop('checked') == true ? 0 : 1,
+                };
+
+                detalles.push(detalle);
+            });
+
+            if (cantDetallesSeleccionados == 0) {
+
+                Swal.fire({
+                    title: "Error!",
+                    text: "Debe de Seleccionar Productos.",
+                    icon: "warning"
+                });
+
+                return;
+            }
+
+            let datosEnvio = {
+                EgresoAlimentos: egresoAlimentos,
+                listaDetalleEgresoAlimentos: detalles
+            };
+
+
+            $.ajax({
+                url: `@ViewData["rutaApp"]/EgresoAlimentos/GuardarDespachoAlmacen`,
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify(datosEnvio),
+                success: function (respuesta) {
+
+                    Swal.fire("Almacenado!", "", "success");
+
+                    // Redireccionar o limpiar formulario si es necesario
+                    window.location.href = `@ViewData["rutaApp"]/EgresoAlimentos/Index`;
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error al guardar:", error);
+                    alert("Ocurrió un error al guardar el despacho de almacén.");
+                }
+            });
+        }
+
+    </script>
+}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+

@@ -1,0 +1,64 @@
+﻿@model List<PROY.Models.Permiso>;
+
+<html>
+<head>
+</head>
+<body>
+    @* @if (TempData["Mensaje"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["Mensaje"]
+        </div>
+    } *@
+
+    <div class="=row">
+        <div class="col-sm-8 offset-sm-2">
+            <h2 class="float-start">Administración de permisos</h2> @* <a class="btn btn-primary float-end" asp-controller="Usuario" asp-action="Registrarse" asp-method="get">Nuevo</a> *@
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>PERMISO</th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @try
+                    {
+                        foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.Nombre</td>
+                                <td></td>
+                                <td></td>
+                                @* <td class="text-center"><a class="btn btn-warning" asp-controller="Usuario" asp-action="Editar" asp-route-id="@item.IdUsuario">Editar</a></td>
+                                <td class="text-center"><a class="btn btn-danger" asp-controller="Usuario" asp-action="Eliminar" asp-route-id="@item.IdUsuario" onclick="confirmar(event)">Eliminar</a></td> *@
+                            </tr>
+                        }
+                    }
+                    catch
+                    {
+
+                    }
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    @section Scripts {
+        <script>
+            function confirmar(e) {
+                var res = confirm("Esta seguro de eliminar el usuario");
+                if (res) return true;
+                if (res == false) e.preventDefault();
+
+                //return false;
+            }
+        </script>
+    }
+
+
+</body>
+</html>

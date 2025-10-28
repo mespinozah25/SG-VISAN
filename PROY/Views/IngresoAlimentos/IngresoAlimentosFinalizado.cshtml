@@ -1,0 +1,662 @@
+﻿@inject IHttpContextAccessor HttpContextAccessor
+<head>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
+</head>
+
+<style>
+    table thead th {
+        pointer-events: none; /* Desactiva la interacción con los títulos */
+    }
+</style>
+
+@model PROY.ViewModels.IngresoAlimentosVM
+
+@{
+    ViewData["Title"] = "IngresoAlimentosFinalizado";
+}
+
+<h2>Visualización del Ingreso de Alimentos </h2>
+
+<br />
+
+<div>
+    <form id="frmIngreso">
+
+        <input type="hidden" id="idIngresoAlimentos" asp-for="@Model.IngresoAlimentos.IdIngresoAlimentos" />
+
+        <br />
+
+        <div id="Estado1">
+            <div class="col">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title"><u> Información del Ingreso de Alimentos </u></h5>
+                        <div class="form-group float-end">
+                            <label for="txtrEstadoActual" class="control-label"><b> Estado </b></label>
+                            <div class="col-sm-9">
+                                <input class="form-control" id="txtrEstadoActual" disabled>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <label for="txtPrograma" class="control-label"><b> Programa </b></label>
+                                <input class="form-control" id="txtPrograma" disabled>
+                            </div>
+                            <div class="col">
+                                <label for="txtConvenio" class="control-label bold"><b> Convenio </b></label>
+                                <input class="form-control" id="txtConvenio" disabled>
+                            </div>
+                            <div class="col">
+                                <label for="txtBodegaRecibe" class="control-label bold"><b> Bodega que recibe </b></label>
+                                <input class="form-control" id="txtBodegaRecibe" disabled>
+                            </div>
+                        </div>
+                        <br />
+                        <div class="row">
+                            <div class="col">
+                                <label for="txtDepartamentoRecepcion" class="control-label"><b> Departamento de Recepción </b></label>
+                                <input class="form-control" id="txtDepartamentoRecepcion" disabled>
+                            </div>
+                            <div class="col">
+                                <label for="txtMunicipioRecepcion" class="control-label bold"><b> Municipio de Recepción </b></label>
+                                <input class="form-control" id="txtMunicipioRecepcion" disabled>
+                            </div>
+                        </div>
+                        <br />
+                        <div class="row">
+                            <div class="col">
+                                <label for="txtUsuarioEstado1" class="control-label"><b> Usuario que creó </b></label>
+                                <input class="form-control" id="txtUsuarioEstado1" disabled>
+                            </div>
+                            <div class="col">
+                                <label for="txtFechaEstado1" class="control-label bold"><b> Fecha de Creación </b></label>
+                                <input class="form-control" id="txtFechaEstado1" disabled>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div id="Estado1">
+            <div class="col">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title"><u> Información de la Junta Receptora de Alimentos </u></h5>
+                        <div class="row">
+                            <div class="col-6">
+                                <label for="txtNoNombramiento" class="control-label">Número de Nombramiento</label>
+                                <input type="text" class="form-control" id="txtNoNombramiento" disabled>
+                            </div>
+                            <div class="col-4">
+                                <label for="archivoNombramiento" class="control-label">Archivo de Nombramiento</label>
+                                <input type="file" name="file" id="archivoNombramiento" class="form-control" disabled/>
+                            </div>
+                            <div class="col-2 text-center" id="divBtnDescargaNombramiento">
+                                <label for="btnDescarga" class="control-label text-center"> Descargar Docto </label>
+                                <input type="hidden" id="txtUbicacionNombramiento" value="@Model.JuntaReceptora.ArchivoNombramiento" />
+                                <a type="button" id="btnDescarga" class="btn btn-primary btn-sm text-center" href="@Url.Action("DownloadFile", new { fileName = Model.JuntaReceptora.ArchivoNombramiento, carpeta = "nombramientos" })">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                            </div> 
+                        </div>
+                        <br />
+                        <div class="row">
+                            <div class="col">
+                                <label for="txtUsuarioEstado1" class="control-label"><b> Usuario que finalizó estado 1 </b></label>
+                                <input class="form-control" id="txtUsuarioFinEstado1" disabled>
+                            </div>
+                            <div class="col">
+                                <label for="txtFechaEstado1" class="control-label bold"><b> Fecha y Hora </b></label>
+                                <input class="form-control" id="txtFechaFinEstado1" disabled>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <br />
+
+        <div id="Estado2_1" style="display:none">
+            <div class="col">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title"><u> Información de documentos WAYBILL </u></h5>
+                        <div class="row">
+                            <div class="col-6">
+                                <label for="txtNoWaibil" class="control-label">No. WAYBILLs</label>
+                                <input type="text" class="form-control" id="txtNoWaibil" disabled>
+                            </div>
+                            <div class="col-4">
+                                <label for="archivoNombramiento" class="control-label">Archivo de WAYBILL</label>
+                                <input type="file" name="file" id="archivoNombramiento" class="form-control" disabled />
+                            </div>
+                            <div class="col-2 text-center" id="divBtnDescargaWaybillFinanciero">
+                                <label for="btnDescarga" class="control-label text-center"> Descargar Docto </label>
+                                <input type="hidden" id="txtArchivoWaybill" value="@Model.IngresoAlimentos.ArchivoWaybillFinanciero" />
+                                <a type="button" id="btnDescarga" class="btn btn-primary btn-sm text-center" href="@Url.Action("DownloadFile", new { fileName = Model.IngresoAlimentos.ArchivoWaybillFinanciero, carpeta = "archivoWaibil" })">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div id="Estado2_2" style="display:none">
+            <div class="col">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title"><u> Información de Boleta de Análisis </u></h5>
+                        <div class="row">
+                            <div class="col-6">
+                                <label for="txtNombreResponsableIndeca" class="control-label">Responsable INDECA</label>
+                                <input type="text" class="form-control" id="txtNombreResponsableIndeca" disabled>
+                            </div>
+                            <div class="col-4">
+                                <label for="archivoNombramiento" class="control-label">Archivo de Boleta de Análisis</label>
+                                <input type="file" name="file" id="archivoNombramiento" class="form-control" disabled />
+                            </div>
+                            <div class="col-2 text-center" id="divBtnDescargaBoletaAnalisis">
+                                <label for="btnDescarga" class="control-label text-center"> Descargar Docto </label>
+                                <input type="hidden" id="txtArchivoBoletaAnalisis" value="@Model.IngresoAlimentos.ArchivoBoletaAnalisis" />
+                                <a type="button" id="btnDescarga" class="btn btn-primary btn-sm text-center" href="@Url.Action("DownloadFile", new { fileName = Model.IngresoAlimentos.ArchivoBoletaAnalisis, carpeta = "boletaAnalisis" })">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div id="Estado2_3" style="display:none">
+            <div class="col">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title"><u> Información de Acta de Recepción de Alimentos </u></h5>
+                        <div class="row">
+                            <div class="col-6">
+                                <label for="txtNoActa" class="control-label">No Acta</label>
+                                <input type="text" class="form-control" id="txtNoActa" disabled>
+                            </div>
+                            <div class="col-4">
+                                <label for="archivoNombramiento" class="control-label">Archivo de Boleta de Análisis</label>
+                                <input type="file" name="file" id="archivoNombramiento" class="form-control" disabled />
+                            </div>
+                            <div class="col-2 text-center" id="divBtnDescargaActa">
+                                <label for="btnDescarga" class="control-label text-center"> Descargar Docto </label>
+                                <input type="hidden" id="txtArchivoActa" value="@Model.IngresoAlimentos.DocumentoActa" />
+                                <a type="button" id="btnDescarga" class="btn btn-primary btn-sm text-center" href="@Url.Action("DownloadFile", new { fileName = Model.IngresoAlimentos.DocumentoActa, carpeta = "actaRecepcion" })">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                            </div>
+                        </div>
+                        <br />
+                        <div class="row">
+                            <div class="col">
+                                <label for="txtUsuarioEstado1" class="control-label"><b> Usuario que finalizó estado 2 </b></label>
+                                <input class="form-control" id="txtUsuarioEstado2" disabled>
+                            </div>
+                            <div class="col">
+                                <label for="txtFechaEstado1" class="control-label bold"><b> Fecha y Hora </b></label>
+                                <input class="form-control" id="txtFechaEstado2" disabled>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <br />
+
+        <div id="Estado3" style="display:none">
+            <div class="col">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title"><u> Información de la Forma 1-H </u></h5>
+                        <div class="row">
+                            <div class="col-6">
+                                <label for="txtNoForma1H" class="control-label">No de Forma 1-H</label>
+                                <input type="text" class="form-control" id="txtNoForma1H" disabled>
+                            </div>
+                            <div class="col-4">
+                                <label for="archivoforma1H" class="control-label">Archivo de Forma 1-H</label>
+                                <input type="file" name="file" id="archivoforma1H" class="form-control" disabled />
+                            </div>
+                            <div class="col-2 text-center" id="divBtnDescargaForma1H">
+                                <label for="btnDescarga" class="control-label text-center"> Descargar Docto </label>
+                                <input type="hidden" id="txtArchivoForma1H" value="@Model.IngresoAlimentos.ArchivoForma1hFinanciero" />
+                                <a type="button" id="btnDescarga" class="btn btn-primary btn-sm text-center" href="@Url.Action("DownloadFile", new { fileName = Model.IngresoAlimentos.ArchivoForma1hFinanciero, carpeta = "Forma1H-Firmado" })">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <br />
+
+        <div id="Productos">
+            <div class="col">
+                <h5 class="card-title"><u> Información del Producto Alimenticio </u></h5>
+                <div class="row">
+                    <table id="tableDetalle" class="table table-hover" width="100%">
+                        <thead>
+                            <tr>
+                                <th>No.</th>
+                                <th>CANTIDAD</th>
+                                <th>PRODUCTO</th>
+                                <th>ESTIBA</th>
+                                <th>FECHA VENCIMIENTO</th>
+                                <th>NO. KARDEX</th>
+                                <th>PRECIO POR UNIDAD</th>
+                                <th>VALOR TOTAL</th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <br />
+
+        <div id="FinEstados" style="display:none">
+            <div class="col">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row" id="UsuarioEstado3" style="display:none">
+                            <div class="col">
+                                <label for="txtUsuarioEstado3" class="control-label"><b> Usuario que finalizó estado 3 </b></label>
+                                <input class="form-control" id="txtUsuarioEstado3" disabled>
+                            </div>
+                            <div class="col">
+                                <label for="txtFechaEstado3" class="control-label bold"><b> Fecha y Hora </b></label>
+                                <input class="form-control" id="txtFechaEstado3" disabled>
+                            </div>
+                        </div>
+                        <div class="row" id="UsuarioEstado4" style="display:none">
+                            <div class="col">
+                                <label for="txtUsuarioEstado4" class="control-label"><b> Usuario que finalizó estado 4 </b></label>
+                                <input class="form-control" id="txtUsuarioEstado4" disabled>
+                            </div>
+                            <div class="col">
+                                <label for="txtFechaEstado4" class="control-label bold"><b> Fecha y Hora </b></label>
+                                <input class="form-control" id="txtFechaEstado4" disabled>
+                            </div>
+                        </div>
+                        <div class="row" id="UsuarioEstado5" style="display:none">
+                            <div class="col">
+                                <label for="txtUsuarioEstado5" class="control-label"><b> Usuario que finalizó Ingreso </b></label>
+                                <input class="form-control" id="txtUsuarioEstado5" disabled>
+                            </div>
+                            <div class="col">
+                                <label for="txtFechaEstado5" class="control-label bold"><b> Fecha y Hora </b></label>
+                                <input class="form-control" id="txtFechaEstado5" disabled>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+
+        <br />
+
+        <div class="row" style="display:none;">
+            <div class="col-6">
+                <label for="txtNoBoletaAnalisis" class="control-label">Número de Boleta de Análisis INDECA</label>
+                <input type="text" class="form-control" id="txtNoBoletaAnalisis" required>
+            </div>
+            <div class="col-4">
+                <label for="archivoBoletaAnalisis" class="control-label">Archivo de Boelta de Analisis</label>
+                <input type="file" name="file" id="archivoBoletaAnalisis" class="form-control" />
+
+            </div>
+            <div class="col-2 text-center" id="divBtnDescarga">
+                <label for="btnDescarga" class="control-label text-center"> Descargar Docto </label>
+                <input type="hidden" id="txtArchivoBoleta" value="@Model.IngresoAlimentos.ArchivoBoletaAnalisis" />
+                <a type="button" id="btnDescarga" class="btn btn-primary btn-sm text-center" href="@Url.Action("DownloadFile", new { fileName = Model.IngresoAlimentos.ArchivoBoletaAnalisis ?? "", carpeta = "boletaAnalisis" })">
+                    <i class="fas fa-download"></i>
+                </a>
+            </div>
+        </div>
+
+        <br />
+
+        <br />
+
+        <div class="row" style="display:none;">
+            <div class="col-4">
+                <label for="txtDPI" class="control-label">No. Licencia Piloto / DPI</label>
+                <input type="text" class="form-control" id="txtDPI" disabled>
+            </div>
+        </div>
+
+        <br />
+        <br />
+
+        <div class="row float-end">
+            <div class="col">
+                <a type="button" class="btn btn-secondary btn-sm" asp-action="Index">Regresar</a>
+            </div>
+        </div>
+
+        @* Listas Desplegables  *@
+        <div class="row" style="display:none;">
+            <div class="col">
+                <label for="cbIdEstado" class="control-label">Estados</label>
+                <select class="form-select" id="cbIdEstado" asp-items="ViewBag.EstadoIngresos"></select>
+            </div>
+            <div class="col">
+                <label for="cbIdProductoAlimenticio" class="control-label">Producto Alimenticio</label>
+                <select class="form-select" id="cbIdProductoAlimenticio" asp-items="ViewBag.ProductoAlimenticio"></select>
+            </div>
+            <div class="col">
+                <label for="cbIdPresentacionPA" class="control-label">Presentación</label>
+                <select class="form-select" id="cbIdPresentacionPA" asp-items="ViewBag.PresentacionPA"></select>
+            </div>
+            <div class="col">
+                <label for="cbIdUnidadMedida" class="control-label">Unidad de Medida</label>
+                <select class="form-select" id="cbIdUnidadMedida" asp-items="ViewBag.UnidadMedida"></select>
+            </div>
+            <div class="col">
+                <label for="cbIdEstiba" class="control-label">Estiba</label>
+                <select class="form-select" id="cbIdEstiba" asp-items="ViewBag.Estiba"></select>
+            </div>
+            <div class="col">
+                <label for="cbIdUsuario" class="control-label">Usuario</label>
+                <select class="form-select" id="cbIdUsuario" asp-items="ViewBag.Usuarios"></select>
+            </div>
+            <div class="col">
+                <label for="cbIdPrograma" class="control-label">Programa</label>
+                <select class="form-select" id="cbIdPrograma" asp-items="ViewBag.Programas"></select>
+            </div>
+            <div class="col">
+                <label for="cbIdConvenio" class="control-label">Convenio</label>
+                <select class="form-select" id="cbIdConvenio" asp-items="ViewBag.Convenios"></select>
+            </div>
+            <div class="col">
+                <label for="cbIdBodega" class="control-label">Bodega</label>
+                <select class="form-select" id="cbIdBodega" asp-items="ViewBag.Bodegas"></select>
+            </div>
+            <div class="col">
+                <label for="cbIdTipoNombramiento" class="control-label">Tipo de Nombramiento</label>
+                <select class="form-select" id="cbIdTipoNombramiento" asp-items="ViewBag.TiposNombramientos"></select>
+            </div>
+            <div class="col">
+                <label for="cbIdDepartamento" class="control-label">Departamentos</label>
+                <select class="form-select" id="cbIdDepartamento" asp-items="ViewBag.Departamentos"></select>
+            </div>
+            <div class="col">
+                <label for="cbIdMunicipio" class="control-label">Municipios</label>
+                <select class="form-select" id="cbIdMunicipio" asp-items="ViewBag.Municipios"></select>
+            </div>
+        </div>
+
+    </form>
+</div>
+
+
+@section Scripts {
+
+    <script>
+        $( document ).ready(function() {
+
+            $("#tableDetalle tbody").empty();
+            $('#tableDetalle_paginate').hide();
+            $('#tableDetalle_info').hide();
+            $('#tableDetalle_filter').hide();
+
+            // Oculta las flechas de ordenamiento
+            $('table.dataTable thead th').removeClass('sorting sorting_asc sorting_desc');
+
+            var urlObj = new URL(window.location.href);
+            var estado = urlObj.searchParams.get("estado");
+            var id = window.location.pathname.split('/').pop();
+
+            if (parseInt(id) != 0){
+                abrirYActualizarUrl(id, estado);
+            }
+        });
+
+        function abrirYActualizarUrl(id, estado) {
+
+            if (id == 0) {
+
+            }
+            else {
+
+                $.ajax({
+                    url: `@ViewData["rutaApp"]/IngresoAlimentos/ObtenerIngresoAlimentosFinalizado/${id}`, // URL para obtener los datos
+                    type: 'GET',
+                    success: function (data) {
+
+                        console.log('data' + JSON.stringify(data));
+
+                        // Llenar el formulario con los datos de Ingreso de Alimentos
+                        var ia = data.ingresoAlimentos;
+                        var br = data.bodegaRecibe;
+                        var jr = data.juntaReceptora;
+
+                        $('#idIngresoAlimentos').val(ia.idIngresoAlimentos);
+
+                        // Completando datos del Estado 1
+                        if (estado >= 1){
+
+                            var bitEstado1 = data.bitacoraEstado1;
+                            var usE1 = data.usuarioEstado1;
+
+                            let txtEstadoActual = $("#cbIdEstado option[value='" + ia.idEstadoIngreso + "']").text(); // Nombre del Estado Actual
+                            $('#txtrEstadoActual').val(txtEstadoActual);
+                            let txtPrograma = $("#cbIdPrograma option[value='" + ia.idPrograma + "']").text(); // Nombre del programa
+                            $('#txtPrograma').val(txtPrograma);
+                            let txtConvenio = $("#cbIdConvenio option[value='" + ia.idConvenio + "']").text(); // Nombre del convenio
+                            $('#txtConvenio').val(txtConvenio);
+                            let txtBodegaRecibe = $("#cbIdBodega option[value='" + ia.idBodegaRecibe + "']").text(); // Nombre de la bodega
+                            $('#txtBodegaRecibe').val(txtBodegaRecibe);
+                            let txtDepartamentoRecepcion = $("#cbIdDepartamento option[value='" + br.idDepartamento + "']").text(); // Nombre del Departamento
+                            $('#txtDepartamentoRecepcion').val(txtDepartamentoRecepcion);
+                            let txtMunicipioRecepcion = $("#cbIdMunicipio option[value='" + br.idMunicipio + "']").text(); // Nombre del Municipio
+                            $('#txtMunicipioRecepcion').val(txtMunicipioRecepcion);
+
+                            let txtUsuarioEstado1 = usE1.nombre + ' ' + usE1.apellidos; // Nombre del Usuario
+                            var fechaFormateada = formatearFechaHora(bitEstado1.fechaHora); // Fecha y Hora
+                            $('#txtUsuarioEstado1').val(txtUsuarioEstado1);
+                            $('#txtFechaEstado1').val(fechaFormateada);
+
+                            $('#txtNoNombramiento').val(jr.numeroNombramiento);
+
+                            if (jr.archivoNombramiento == null){
+                                $('#divBtnDescargaNombramiento').hide();
+                            }
+
+                            
+                            $('#txtUsuarioFinEstado1').val(txtUsuarioEstado1);
+                            $('#txtFechaFinEstado1').val(fechaFormateada);
+                        }
+
+                        // Completando datos del Estado 2
+                        if (estado >= 2){
+
+                            var bitEstado2 = data.bitacoraEstado2;
+                            var usE2 = data.usuarioEstado2;
+                            var wa = data.waybill;
+
+                            $('#Estado2_1').show();
+
+                            var boletas = wa.map(item => item.noBoleta).join(',');
+                            $('#txtNoWaibil').val(boletas);
+                            if (ia.archivoWaybillFinanciero == null){
+                                $('#divBtnDescargaWaybillFinanciero').hide();
+                            }
+
+
+                            $('#Estado2_2').show();
+
+                            $('#txtNombreResponsableIndeca').val(ia.nombreResponsableIndeca);
+                            if (ia.archivoBoletaAnalisis == null){
+                                $('#divBtnDescargaBoletaAnalisis').hide();
+                            }
+
+
+                            $('#Estado2_3').show();
+
+                            $('#txtNoActa').val(ia.noActa);
+                            if (ia.documentoActa == null){
+                                $('#divBtnDescargaActa').hide();
+                            }
+
+                            if (bitEstado2 != null){
+                                let txtUsuarioEstado2 = usE2.nombre + ' ' + usE2.apellidos; // Nombre del Usuario
+                                var fechaFormateada = formatearFechaHora(bitEstado2.fechaHora); // Fecha y Hora
+                                $('#txtUsuarioEstado2').val(txtUsuarioEstado2);
+                                $('#txtFechaEstado2').val(fechaFormateada);
+                            }
+                            
+                        }
+
+                        // Completando datos del Estado 3
+                        if (estado >= 3){
+
+                            var bitEstado3 = data.bitacoraEstado3;
+                            var usE3 = data.usuarioEstado3;
+
+                            var bitEstado4 = data.bitacoraEstado4;
+                            var usE4 = data.usuarioEstado4;
+
+                            $('#Estado3').show();
+                            $('#FinEstados').show();
+                            $('#UsuarioEstado3').show();
+
+                            $('#txtNoForma1H').val(ia.noForma1h);
+                            if (ia.archivoForma1hFinanciero == null){
+                                $('#divBtnDescargaForma1H').hide();
+                            }
+
+
+                            if (bitEstado3 != null){
+                                let txtUsuarioEstado3 = usE3.nombre + ' ' + usE3.apellidos; // Nombre del Usuario
+                                var fechaFormateada = formatearFechaHora(bitEstado3.fechaHora); // Fecha y Hora
+                                $('#txtUsuarioEstado3').val(txtUsuarioEstado3);
+                                $('#txtFechaEstado3').val(fechaFormateada);
+                            }
+                        }
+
+                        // Completando datos del Estado 4
+                        if (estado >= 4){
+
+                            var bitEstado4 = data.bitacoraEstado4;
+                            var usE4 = data.usuarioEstado4;
+
+                            $('#UsuarioEstado4').show();
+
+                            if (bitEstado4 != null){
+                                let txtUsuarioEstado4 = usE4.nombre + ' ' + usE4.apellidos; // Nombre del Usuario
+                                var fechaFormateada = formatearFechaHora(bitEstado4.fechaHora); // Fecha y Hora
+                                $('#txtUsuarioEstado4').val(txtUsuarioEstado4);
+                                $('#txtFechaEstado4').val(fechaFormateada);
+                            }
+
+                        }
+
+                        // Completando datos del Estado 5
+                        if (estado >= 5){
+
+                            var bitEstado4 = data.bitacoraEstado4;
+                            var usE4 = data.usuarioEstado4;
+
+                            $('#UsuarioEstado5').show();
+
+                            if (bitEstado4 != null){
+                                let txtUsuarioEstado4 = usE4.nombre + ' ' + usE4.apellidos; // Nombre del Usuario
+                                var fechaFormateada = formatearFechaHora(bitEstado4.fechaHora); // Fecha y Hora
+                                $('#txtUsuarioEstado5').val(txtUsuarioEstado4);
+                                $('#txtFechaEstado5').val(fechaFormateada);
+                            }
+
+                        }
+
+
+
+                        // Agregar Detalles de Prodcutos
+                        if (data.productosIngreso.length > 0){
+
+                            let tabla = document.getElementById("tableDetalle");
+                            let tbody = tabla.getElementsByTagName("tbody")[0];
+
+                            data.productosIngreso.forEach((detalle, index) => {
+
+                                let fila = document.createElement("tr");
+
+
+                                let idProductosIngreso = detalle.idProductosIngreso; // Id del Producto
+                                let txtProducto = $("#cbIdProductoAlimenticio option[value='" + detalle.idProductoAlimenticio + "']").text(); // Nombre del producto
+                                let txtPresentacion = $("#cbIdPresentacionPA option[value='" + detalle.idPresentacion + "']").text(); // Nombre de la presentación
+                                let cantidadUnidad = detalle.cantidadUnidad;
+                                let txtUnidad = $("#cbIdUnidadMedida option[value='" + detalle.idUnidadMedida + "']").text(); // Nombre de la unidad de medida
+                                let txtEstiba = detalle.estiba == null ? ' ' : detalle.estiba; // Nombre de la Estiba
+                                let cantidadRecibir = detalle.cantidadRecibir;
+                                let folio = detalle.folioLibroAlmacen == null ? '' : detalle.folioLibroAlmacen;
+                                let precio = detalle.precioUnidad == null ? '' : detalle.precioUnidad;
+                                let valor = detalle.valorTotal == null ? "" : detalle.valorTotal;
+                                let fechaVencimiento = detalle.fechaVencimiento == null ? ' ' : new Date(detalle.fechaVencimiento).toLocaleDateString('es-ES');
+
+                                var nombreFinalProducto = txtPresentacion + ' de ' + txtProducto + ' en presentación de ' + cantidadUnidad + ' ' + txtUnidad;
+
+                                fila.innerHTML = `
+                                    <td>
+                                        ${index + 1}
+                                        <input type="hidden" name="IdProductosIngreso" value="${idProductosIngreso}">
+                                    </td>
+                                    <td>${cantidadRecibir}</td>
+                                    <td>${nombreFinalProducto}</td>
+                                    <td>${txtEstiba}</td>
+                                    <td>${fechaVencimiento}</td>
+                                    <td>${folio}</td>
+                                    <td>${precio}</td>
+                                    <td>${valor}</td>
+                                `;
+
+                                tbody.appendChild(fila);
+                            });
+                        }
+
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error al obtener los datos de ingreso de alimentos: ', error);
+                    }
+                });
+            }
+        }
+
+        function formatearFechaHora(fechaOriginal){
+            let fecha = new Date(fechaOriginal);
+
+            // Asegurarse de agregar ceros a la izquierda si es necesario
+            let dia = ("0" + fecha.getDate()).slice(-2);
+            let mes = ("0" + (fecha.getMonth() + 1)).slice(-2);
+            let anio = fecha.getFullYear();
+
+            let horas = ("0" + fecha.getHours()).slice(-2);
+            let minutos = ("0" + fecha.getMinutes()).slice(-2);
+
+            // Formato final
+            let fechaFormateada = `${dia}/${mes}/${anio} ${horas}:${minutos}`;
+
+            return fechaFormateada;
+        }
+
+    </script>
+}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+

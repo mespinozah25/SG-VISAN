@@ -1,0 +1,521 @@
+﻿<head>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
+</head>
+
+<style>
+    table thead th {
+        pointer-events: none; /* Desactiva la interacción con los títulos */
+    }
+</style>
+
+@model PROY.ViewModels.IngresoAlimentosVM
+
+@{
+    ViewData["Title"] = "Registrarse";
+}
+
+<h1>Registro de Forma 1-H</h1>
+
+<br />
+
+<div>
+    <form id="frmRecepcion">
+
+        <input type="hidden" id="idIngresoAlimentos" asp-for="@Model.IngresoAlimentos.IdIngresoAlimentos" />
+
+        <br />
+        <br />
+
+        <div class="row">
+            <div class="col-3">
+                <label for="txtNoForma1H" class="control-label">No. Forma 1-H</label>
+                <input type="text" class="form-control" id="txtNoForma1H" required>
+            </div>
+            <div class="col-3">
+                <label for="txtFechaForma1H" class="control-label">Fecha Forma 1-H</label>
+                <input type="date" class="form-control" id="txtFechaForma1H" required>
+            </div>
+            <div class="col-6">
+                <label for="cbIdProveedor" class="control-label">Proveedor</label>
+                <select class="form-select" id="cbIdProveedor" asp-items="ViewBag.Proveedores"></select>
+            </div>
+        </div>
+
+        <br />
+        <br />
+
+        <div class="row col-12">
+            <div class="">
+                <table id="tableDetalle" class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>No.</th>
+                            <th>CANTIDAD</th>
+                            <th>PRODUCTO</th>
+                            <th>ESTIBA</th>
+                            <th>NO. KARDEX</th>
+                            <th>PRECIO POR UNIDAD</th>
+                            <th>VALOR TOTAL</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+
+        <br />
+        <br />
+
+        <div class="row float-end">
+            <div class="col">
+                <a type="button" class="btn btn-secondary btn" asp-action="Index">Regresar</a>
+            </div>
+            <div class="col camposAlmacenamiento">
+                <input type="button" value="Guardar" class="btn btn-primary" onclick="return ConfirmSave();" />
+            </div>
+            <div class="col camposAlmacenamiento">
+                <a class="btn btn-info btn disabled" id="CambioEstado" asp-controller="IngresoAlimentos" asp-action="CambioEstado" asp-route-id="@Model.IngresoAlimentos.IdIngresoAlimentos" asp-route-estado="4" onclick="ConfirmarCabmioEstado(event)" disabled> Finalizar 1-H </a>
+                @* <a class="btn btn-info btn disabled" id="CambioEstado" onclick="CambioEstado()" disabled> Finalizar 1-H </a> *@
+            </div>
+        </div>
+
+        <div class="row" style="display:none;">
+            <div class="col">
+                <label for="cbIdProductoAlimenticio" class="control-label">Producto Alimenticio</label>
+                <select class="form-select" id="cbIdProductoAlimenticio" asp-items="ViewBag.ProductoAlimenticio"></select>
+            </div>
+            <div class="col">
+                <label for="cbIdPresentacionPA" class="control-label">Presentación</label>
+                <select class="form-select" id="cbIdPresentacionPA" asp-items="ViewBag.PresentacionPA"></select>
+            </div>
+            <div class="col">
+                <label for="cbIdUnidadMedida" class="control-label">Unidad de Medida</label>
+                <select class="form-select" id="cbIdUnidadMedida" asp-items="ViewBag.UnidadMedida"></select>
+            </div>
+            <div class="col">
+                <label for="cbIdEstiba" class="control-label">Estiba</label>
+                <select class="form-select" id="cbIdEstiba" asp-items="ViewBag.Estiba"></select>
+            </div>
+        </div>
+
+    </form>
+</div>
+
+
+<!-- Modal -->
+<div class="modal fade" id="wCambioEstado" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="height:100%;">
+
+            <form id="frmCambioEstado">
+                <div class="modal-header bg-secondary">
+                    <h5 class="modal-title text-white" id="lblModalTitle">Traslado de Ingreso</h5>
+                    <button type="button" id="btnClose" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div>
+                        <div class="col">
+                            <label for="cbIdUsuario" class="control-label">Usuario: *</label>
+                            <select class="form-select" id="cbIdUsuario" required></select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <a id="btnEnviar" class="btn btn-info btn" onclick="confirmarTraslado()"> Enviar </a>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+
+    <script>
+        $( document ).ready(function() {
+
+            $("#tableDetalle tbody").empty();
+            $('#tableDetalle_paginate').hide();
+            $('#tableDetalle_info').hide();
+            $('#tableDetalle_filter').hide();
+
+            var urlObj = new URL(window.location.href);
+            var type = urlObj.searchParams.get("type");
+            var id = window.location.pathname.split('/').pop();
+
+            // Inicializa la tabla (si no está inicializada)
+            var table = $('#tableDetalle').DataTable();
+
+            // Oculta las flechas de ordenamiento
+            $('table.dataTable thead th').removeClass('sorting sorting_asc sorting_desc');
+
+            // Se comprueba si se debe de habilitar el botón de finalización
+            HabilitarFinalizacion();
+
+            if (parseInt(id) != 0){
+                abrirYActualizarUrl(id, type);
+            }
+        });
+
+        function abrirYActualizarUrl(id, tipoApertura) {
+
+            // Se inicia reiniciando la tabla
+             $("#tableDetalle tbody").empty();
+
+             // El tipo de apertura 1 indica que se var almacenar o editar un registro
+            // El tipo de apertura 2 indica solo de observación
+            let disabled = tipoApertura == 1 ? "" : "disabled" ;
+            if(tipoApertura == 1){
+                $('.camposAlmacenamiento').show();
+                $("#frmRecepcion input:not([disabled])").attr("disabled", false);  // Hace los inputs solo lectura
+                $("#frmRecepcion select").prop("disabled", false); // Deshabilita los selects
+            } else {
+                $('.camposAlmacenamiento').hide();
+                $("#frmRecepcion input").attr("disabled", true);  // Hace los inputs solo lectura
+                $("#frmRecepcion select").prop("disabled", true); // Deshabilita los selects
+            }
+
+            if (id == 0) {
+
+            }
+            else {
+
+                $.ajax({
+                    url: `@ViewData["rutaApp"]/IngresoAlimentos/ObtenerRregistroForma1H/${id}`, // URL para obtener los datos
+                    type: 'GET',
+                    success: function (data) {
+
+                        console.log('data' + JSON.stringify(data));
+
+                        // Llenar el formulario con los datos de Ingreso de Alimentos
+                        var ia = data.ingresoAlimentos;
+
+                        var fechaFormateada = '';
+
+                        if(ia.fechaForma1h != null){
+                            var fecha = ia.fechaForma1h;  // Fecha recibida
+                            var fechaFormateada = fecha.split("T")[0]; // Extrae solo la parte "YYYY-MM-DD"
+                        } else{
+                            $("#CambioEstado").addClass("disabled");
+                        }
+                        
+
+                        $('#idIngresoAlimentos').val(ia.idIngresoAlimentos);
+                        $('#txtNoForma1H').val(ia.noForma1h);
+                        $('#txtFechaForma1H').val(fechaFormateada);
+                        $('#cbIdProveedor').val(ia.idProveedor1H);
+
+                        // Agregar Detalle
+                        if (data.productosIngreso.length > 0){
+
+                            let tabla = document.getElementById("tableDetalle");
+                            let tbody = tabla.getElementsByTagName("tbody")[0];
+
+                            data.productosIngreso.forEach((detalle, index) => {
+
+                                let fila = document.createElement("tr");
+
+
+                                let idProductosIngreso = detalle.idProductosIngreso; // Id del Producto
+                                let txtProducto = $("#cbIdProductoAlimenticio option[value='" + detalle.idProductoAlimenticio + "']").text(); // Nombre del producto
+                                let txtPresentacion = $("#cbIdPresentacionPA option[value='" + detalle.idPresentacion + "']").text(); // Nombre de la presentación
+                                let cantidadUnidad = detalle.cantidadUnidad;
+                                let txtUnidad = $("#cbIdUnidadMedida option[value='" + detalle.idUnidadMedida + "']").text(); // Nombre de la unidad de medida
+                                let txtEstiba = detalle.estiba; // Nombre de la Estiba
+                                let cantidadRecibir = detalle.cantidadRecibir;
+                                let folio = detalle.folioLibroAlmacen == null ? '' : detalle.folioLibroAlmacen;
+                                let precio = detalle.precioUnidad == null ? '' : detalle.precioUnidad;
+                                let valor = detalle.valorTotal == null ? "" : detalle.valorTotal;
+
+                                var nombreFinalProducto = txtPresentacion + ' de ' + txtProducto + ' en presentación de ' + cantidadUnidad + ' ' + txtUnidad;
+
+                                fila.innerHTML = `
+                                    <td>
+                                        ${index + 1}
+                                        <input type="hidden" name="IdProductosIngreso" value="${idProductosIngreso}">
+                                    </td>
+                                    <td>${cantidadRecibir}</td>
+                                    <td>${nombreFinalProducto}</td>
+                                    <td>${txtEstiba}</td>
+                                    <td>
+                                        <input type="text" name="FolioLibroAlmacen" class="form-control" value="${folio}" ${disabled}>
+                                    </td>
+                                    <td>
+                                        <input type="number" min="0" name="PrecioUnidad" class="form-control" onchange="return AgregarValorTotal(this);" value="${precio}" ${disabled}>
+                                    </td>
+                                    <td>
+                                        <input type="text" disabled name="ValorTotal" class="form-control" value="${valor}">
+                                    </td>
+                                `;
+
+                                tbody.appendChild(fila);
+                            });
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error al obtener los datos de productos: ', error);
+                    }
+                });
+            }
+        }
+
+        function AgregarValorTotal(input){
+
+            let fila = $(input).closest("tr"); // Encuentra la fila actual
+            let cantidadRecibir = parseFloat(fila.find("td:eq(1)").text()) || 0; // Obtiene la cantidad
+            let precioUnidad = parseFloat($(input).val()) || 0; // Obtiene el precio ingresado
+            let valorTotal = cantidadRecibir * precioUnidad; // Calcula el total
+
+            // Actualiza el input "ValorTotal" y su texto visible
+            fila.find("input[name='ValorTotal']").val(valorTotal.toFixed(2));
+        }
+
+        function ConfirmSave(){
+            Swal.fire({
+              title: "Está seguro de almacenar Los Registro de Forma 1-H?",
+              showCancelButton: true,
+              confirmButtonText: "Guardar",
+              icon: "question"
+            }).then((result) => {
+              if (result.isConfirmed) {
+                  GuardarForma();
+              }
+            });
+        }
+
+        // Si el tipo es 1 - mostrará los campos faltantes
+        function ValidarTabla(type) {
+            let valido = true;
+
+            $("#tableDetalle tbody tr").each(function () {
+                $(this).find("input").each(function () {
+                    if ($(this).attr("name") !== "ValorTotal" && $(this).val().trim() === "") {
+                        valido = false;
+                        
+                        if(type == 1)
+                            $(this).addClass("is-invalid"); // Agrega una clase de error si está vacío
+                    } else {
+                        if(type == 1)
+                            $(this).removeClass("is-invalid"); // Remueve la clase si el campo está lleno
+                    }
+                });
+            });
+
+            return valido;
+        }
+
+
+        function GuardarForma() {
+            let ingresoAlimentos = {
+                IdIngresoAlimentos: $("#idIngresoAlimentos").val(),
+                NoForma1h: $("#txtNoForma1H").val(),
+                FechaForma1h: $("#txtFechaForma1H").val(),
+                IdProveedor1H: $("#cbIdProveedor").val(),
+            };
+
+            let detalles = [];
+            let foliosSet = new Set(); // Conjunto para almacenar folios únicos
+            let error = false;
+            let mensajeError = "";
+            let noFila = 0;
+
+            $("#tableDetalle tbody tr").each(function () {
+                let fila = $(this);
+                noFila ++;
+
+                let folioLibroAlmacen = fila.find("input[name='FolioLibroAlmacen']").val().trim();
+
+                // Validar si el folio ya existe en el conjunto
+                if (!folioLibroAlmacen){
+                    if (foliosSet.has(folioLibroAlmacen)) {
+                        mensajeError = `El No. de Kardex "${folioLibroAlmacen}", de la fila No. ${noFila}, ya ha sido ingresado en otro producto.`;
+                        error = true;
+                        return false; // Detiene el `.each()` si hay error
+                    }
+                }
+
+                // Agrega el Folio al conjunto para futuras comparaciones
+                foliosSet.add(folioLibroAlmacen);
+
+                let detalle = {
+                    IdProductosIngreso: fila.find("input[name='IdProductosIngreso']").val(),
+                    FolioLibroAlmacen: fila.find("input[name='FolioLibroAlmacen']").val(),
+                    PrecioUnidad: fila.find("input[name='PrecioUnidad']").val(),
+                    ValorTotal: fila.find("input[name='ValorTotal']").val(),
+                };
+
+                detalles.push(detalle);
+            });
+
+            if(error){
+                Swal.fire({
+                    title: "Error!",
+                    text: mensajeError,
+                    icon: "warning"
+                });
+
+                return;
+            }
+
+            let datosEnvio = {
+                IngresoAlimentos: ingresoAlimentos,
+                listaProductosIngreso: detalles
+            };
+
+            // Crear un objeto FormData
+            var formData = new FormData();
+
+            // Agregar los datos del formulario al objeto FormData
+            formData.append('modelo', JSON.stringify(datosEnvio)); // Enviar el modelo como JSON
+
+            $.ajax({
+                url: `@ViewData["rutaApp"]/IngresoAlimentos/GuardarForma1H`,
+                type: "POST",
+                contentType: false,
+                processData: false,
+                data: formData,
+                success: function (respuesta) {
+
+                    Swal.fire("Almacenado!", "", "success");
+
+                    // Se confirma la habilitación del botón de finalización
+                    HabilitarFinalizacion();
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error al guardar:", error);
+                    alert("Ocurrió un error al guardar el registro de Forma 1H.");
+                }
+            });
+        }
+
+        function HabilitarFinalizacion(){
+            // Primero se validará si la tabla se encuentra completa
+            if (ValidarTabla(0)){
+                $("#CambioEstado").removeClass("disabled");
+            }
+        }
+
+        function ConfirmarCabmioEstado(e){
+
+            e.preventDefault();
+
+            Swal.fire({
+              title: "Está seguro que desea finalizar el Registro 1-H del Ingreso de Alimentos?",
+              showCancelButton: true,
+              confirmButtonText: "Enviar",
+              icon: "question"
+            }).then((result) => {
+              if (result.isConfirmed) {
+
+                if ($("#txtNoForma1H").val() == "" && $("#txtFechaForma1H").val() == ""){
+                    Swal.fire({
+                        title: "Error!",
+                        text: "Debe de completar todos los campos.",
+                        icon: "warning"
+                    });
+
+                    e.preventDefault();
+
+                } else {
+                    window.location.href = e.target.href;
+
+                    return true;
+                }
+
+              } else{
+                  e.preventDefault();
+              }
+            });
+        }
+
+        function CambioEstado(){
+
+            if ($("#txtNoForma1H").val() == "" && $("#txtFechaForma1H").val() == "" && $("#cbIdProveedor").val() == ""){
+                Swal.fire({
+                    title: "Error!",
+                    text: "Debe de completar todos los campos.",
+                    icon: "warning"
+                });
+
+                return;
+
+            }
+
+            // Se ejecutará validación que indicará si todos los campos de la tabla se encuentran correctos
+            if(!ValidarTabla(1)){
+                Swal.fire({
+                    title: "Error!",
+                    text: "Debe de completar todos los campos de la tabla.",
+                    icon: "warning"
+                });
+
+                return;
+            }
+
+            $.ajax({
+                url: `@ViewData["rutaApp"]/IngresoAlimentos/ObtenerUsuariosJefeBodega`, // URL para obtener los datos
+                type: 'GET',
+                success: function (data) {
+
+                    var usuarios = data.usuarios;
+
+                    let selectUsuario = $('#cbIdUsuario');
+                    selectUsuario.empty(); // Limpiar opciones previas
+                    let optionsUsuarios = "";
+
+                    usuarios.forEach(uss => {
+                            optionsUsuarios += `<option value="${uss.idUsuario}">${uss.nombre} ${uss.apellidos}</option>`;
+                    });
+
+                    selectUsuario.append(optionsUsuarios);
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error al obtener los datos de usuarios: ', error);
+                }
+            });
+
+            var modal = new bootstrap.Modal(document.getElementById('wCambioEstado'));
+            modal.show();
+        }
+
+        function confirmarTraslado(){
+
+            Swal.fire({
+              title: "Está seguro de enviar el Ingreso de Alimentos al Finalización?",
+              showCancelButton: true,
+              confirmButtonText: "Enviar",
+              icon: "question"
+            }).then((result) => {
+              if (result.isConfirmed) {
+
+                  var id = parseInt($("#idIngresoAlimentos").val());
+                  var estado = 4;
+                  var idUsuario = parseInt($('#cbIdUsuario').val());
+
+                $.ajax({
+                    url: `@ViewData["rutaApp"]/IngresoAlimentos/CambioEstado`, // Ruta del método
+                    type: 'POST',
+                    data: { 'id': id, 'estado': estado, 'idUsuario': idUsuario },
+                    success: function (response) {
+
+                        // Redireccionar 
+                        window.location.href = `@ViewData["rutaApp"]/IngresoAlimentos/Index`;
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("❌ Error al cambiar estado:", xhr.responseText);
+                        alert("Hubo un error al cambiar el estado. Verifica la consola.");
+                    }
+                });
+
+                  return true;
+              } else{
+                  // e.preventDefault();
+              }
+            });
+        }
+    </script>
+}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+

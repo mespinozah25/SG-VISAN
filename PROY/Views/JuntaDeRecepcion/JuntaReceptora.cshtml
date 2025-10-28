@@ -1,0 +1,493 @@
+﻿<head>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
+</head>
+
+<style>
+    table thead th {
+        pointer-events: none; /* Desactiva la interacción con los títulos */
+    }
+</style>
+
+@model PROY.ViewModels.JuntaDeRecepcionVM
+
+@{
+    ViewData["Title"] = "Registrarse";
+}
+
+<h1>Registrar Junta Receptora</h1>
+
+<br />
+
+<div>
+    <form id="frmJuntaReceptora">
+
+        <input type="hidden" id="idJuntaReceptora" asp-for="@Model.JuntaReceptora.IdJuntaReceptora" />
+
+        <div class="row">
+
+            <input type="hidden" id="idJuntaReceptora" value="0" />
+
+            <div class="col-6">
+                <label for="txtNoNombramiento" class="control-label">Número de Nombramiento</label>
+                <input type="text" class="form-control" id="txtNoNombramiento" required>
+            </div>
+            <div class="col-4">
+                <label for="archivoNombramiento" class="control-label">Archivo de Nombramiento</label>
+                <input type="file" name="file" id="archivoNombramiento" class="form-control" />
+            </div>
+            <div class="col-2 text-center" id="divBtnDescarga" style="display:none">
+                <label for="btnDescarga" class="control-label text-center"> Descargar Docto </label>
+                <input type="hidden" id="txtUbicacionNombramiento" value="@Model.JuntaReceptora.ArchivoNombramiento" />
+                <a type="button" id="btnDescarga" class="btn btn-primary btn-sm text-center" href="@Url.Action("DownloadFile", new { fileName = Model.JuntaReceptora.ArchivoNombramiento, carpeta = "nombramientos" })">
+                    <i class="fas fa-download"></i>
+                </a>
+            </div>
+        </div>
+
+        <br />
+
+        <div class="row camposAlmacenamiento">
+            <div class="col-4">
+                <label for="txtNombreMiembro" class="control-label">Nombre del Miembro de Junta</label>
+                <input type="text" class="form-control" id="txtNombreMiembro">
+            </div>
+            <div class="col-4">
+                <label for="txtDPI" class="control-label">No. DPI</label>
+                <input type="text" class="form-control" id="txtDPI">
+            </div>
+            <div class="col-4">
+                <label for="cbIdTipoNombramiento" class="control-label">Tipo de Nombramiento</label>
+                <select class="form-select" id="cbIdTipoNombramiento" asp-items="ViewBag.TiposNombramientos"></select>
+            </div>
+        </div>
+
+        <div class="row float-end camposAlmacenamiento">
+            <div class="col">
+                <br />
+                <button type="button" href="#" class="btn btn-primary" id="btnAgregarDetalle" onclick="return AgregarDetalle();">Agregar</button>
+            </div>
+        </div>
+
+        <br />
+        <br />
+        <br />
+
+        <div class="row col-12">
+            <div class="">
+                <table id="tableDetalle" class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>No.</th>
+                            <th>NOMBRE MIEMBRO</th>
+                            <th>DPI</th>
+                            <th>TIPO DE NOMBRAMIENTO</th>
+                            <th>ACCIONES</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+
+        <br />
+        <br />
+
+        <div class="row float-end">
+            <div class="col">
+                <a type="button" class="btn btn-secondary btn" asp-action="Index">Regresar</a>
+            </div>
+            <div class="col camposAlmacenamiento">
+                <input type="button" value="Guardar" class="btn btn-primary" onclick="return ConfirmSave();" />
+            </div>
+        </div>
+
+    </form>
+</div>
+
+
+@section Scripts {
+
+    <script>
+        $( document ).ready(function() {
+
+            $("#tableDetalle tbody").empty();
+            $('#tableDetalle_paginate').hide();
+            $('#tableDetalle_info').hide();
+            $('#tableDetalle_filter').hide();
+
+            var urlObj = new URL(window.location.href);
+            var type = urlObj.searchParams.get("type");
+            var id = window.location.pathname.split('/').pop();
+
+            // Inicializa la tabla (si no está inicializada)
+            var table = $('#tableDetalle').DataTable();
+
+            // validación de DPI
+
+            // Oculta las flechas de ordenamiento
+            $('table.dataTable thead th').removeClass('sorting sorting_asc sorting_desc');
+
+            if (parseInt(id) != 0){
+                abrirYActualizarUrl(id, type);
+            }
+        });
+
+        function abrirYActualizarUrl(id, tipoApertura) {
+
+            // Se inicia reiniciando la tabla
+             $("#tableDetalle tbody").empty();
+
+             // El tipo de apertura 1 indica que se var almacenar o editar un registro
+            // El tipo de apertura 2 indica solo de observación
+            if(tipoApertura == 1){
+                $('.camposAlmacenamiento').show();
+                $("#frmJuntaReceptora input:not([disabled])").attr("disabled", false);  // Hace los inputs solo lectura
+                $("#frmJuntaReceptora select").prop("disabled", false); // Deshabilita los selects
+            }else{
+                $('.camposAlmacenamiento').hide();
+                $("#frmJuntaReceptora input").attr("disabled", true);  // Hace los inputs solo lectura
+                $("#frmJuntaReceptora select").prop("disabled", true); // Deshabilita los selects
+            }
+
+            if (id == 0) {
+                $('#divBtnDescarga').hide(); 
+            }
+            else {
+
+                $.ajax({
+                    url: `@ViewData["rutaApp"]/JuntaDeRecepcion/ObtenerJuntaReceptora/${id}`, // URL para obtener los datos
+                    type: 'GET',
+                    success: function (data) {
+
+                        console.log('data' + JSON.stringify(data));
+
+                        // Llenar el formulario con los datos de la Junta Receptora
+                        var jr = data.juntaReceptora;
+
+                        $('#idJuntaReceptora').val(jr.idJuntaReceptora);
+                        $('#txtNoNombramiento').val(jr.numeroNombramiento);
+
+                        if (jr.archivoNombramiento != null){
+                            $('#divBtnDescarga').show();
+                        }
+
+                        // Agregar Detalle
+                        if (data.listDetalle.length > 0){
+
+                            let tabla = document.getElementById("tableDetalle");
+                            let tbody = tabla.getElementsByTagName("tbody")[0];
+
+                            data.listDetalle.forEach((detalle, index) => {
+
+                                let fila = document.createElement("tr");
+
+                                let txtTipoNomb = $("#cbIdTipoNombramiento option[value='" + detalle.idTipoNombramiento + "']").text(); // Nombre del tipo de nombramiento
+
+                                var botonEliminar = tipoApertura == 1
+                                    ? `<button type="button" class="btn btn-danger btn-sm" onclick="EliminarFila(this, ${detalle.idDetalleJuntaReceptora})">Eliminar</button>`
+                                    : '';
+
+                                fila.innerHTML = `
+                                    <td>${index + 1}</td>
+                                    <td>${detalle.nombreCompleto}</td>
+                                    <td>${detalle.dpi}</td>
+                                    <td>${txtTipoNomb}</td>
+                                    <td>
+                                        ${botonEliminar}
+                                        <input type="hidden" name="IdDetalleJuntaReceptora" value="${detalle.idDetalleJuntaReceptora}">
+                                        <input type="hidden" name="IdJuntaReceptora" value="${detalle.idJuntaReceptora}">
+                                        <input type="hidden" name="NombreCompleto" value="${detalle.nombreCompleto}">
+                                        <input type="hidden" name="DPI" value="${detalle.dpi}">
+                                        <input type="hidden" name="IdTipoNombramiento" value="${detalle.idTipoNombramiento}">
+                                    </td>
+                                `;
+
+                                tbody.appendChild(fila);
+                            });
+                        }
+
+                        var contador = ComprobarAgregarDetalle();
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error al obtener los datos de ingreso de alimentos: ', error);
+                    }
+                });
+            }
+        }
+
+        function ActualizarContador() {
+            let filas = document.querySelectorAll("#tableDetalle tbody tr");
+            filas.forEach((fila, index) => {
+                fila.cells[0].innerHTML = `${index + 1}`;
+            });
+        }
+
+        function ComprobarAgregarDetalle(){
+            let filas = document.querySelectorAll("#tableDetalle tbody tr");
+            var contador = 0;
+
+            filas.forEach((fila, index) => {
+                contador ++;
+            });
+
+            if (contador >= 5)
+                $('#btnAgregarDetalle').prop('disabled', true);
+            else
+                $('#btnAgregarDetalle').prop('disabled', false);
+
+            return contador;
+        }
+
+        function AgregarDetalle() {
+
+            var contador = ComprobarAgregarDetalle();
+
+            let idJuntaReceptora = $("#idJuntaReceptora").val();
+            let nombreMiembro = $("#txtNombreMiembro").val().toUpperCase().trim();
+            let txtDpi = $("#txtDPI").val();
+            let tipoNomb = $("#cbIdTipoNombramiento").val();
+            let txtTipoNomb = $("#cbIdTipoNombramiento option:selected").text();
+
+            if (!nombreMiembro || !txtDpi) {
+                Swal.fire({
+                    title: "Error!",
+                    text: "Todos los campos son obligatorios.",
+                    icon: "warning"
+                });
+
+                return false;
+            }
+
+            if (!cuiIsValid(txtDpi)){
+                Swal.fire({
+                    title: "Error!",
+                    text: "Formato de CUI es inválido.",
+                    icon: "warning"
+                });
+
+                return false;
+            }
+
+            let tabla = document.getElementById("tableDetalle");
+            let tbody = tabla.getElementsByTagName("tbody")[0];
+
+            if (!tbody) {
+                tbody = document.createElement("tbody");
+                tabla.appendChild(tbody);
+            }
+
+            let fila = document.createElement("tr");
+
+            fila.innerHTML = `
+                <td></td>
+                <td>${nombreMiembro}</td>
+                <td>${txtDpi}</td>
+                <td>${txtTipoNomb}</td>
+                <td>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="EliminarFila(this, 0)">Eliminar</button>
+
+                    <input type="hidden" name="IdDetalleJuntaReceptora" value="0">
+                    <input type="hidden" name="IdJuntaReceptora" value="${idJuntaReceptora}">
+                    <input type="hidden" name="NombreCompleto" value="${nombreMiembro}">
+                    <input type="hidden" name="DPI" value="${txtDpi}">
+                    <input type="hidden" name="IdTipoNombramiento" value="${tipoNomb}">
+                </td>
+            `;
+
+            tbody.appendChild(fila);
+            ActualizarContador();
+            var contador = ComprobarAgregarDetalle();
+
+            LimpiarDetalles();
+            return false;
+        }
+
+        function EliminarFila(boton, idDetalle) {
+
+            // En el escenario en donde el ID de es diferente de cero, se elimina en la BD
+            if (idDetalle != 0){
+
+                Swal.fire({
+                    title: "Desea eliminar Miembro de Junta Receptora?",
+                    text: "Este proceso eliminará el Miembro.",
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#3085d6",
+                    cancelButtonColor: "#d33",
+                    confirmButtonText: "Eliminar!"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+
+                        $.ajax({
+                            url: `@ViewData["rutaApp"]/JuntaDeRecepcion/EliminarDetalleJuntaReceptora?id=${idDetalle}`,
+                            type: "POST",
+                            success: function (respuesta) {
+                                Swal.fire({
+                                    title: "Eliminado!",
+                                    text: "Miembro eliminado con éxito.",
+                                    icon: "success"
+                                });
+
+                                boton.closest("tr").remove();
+                            },
+                            error: function (xhr, status, error) {
+                                console.error("Error al eliminar:", error);
+                                alert("Ocurrió un error al eliminar el miembro.");
+                            }
+                        });
+                    } else {
+                        return false;
+                    }
+                });
+            } else {
+                boton.closest("tr").remove();
+            }
+
+            ActualizarContador();
+            ComprobarAgregarDetalle();
+        }
+
+        function LimpiarDetalles(){
+            $('#txtNombreMiembro').val('');
+            $('#txtDPI').val('');
+        }
+
+        function ConfirmSave(){
+            Swal.fire({
+              title: "Está seguro de almacenar la Junta Receptora?",
+              showCancelButton: true,
+              confirmButtonText: "Guardar",
+              icon: "question"
+            }).then((result) => {
+              if (result.isConfirmed) {
+                  GuardarJuntaReceptora();
+              }
+            });
+        }
+
+        function GuardarJuntaReceptora() {
+            let juntaReceptora = {
+                IdJuntaReceptora: $("#idJuntaReceptora").val(),
+                IdIngresoAlimentos: $("#idIngresoAlimentos").val(),
+                NumeroNombramiento: $("#txtNoNombramiento").val(),
+            };
+
+            if (!juntaReceptora.NumeroNombramiento){
+                Swal.fire({
+                    title: "Error!",
+                    text: "Debe de ingresaro Número de Nombramiento y cargar archivo.",
+                    icon: "warning"
+                });
+
+                return;
+            }
+
+            var countTitulares = 0; // id: 1
+            var countSuplentes = 0; // id: 2
+
+            let detalles = [];
+            let DpiSeleccionadas = new Set(); // Conjunto para rastrear IdEstiba únicos
+            let error = false;
+            let noFila = 0;
+
+            $("#tableDetalle tbody tr").each(function () {
+                let fila = $(this);
+                noFila ++;
+
+                let dpi = fila.find("input[name='DPI']").val();
+
+                // Verifica si el DPI ya fue ingresado
+                if (DpiSeleccionadas.has(dpi)) {
+                    error = true;
+                    return false; // Detiene el `.each()` al encontrar un error
+                }
+
+                // Agrega el DPI al conjunto para futuras comparaciones
+                DpiSeleccionadas.add(dpi);
+
+                let detalle = {
+                    IdDetalleJuntaReceptora: fila.find("input[name='IdDetalleJuntaReceptora']").val(),
+                    IdJuntaReceptora: fila.find("input[name='IdJuntaReceptora']").val(),
+                    NombreCompleto: fila.find("input[name='NombreCompleto']").val(),
+                    DPI: fila.find("input[name='DPI']").val(),
+                    IdTipoNombramiento: fila.find("input[name='IdTipoNombramiento']").val(),
+                };
+
+                if (detalle.IdTipoNombramiento == 1)
+                    countTitulares += 1;
+                else
+                    countSuplentes += 1;
+
+                detalles.push(detalle);
+            });
+
+            if(error){
+                Swal.fire({
+                    title: "Error!",
+                    text: `DPI asignado en la fila ${noFila}, se encuentra duplicado.`,
+                    icon: "warning"
+                });
+
+                return;
+            }
+
+            if (countTitulares != 3 || countSuplentes < 1 ){
+
+                Swal.fire({
+                    title: "Error!",
+                    text: "Debe de ingresar 3 Titulares y al menos 1 Suplente.",
+                    icon: "warning"
+                });
+
+                return;
+            }
+
+            if (detalles.length < 4) {
+
+                Swal.fire({
+                    title: "Error!",
+                    text: "Debe de contar con al menos 4 Miembros de Junta Receptora.",
+                    icon: "warning"
+                });
+
+                return;
+            }
+
+            let datosEnvio = {
+                JuntaReceptora: juntaReceptora,
+                listaDetalleJuntaReceptora: detalles
+            };
+
+            // Crear un objeto FormData
+            var formData = new FormData();
+
+            // Agregar los datos del formulario al objeto FormData
+            formData.append('modelo', JSON.stringify(datosEnvio)); // Enviar el modelo como JSON
+            formData.append('file', $('#archivoNombramiento')[0].files[0]); // Agregar el archivo
+
+            $.ajax({
+                url: `@ViewData["rutaApp"]/JuntaDeRecepcion/GuardarJuntaReceptora`,
+                type: "POST",
+                contentType: false,
+                processData: false,
+                data: formData,
+                success: function (respuesta) {
+
+                    Swal.fire("Almacenado!", "", "success");
+
+                    // Redireccionar o limpiar formulario si es necesario
+                    window.location.href = `@ViewData["rutaApp"]/JuntaDeRecepcion/Index`;
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error al guardar:", error);
+                    alert("Ocurrió un error al guardar la junta receptora.");
+                }
+            });
+        }
+
+    </script>
+}
+
+<script src="~/js/Globales.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+

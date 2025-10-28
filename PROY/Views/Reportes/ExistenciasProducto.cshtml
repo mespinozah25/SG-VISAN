@@ -1,0 +1,222 @@
+﻿@model PROY.ViewModels.KardexVM;
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
+<head>
+</head>
+
+<style>
+    table thead th {
+        pointer-events: none; /* Desactiva la interacción con los títulos */
+    }
+</style>
+
+@{
+
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@{
+    ViewData["Title"] = "Tarjeta de Existencia de Producto Alimentario";
+}
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Mensaje"]
+    </div>
+}
+
+
+<h2 class="float-start">Tarjeta de Existencia de Producto Alimentario</h2> 
+<p><br /></p>
+
+<br />
+
+@await Html.PartialAsync("_CriteriosDeBusqueda")
+
+<table class="table" id="tableDetalle">
+    <thead>
+        <tr>
+            <th>FECHA</th>
+            <th>ENVIO</th>
+            <th>TRASLADO</th>
+            <th>DESTINATARIO</th>
+            <th>INGRESO</th>
+            <th>EGRESO</th>
+            <th>SALDO</th>
+            <th>OBSERVACIONES</th>
+        </tr>
+    </thead>
+    <tbody>
+        @try
+        {
+            int indexCount = 0;
+
+            foreach (var item in Model.listaKardex)
+            {
+                string tmpEnvio = "";
+                string tmpDestinatario = "";
+                if(item.Tabla == "PRODUCTOS_INGRESO"){
+                    tmpEnvio = item.NoActa;
+                    tmpDestinatario = item.NombrePrograma;
+                }
+                if(item.Tabla == "EGRESO_PRODUCTOS"){
+                    tmpEnvio = item.Despacho;
+                    tmpDestinatario = item.NombrePrograma;
+                }
+                <tr>
+                    
+                    <td>
+                        @{
+                            string fechaVen = item.FechaMovimiento?.ToString("dd/MM/yyyy") ?? string.Empty;
+                        }
+                        @fechaVen
+                    </td> 
+                    <td>@tmpEnvio</td>
+                    <td></td>
+                    <td>@tmpDestinatario</td>
+                    <td>@item.Ingreso</td>
+                    <td>@item.Egreso</td>
+                    <td>@item.Saldo</td>
+                    <td> </td>
+                    
+                </tr>
+            }
+        }
+        catch
+        {
+
+        }
+
+    </tbody>
+</table>
+
+
+
+@section Scripts {
+
+    <script>
+
+        var tipoReporte = 4;
+        var nombreReporte = "Tarjeta de Existencia de Producto Alimentario";
+
+        $( document ).ready(function() {
+
+            $('#tableDetalle_paginate').hide();
+            $('#tableDetalle_info').hide();
+            $('#tableDetalle_filter').hide();
+
+            // Oculta las flechas de ordenamiento
+            $('table.dataTable thead th').removeClass('sorting sorting_asc sorting_desc');
+
+            HabilitarBusquedas();
+        });
+
+        // Función que habilita los criterios de búsqueda que necesita para el reporte
+        function HabilitarBusquedas(){
+
+            $('#divCriteriosBusqueda').show(); // Habilita los criterios
+
+            // Colocar .show() los criterios que desean que se visualicen
+            $('#divIdBodega').show();
+            $('#divIdProductoAlimenticio').show();
+            $('#divIdUnidadMedida').show();
+            $('#divIdConvenio').show();
+        }
+
+        function Buscar(){
+
+            // Se inicia reiniciando la tabla
+             $("#tableDetalle tbody").empty();
+
+             let filtros = {
+                IdBodega: parseInt($("#cbIdBodega").val()),
+                IdProductoAlimenticio: $("#cbIdProductoAlimenticio").val(),
+                IdUnidadMedida: $("#cbIdUnidadMedida").val(),
+                IdConvenio: $("#cbIdConvenio").val(),
+            };
+            
+             let datosEnvio = {
+                FiltrosReportesDTO: filtros,
+            };
+
+            // Crear un objeto FormData
+            var formData = new FormData();
+
+            // Agregar los datos del formulario al objeto FormData
+            formData.append('modelo', JSON.stringify(datosEnvio)); // Enviar el modelo como JSON
+
+             $.ajax({
+                url: `@ViewData["rutaApp"]/Reportes/BusquedaExistenciasProducto`,
+                type: "POST",
+                contentType: false,
+                processData: false,
+                data: formData,
+                success: function (data) {
+
+                    console.log(data.tabla);
+
+                    let tabla = document.getElementById("tableDetalle");
+                    let tbody = tabla.getElementsByTagName("tbody")[0];
+
+                    data.tabla.forEach((detalle, index) => {
+
+                        let fila = document.createElement("tr");
+
+                        var fechaMov = '';
+
+                        if(detalle.fechaMovimiento != null){
+                            var fecha = detalle.fechaMovimiento;  // Fecha recibida
+                            var fechaMov = fecha.split("T")[0]; // Extrae solo la parte "YYYY-MM-DD"
+                        }
+
+                        let tmpHTML = `
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        `
+
+                        if(detalle.tabla == "PRODUCTOS_INGRESO") {
+                            tmpHTML = `
+                                <td>${detalle.noActa}</td>
+                                <td></td>
+                                <td>${detalle.nombrePrograma}</td>
+                            `
+                        } else if(detalle.tabla == "EGRESO_PRODUCTOS") {
+                            tmpHTML = `
+                                <td>${detalle.despacho}</td>
+                                <td></td>
+                                <td>${detalle.nombrePrograma}</td>
+                            `
+                        }
+
+                        fila.innerHTML = `
+                            <td>${fechaMov}</td>
+                            ${tmpHTML}
+                            <td>${detalle.ingreso || ''}</td>
+                            <td>${detalle.egreso || ''}</td>
+                            <td>${detalle.saldo || ''}</td>
+                            <td></td>
+                        `;
+
+                        tbody.appendChild(fila);
+                    });
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error al mostrar Tabla:", error);
+                    alert("Ocurrió un error al extraer los datos de la tabla.");
+                }
+            });
+        }
+
+
+    </script>
+}
+
+<script src="~/js/reportes.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+@* CDN para la creación del archivo xlsx *@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+@* CDN para la creación del archivo PDF *@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>

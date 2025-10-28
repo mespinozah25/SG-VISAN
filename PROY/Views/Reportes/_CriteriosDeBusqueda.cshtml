@@ -1,0 +1,70 @@
+﻿@* Views/Shared/_CriteriosBusqueda.cshtml *@
+<div class="col">
+    <div class="card">
+        <div class="card-body" id="divCriteriosBusqueda" style="display:none">
+            <h5 class="card-title">Criterios de Búsqueda</h5>
+            <div class="row">
+                <form id="_frmBusqueda">
+                    <div class="row">
+                        <div class="col-3" id="divFechaMovimiento" style="display:none;">
+                            <label for="Fecha" class="control-label">Fecha</label>
+                            <input type="date" class="form-control" id="txtFecha" name="Fecha">
+                        </div>
+                        <div class="col-3" id="divNoConstancia" style="display:none;">
+                            <label for="txtNoConstancia" class="control-label">No. Constancia</label>
+                            <input type="text" class="form-control" id="txtNoConstancia" name="NoConstancia">
+                        </div>
+                        <div class="col-3" id="divIdBodega" style="display:none;">
+                            <label for="cbIdBodega" class="control-label">Bodegas</label>
+                            <select class="form-select" id="cbIdBodega" name="IdBodega" asp-items="ViewBag.Bodegas"></select>
+                        </div>
+                        <div class="col-3" id="divIdProductoAlimenticio" style="display:none;">
+                            <label for="cbIdProductoAlimenticio" class="control-label">Producto Alimenticio</label>
+                            <select class="form-select" id="cbIdProductoAlimenticio" name="IdProductoAlimenticio" asp-items="ViewBag.ProductoAlimenticio"></select>
+                        </div>
+                        <div class="col-3" id="divIdPresentacionPA" style="display:none;">
+                            <label for="cbIdPresentacionPA" class="control-label">Presentación</label>
+                            <select class="form-select" id="cbIdPresentacionPA" name="IdPresentacion" asp-items="ViewBag.PresentacionPA"></select>
+                        </div>
+                        <div class="col-3" id="divIdUnidadMedida" style="display:none;">
+                            <label for="cbIdUnidadMedida" class="control-label">Unidad de Medida</label>
+                            <select class="form-select" id="cbIdUnidadMedida" name="IdUnidadMedida" asp-items="ViewBag.UnidadMedida"></select>
+                        </div>
+                        <div class="col-3" id="divIdPrograma" style="display:none;">
+                            <label for="cbIdPrograma" class="control-label">Programas</label>
+                            <select class="form-select" id="cbIdPrograma" name="IdPrograma" asp-items="ViewBag.Programas"></select>
+                        </div>
+                        <div class="col-3" id="divIdConvenio" style="display:none;">
+                            <label for="cbIdConvenio" class="control-label">Convenio</label>
+                            <select class="form-select" id="cbIdConvenio" name="IdConvenio" asp-items="ViewBag.Convenios"></select>
+                        </div>
+                        <div class="col-3" id="divIdTransportista" style="display:none;">
+                            <label for="cbIdTransportista" class="control-label">Transportista</label>
+                            <select class="form-select" id="cbIdTransportista" name="IdTransportista" asp-items="ViewBag.transportistas"></select>
+                        </div>
+                        <div class="col-3" id="divIdPiloto" style="display:none;">
+                            <label for="cbIdPiloto" class="control-label">Piloto</label>
+                            <select class="form-select" id="cbIdPiloto" name="IdPiloto" asp-items="ViewBag.pilotos"></select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <br />
+            <div class="row">
+                <div class="col">
+                    <a type="button" href="#" class="btn btn-secondary" onclick="return LimpiarCriterios();">Limpiar</a>
+                    <a type="button" href="#" class="btn btn-primary" onclick="return Buscar();">Buscar</a>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer">
+            <a class="btn btn-danger btn-sm float-end ms-3" onclick="GenerarReporte('@Url.Action("GeneraReporte", "Reportes")', 'pdf')">
+                <i class="fas fa-file-pdf"></i> Descargar PDF
+            </a>
+            <a class="btn btn-success btn-sm float-end" onclick="GenerarReporte('@Url.Action("GeneraReporte", "Reportes")', 'excel')">
+                <i class="fas fa-table"></i> Descargar Excel
+            </a>
+        </div>
+    </div>
+</div>
+

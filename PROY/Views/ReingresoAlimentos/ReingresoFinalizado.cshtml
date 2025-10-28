@@ -1,0 +1,438 @@
+﻿<head>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
+
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+
+</head>
+
+<style>
+    table thead th {
+        pointer-events: none; /* Desactiva la interacción con los títulos */
+    }
+</style>
+
+@model PROY.ViewModels.ReingresoAlimentosVM
+
+@{
+    ViewData["Title"] = "Registro Reingreso";
+}
+
+<h1 class="float-start">Revisión despacho de Almacén</h1>
+<div class="float-end">
+    <label for="txtEstado" class="control-label"><b> Estado: </b></label>
+    <input class="form-control" id="txtEstado" disabled>
+</div>
+<br />
+<br />
+
+<div>
+    <form id="frmDespacho">
+
+        <input type="hidden" id="idReingresoAlimentos" asp-for="@Model.ReingresoAlimentos.IdReingresoAlimentos" />
+        <input type="hidden" id="idEgresoAlimentos" asp-for="@Model.ReingresoAlimentos.IdEgresoAlimentos" />
+
+        <br />
+        <div id="Estado1">
+            <div class="col">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col">
+                                <label for="txtNoOficioReingreso" class="control-label"><b> No. Oficio Reingreso </b></label>
+                                <input class="form-control" id="txtNoOficioReingreso" disabled>
+                            </div>
+                            <div class="col">
+                                <label for="txtFechaSolicitud" class="control-label"><b> Fecha de Solicitud </b></label>
+                                <input class="form-control" id="txtFechaSolicitud" disabled>
+                            </div>
+                        </div>
+
+                        <br />
+
+                        <div class="row">
+                            <div class="col">
+                                <label for="txtDepartamentoSolicitante" class="control-label"><b> Departamento Solicitante </b></label>
+                                <input class="form-control" id="txtDepartamentoSolicitante" disabled>
+                            </div>
+                        </div>
+
+                        <br />
+
+                        <div class="row">
+                            <div class="col">
+                                <div class="form-group">
+                                    <label for="txtNoDespachoAlmacenEgreso" class="control-label"><b>No. Despacho Almacén </b></label>
+                                    <input type="text" id="txtNoDespachoAlmacenEgreso" class="form-control" disabled>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <label for="txtFechaDespachoEgreso" class="control-label"><b> Fecha de Despacho </b></label>
+                                <input class="form-control" id="txtFechaDespachoEgreso" disabled>
+                            </div>
+                            <div class="col">
+                                <label for="txtProgramaEgreso" class="control-label"><b> Programa </b></label>
+                                <input type="text" class="form-control" id="txtProgramaEgreso" disabled>
+                            </div>
+                        </div>
+
+                        <br />
+
+                        <div class="row">
+                            <div class="col">
+                                <label for="cbIdDepartamentoDetino" class="control-label"><b> Departamento de Destino </b></label>
+                                <input class="form-control" id="cbIdDepartamentoDetino" disabled>
+                            </div>
+                            <div class="col">
+                                <label for="cbIdMunicipioDestino" class="control-label"><b> Municipio de Destino </b></label>
+                                <input class="form-control" id="cbIdMunicipioDestino" disabled>
+                            </div>
+                            <div class="col">
+                                <label for="direccionFinal" class="control-label"><b> Dirección Final </b></label>
+                                <input type="text" class="form-control" id="direccionFinal" disabled>
+                            </div>
+                        </div>
+
+                        <br />
+
+                        <div class="row">
+                            <div class="col">
+                                <label for="txtUsuarioEstado1" class="control-label"><b> Usuario que Creó: </b></label>
+                                <input class="form-control" id="txtUsuarioEstado1" disabled>
+                            </div>
+                            <div class="col">
+                                <label for="txtFechaEstado1" class="control-label"><b> Fecha y Hora de Creación: </b></label>
+                                <input class="form-control" id="txtFechaEstado1" disabled>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <br />
+
+        <div id="Estado2" style="display:none">
+            <div class="col">
+                <div class="card">
+                    <div class="card-body">
+
+                        <div class="row">
+                            <div class="col">
+                                <div class="form-group">
+                                    <label class="control-label">Observaciones Inspección Física INDECA de producto que reingresa</label>
+                                    <textarea class="form-control" rows="2" id="txtObservacionFisicaIndeca" disabled></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h4>Producto que Reingresó</h4>
+
+                        <br />
+
+                        <div class="row col-12">
+                            <div class="">
+                                <table id="tableDetalle" class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>No.</th>
+                                            <th>PRODUCTO</th>
+                                            <th>PRESENTACIÓN</th>
+                                            <th>CANT. UNIDAD</th>
+                                            <th>UNIDAD MEDIDA</th>
+                                            <th>CANTIDAD</th>
+                                            <th>FECHA DE VENCIMIENTO</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
+
+                        <br />
+                        <br />
+
+                        <div class="row">
+                            <div class="col-6">
+                                <label for="archivoDespacho" class="control-label">Archivo Despacho de Almacén con anotación de reingreso autorizado</label>
+                                <input type="file" name="file" id="archivoDespacho" class="form-control" />
+                            </div>
+                            <div class="col-2 text-center" id="divBtnDescarga">
+                                <label for="btnDescarga" class="control-label text-center"> Descargar Docto </label>
+                                <input type="hidden" id="txtUbicacionArchivo" value="@Model.ReingresoAlimentos.ArchivoDespachoAlmacenReingreso" />
+                                <a type="button" id="btnDescarga" class="btn btn-primary btn-sm text-center" href="@Url.Action("DownloadFile", new { fileName = Model.ReingresoAlimentos.ArchivoDespachoAlmacenReingreso, carpeta = "despachoAlmacenReingreso" })">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                            </div>
+                        </div>
+
+                        <br />
+
+                        <div class="row">
+                            <div class="col">
+                                <label for="txtUsuarioEstado2" class="control-label"><b> Usuario que Finaliza: </b></label>
+                                <input class="form-control" id="txtUsuarioEstado2" disabled>
+                            </div>
+                            <div class="col">
+                                <label for="txtFechaEstado2" class="control-label"><b> Fecha y Hora de Finalización: </b></label>
+                                <input class="form-control" id="txtFechaEstado2" disabled>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+        <div class="row float-end">
+            <div class="col">
+                <a type="button" class="btn btn-secondary btn" asp-action="Index">Regresar</a>
+            </div>
+        </div>
+
+        <br />
+
+    </form>
+</div>
+
+
+<div class="row" style="display:none">
+    <div class="col">
+        <label for="cbIdProductoAlimenticio" class="control-label">Producto Alimenticio</label>
+        <select class="form-select" id="cbIdProductoAlimenticio" asp-items="ViewBag.ProductoAlimenticio"></select>
+    </div>
+    <div class="col">
+        <label for="cbIdPresentacionPA" class="control-label">Presentación</label>
+        <select class="form-select" id="cbIdPresentacionPA" asp-items="ViewBag.PresentacionPA"></select>
+    </div>
+    <div class="col">
+        <label for="txtCantidadUnidad" class="control-label">Cantidad Unidad</label>
+        <input type="number" class="form-control" min="0" id="txtCantidadUnidad">
+    </div>
+    <div class="col">
+        <label for="cbIdUnidadMedida" class="control-label">Unidad de Medida</label>
+        <select class="form-select" id="cbIdUnidadMedida" asp-items="ViewBag.UnidadMedida"></select>
+    </div>
+    <div class="col">
+        <label for="txtCantidad" class="control-label">Cantida</label>
+        <input type="number" class="form-control" min="0" id="txtCantidad">
+    </div>
+    <div class="col">
+        <label for="txtFechaVencimiento" class="control-label">Fecha Vencimiento</label>
+        <input type="date" class="form-control" min="0" id="txtFechaVencimiento">
+    </div>
+</div>
+
+
+@section Scripts {
+
+    <script>
+        $( document ).ready(function() {
+
+            $("#tableDetalle tbody").empty();
+            $('#tableDetalle_paginate').hide();
+            $('#tableDetalle_info').hide();
+            $('#tableDetalle_filter').hide();
+
+            var urlObj = new URL(window.location.href);
+            var type = urlObj.searchParams.get("type");
+            var estado = urlObj.searchParams.get("estado");
+            var id = window.location.pathname.split('/').pop();
+
+            // Inicializa la tabla (si no está inicializada)
+            var table = $('#tableDetalle').DataTable();
+
+            // Oculta las flechas de ordenamiento
+            $('table.dataTable thead th').removeClass('sorting sorting_asc sorting_desc');
+
+            if (parseInt(id) != 0){
+                abrirYActualizarUrl(id, type, estado);
+            }
+
+
+
+        });
+
+
+        function abrirYActualizarUrl(id, tipoApertura, estado) {
+
+            // Se inicia reiniciando la tabla
+             $("#tableDetalle tbody").empty();
+
+             if (estado > 2){
+                 $('#Estado2').show();
+             }
+
+             var txtEstado = estado == 1 ? 'Iniciada / En Bodega' :
+                             estado == 2 ? 'Iniciada / En Bodega' :
+                             estado == 3 ? 'REINGRESO FINALIZADO' : '';
+
+            $('#txtEstado').val(txtEstado);
+
+            // El tipo de apertura 1 indica que se va almacenar o editar un registro
+            // El tipo de apertura 2 indica solo de observación
+            if(tipoApertura == 1){
+                $('.camposAlmacenamiento').show();
+                $("#frmDespacho input:not([disabled])").attr("disabled", false);  // Hace los inputs solo lectura
+                $("#frmDespacho select").prop("disabled", false); // Deshabilita los selects
+                $("#frmDespacho textarea").prop("disabled", false); // Deshabilita los TextArea
+            }else{
+                $('.camposAlmacenamiento').hide();
+                $("#frmDespacho input").attr("disabled", true);  // Hace los inputs solo lectura
+                $("#frmDespacho select").prop("disabled", true); // Deshabilita los selects
+                $("#frmDespacho textarea").prop("disabled", true); // Deshabilita los selects
+            }
+
+            if (id == 0) {
+
+                // Test
+
+            }
+            else {
+
+                $.ajax({
+                    url: `@ViewData["rutaApp"]/ReingresoAlimentos/ObtenerReingresoFinalizado/${id}`, // URL para obtener los datos
+                    type: 'GET',
+                    success: function (data) {
+
+                        console.log('data' + JSON.stringify(data));
+
+                        var ea = data.reingresoAlimentos;
+                        var egreso = data.egresoAlimentos;
+
+                        // Llenar el formulario con los datos de Egreso de Alimentos
+                        $('#idReingresoAlimentos').val(ea.idReingresoAlimentos);
+                        $('#idEgresoAlimentos').val(ea.idEgresoAlimentos);
+                        $('#txtNoDespachoAlmacenEgreso').val(egreso.noDespachoAlmacen);
+                        $('#txtNoOficioReingreso').val(ea.noOficioReingreso);
+                        $('#txtFechaSolicitud').val(new Date(ea.fechaSolicitud).toLocaleDateString('es-ES'));
+                        $('#txtDepartamentoSolicitante').val(data.programa);
+                        $('#txtObservacionFisicaIndeca').val(ea.observacionFisicaIndeca);
+
+                        if (estado == 1 || estado == 2){
+                            var us1 = data.usuarioEstado1;
+                            var bit1 = data.bitacoraEstado1;
+
+                            let fecha = new Date(bit1.fechaHora);
+
+                            // Formatear la fecha y la hora
+                            let opciones = { day: '2-digit', month: '2-digit', year: 'numeric' };
+                            let opcionesHora = { hour: '2-digit', minute: '2-digit', hour12: true };
+                            let fechaFormateada = fecha.toLocaleDateString('es-ES', opciones);
+                            let horaFormateada = fecha.toLocaleTimeString('es-ES', opcionesHora).replace(/\./g, ''); // Limpiar AM/PM en algunos formatos
+                            let resultado = `${fechaFormateada} ${horaFormateada}`;
+
+                            $('#txtFechaEstado1').val(resultado);
+                            $('#txtUsuarioEstado1').val(us1.nombre + ' ' + us1.apellidos);
+                        } else {
+                            var us1 = data.usuarioEstado1;
+                            var us2 = data.usuarioEstado2;
+                            var bit1 = data.bitacoraEstado1;
+                            var bit2 = data.bitacoraEstado2;
+
+                            $('#txtUsuarioEstado1').val(us1.nombre + ' ' + us1.apellidos);
+                            $('#txtUsuarioEstado2').val(us2.nombre + ' ' + us2.apellidos);
+
+                            let fecha1 = new Date(bit1.fechaHora);
+                            let fecha2 = new Date(bit2.fechaHora);
+
+                            // Formatear la fecha y la hora
+                            let opciones = { day: '2-digit', month: '2-digit', year: 'numeric' };
+                            let opcionesHora = { hour: '2-digit', minute: '2-digit', hour12: true };
+
+                            let fechaFormateada1 = fecha1.toLocaleDateString('es-ES', opciones);
+                            let horaFormateada1 = fecha1.toLocaleTimeString('es-ES', opcionesHora).replace(/\./g, ''); // Limpiar AM/PM en algunos formatos
+                            let resultado1 = `${fechaFormateada1} ${horaFormateada1}`;
+
+                            let fechaFormateada2 = fecha2.toLocaleDateString('es-ES', opciones);
+                            let horaFormateada2 = fecha2.toLocaleTimeString('es-ES', opcionesHora).replace(/\./g, ''); // Limpiar AM/PM en algunos formatos
+                            let resultado2 = `${fechaFormateada2} ${horaFormateada2}`;
+
+                            $('#txtFechaEstado1').val(resultado1);
+                            $('#txtFechaEstado2').val(resultado2);
+
+                        }
+
+                        obtenerDatosEgreso(egreso.idEgresoAlimentos);
+
+                        if (ea.archivoDespachoAlmacenReingreso == null){
+                            $('#divBtnDescarga').hide();
+                        }
+
+                        // Agregar Detalle
+                        if (data.detReingresoAlimentos.length > 0){
+
+                            let tabla = document.getElementById("tableDetalle");
+                            let tbody = tabla.getElementsByTagName("tbody")[0];
+
+                            data.detReingresoAlimentos.forEach((detalle, index) => {
+
+                                let fila = document.createElement("tr");
+
+                                let txtProducto = $("#cbIdProductoAlimenticio option[value='" + detalle.idProductoAlimenticio + "']").text(); // Nombre del producto
+                                let txtpresentacion = $("#cbIdPresentacionPA option[value='" + detalle.idPresentacion + "']").text(); // Nombre de la presentación
+                                let cantidadUnidad = detalle.cantidadUnidad;
+                                let txtUnidad = $("#cbIdUnidadMedida option[value='" + detalle.idUnidadMedida + "']").text(); // Nombre de la unidad de medida
+                                // let txtEstiba = $("#cbIdEstiba option[value='" + detalle.idEstiba + "']").text(); // Nombre de la unidad de medida
+                                let cantidad = detalle.cantidad;
+
+                                var fechaFormateadaVenci = '';
+                                if(detalle.fechaVencimiento != null){
+                                    var fecha = detalle.fechaVencimiento;  // Fecha recibida Vencimiento
+                                    fechaFormateadaVenci = fecha.split("T")[0]; // Extrae solo la parte "YYYY-MM-DD"
+                                }
+
+                                fila.innerHTML = `
+                                    <td>${index + 1}</td>
+                                    <td>${txtProducto}</td>
+                                    <td>${txtpresentacion}</td>
+                                    <td>${cantidadUnidad}</td>
+                                    <td>${txtUnidad}</td>
+                                    <td>${cantidad}</td>
+                                    <td>
+                                        <input type="date" name="FechaVencimiento" class="form-control" value="${fechaFormateadaVenci}" disabled>
+                                    </td>
+                                `;
+
+                                tbody.appendChild(fila);
+                            });
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error al obtener los datos de Egreso de alimentos: ', error);
+                    }
+                });
+            }
+        }
+
+        function obtenerDatosEgreso(id) {
+
+            $.ajax({
+                url: `@ViewData["rutaApp"]/ReingresoAlimentos/ObtenerEgresoAlimentos/${id}`, // URL para obtener los datos
+                type: 'GET',
+                success: function (data) {
+
+                    console.log('data' + JSON.stringify(data));
+
+                    var ea = data.egresoAlimentos;
+
+                    // Llenar el formulario con los datos de Egreso de Alimentos
+                    $('#txtFechaDespachoEgreso').val(new Date(ea.fechaSolicitud).toLocaleDateString('es-ES'));
+                    $('#txtProgramaEgreso').val(data.programa);
+                    $('#cbIdDepartamentoDetino').val(data.departamentoDestino);
+                    $('#cbIdMunicipioDestino').val(data.municipioDestino);
+                    $('#direccionFinal').val(ea.direccionFinal);
+
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error al obtener los datos de Egreso de alimentos: ', error);
+                }
+            });
+        }
+
+    </script>
+}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+

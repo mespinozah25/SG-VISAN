@@ -1,0 +1,170 @@
+﻿@model PROY.ViewModels.PilotoVM;
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
+<head>
+</head>
+@{
+
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@{
+    ViewData["Title"] = "Pilotos";
+}
+
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Mensaje"]
+    </div>
+}
+
+@* <div class="=row">
+        <div class="col-sm-8"> *@
+<h2 class="float-start">Administración de Pilotos</h2> <a class="btn btn-primary btn-sm float-end" onclick="abrirModalYActualizarUrl(0)"><i class="fas fa-plus-square"></i> Pilotos</a>
+<p><br /></p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>TRANSPORTISTA</th>
+            <th>NOMBRE PILOTO</th>
+            <th>NO. LICENCIA</th>
+            <th>OPCIONES</th>
+        </tr>
+    </thead>
+    <tbody>
+        @try
+        {
+            foreach (var item in Model.listaPilotos)
+            {
+                <tr>
+                    <td>
+                        @{
+                            // Obtener la descripción usando el diccionario
+                            string descripcionTransportista = Model.TransportistaDict.TryGetValue(item.IdTransportista ?? 0, out var descTransportista)
+                            ? descTransportista
+                            : "Transportista no encontrado";
+                        }
+                        @descripcionTransportista
+                    </td>
+                    <td>@item.NombresPiloto @item.ApellidosPiloto</td>
+                    <td>@item.NoLicencia</td>
+                    <td class="text-center">
+                        <a class="btn btn-info btn-sm" onclick="abrirModalYActualizarUrl(@item.IdPiloto)"><i class="fas fa-edit"></i> Editar</a>
+                        <a class="btn btn-danger btn-sm" asp-controller="Piloto" asp-action="Eliminar" asp-route-id="@item.IdPiloto" onclick="confirmar(event)"><i class="fas fa-trash"></i> Eliminar</a>
+                    </td>
+
+                </tr>
+            }
+        }
+        catch
+        {
+
+        }
+
+    </tbody>
+</table>
+
+<!-- Modal -->
+<div class="modal fade" id="wNewPiloto" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="height:450px;">
+            <form asp-action="GuardarPiloto" asp-controller="Piloto" method="post">
+                <div class="modal-header bg-secondary">
+                    <h5 class="modal-title text-white" id="lblModalTitle">@ViewBag.ModalTitle</h5>
+                    <button type="button" id="btnClose" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <input type="hidden" id="idPiloto" asp-for="@Model.Piloto.IdPiloto" />
+                    <div>
+                        <div class="col">
+                            <label for="cbIdTransportista" class="control-label">Transportista</label>
+                            <select class="form-select" id="cbIdTransportista" asp-for="@Model.Piloto.IdTransportista" asp-items="ViewBag.Transportistas" required></select>
+                            <span asp-validation-for="@Model.Piloto.IdTransportista" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label for="txtNombresPiloto" class="control-label">Nombres del Piloto</label>
+                            <input type="text" class="form-control" id="txtNombresPiloto" asp-for="@Model.Piloto.NombresPiloto" required></input>
+                            <span asp-validation-for="@Model.Piloto.NombresPiloto" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label for="txtApellidosPiloto" class="control-label">Apellidos del Piloto</label>
+                            <input type="text" class="form-control" id="txtApellidosPiloto" asp-for="@Model.Piloto.ApellidosPiloto" required></input>
+                            <span asp-validation-for="@Model.Piloto.ApellidosPiloto" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label for="txtNoLicencia" class="control-label">Número de Licencia</label>
+                            <input type="text" class="form-control" id="txtNoLicencia" asp-for="@Model.Piloto.NoLicencia" required></input>
+                            <span asp-validation-for="@Model.Piloto.NoLicencia" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <input type="submit" value="Guardar" class="btn btn-primary" />
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        function abrirModalYActualizarUrl(id) {
+            if (id == 0) {
+                var ventanaTitle = document.getElementById("lblModalTitle");
+                ventanaTitle.textContent = "REGISTRO PILOTO";
+
+                $('#idPiloto').val(0);
+                $('#cbIdTransportista').val();
+                $('#txtNombresPiloto').val('');
+                $('#txtApellidosPiloto').val('');
+                $('#txtNoLicencia').val('');
+            }
+            else {
+
+                $.ajax({
+                    url: `@ViewData["rutaApp"]/Piloto/ObtenerPiloto/${id}`, // URL para obtener los datos
+                    type: 'GET',
+                    success: function (data) {
+
+                        console.log('data' + JSON.stringify(data));
+                        // Llenar el formulario del modal con los datos del vehículo
+                        $('#idPiloto').val(id);
+                        $('#cbIdTransportista').val(data.idTransportista);
+                        $('#txtNombresPiloto').val(data.nombresPiloto);
+                        $('#txtApellidosPiloto').val(data.apellidosPiloto);
+                        $('#txtNoLicencia').val(data.noLicencia);
+                        //alert(id);
+
+                        var ventanaTitle = document.getElementById("lblModalTitle");
+                        ventanaTitle.textContent = "MODIFICAR PILOTO ";
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error al obtener los datos del piloto:', error);
+                    }
+                });
+            }
+
+            var modal = new bootstrap.Modal(document.getElementById('wNewPiloto'));
+            modal.show();
+
+        }
+
+        function confirmar(e){
+            var res=confirm("Esta seguro de eliminar el piloto");
+            if (res) return true;
+            if (res==false) e.preventDefault();
+
+            //return false;
+        }
+    </script>
+}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+

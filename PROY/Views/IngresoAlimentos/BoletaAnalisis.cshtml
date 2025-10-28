@@ -1,0 +1,267 @@
+﻿@inject IHttpContextAccessor HttpContextAccessor
+<head>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
+</head>
+
+@model PROY.ViewModels.IngresoAlimentosVM
+
+@{
+    ViewData["Title"] = "Registrarse";
+}
+
+<h1>Registrar de Boleta de Análisis</h1>
+
+<br />
+
+<div>
+    <form id="frmBoleta">
+
+        <input type="hidden" id="idIngresoAlimentos" asp-for="@Model.IngresoAlimentos.IdIngresoAlimentos" />
+
+        <br />
+
+        <div class="row">
+            <div class="col">
+                <label for="cbIdPrograma" class="control-label"><b> Programa </b></label>
+                <input class="form-control" id="cbPrograma" disabled>
+            </div>
+            <div class="col">
+                <label for="cbIdConvenio" class="control-label bold"><b> Convenio </b></label>
+                <input class="form-control" id="cbConvenio" disabled>
+            </div>
+            <div class="col">
+                <label for="cbIdBodega" class="control-label bold"><b> Bodega que recibe </b></label>
+                <input class="form-control" id="cbBodega" disabled>
+            </div>
+        </div>
+
+        <br />
+
+        <div class="row">
+            <div class="col-6">
+                <label for="txtNoBoletaAnalisis" class="control-label">Número de Boleta de Análisis INDECA</label>
+                <input type="text" class="form-control" id="txtNoBoletaAnalisis" required>
+            </div>
+            <div class="col-4">
+                <label for="archivoBoletaAnalisis" class="control-label">Archivo de Boelta de Analisis</label>
+                <input type="file" name="file" id="archivoBoletaAnalisis" class="form-control" />
+
+            </div>
+            <div class="col-2 text-center" id="divBtnDescarga">
+                <label for="btnDescarga" class="control-label text-center"> Descargar Docto </label>
+                <input type="hidden" id="txtArchivoBoleta" value="@Model.IngresoAlimentos.ArchivoBoletaAnalisis" />
+                <a type="button" id="btnDescarga" class="btn btn-primary btn-sm text-center" href="@Url.Action("DownloadFile", new { fileName = Model.IngresoAlimentos.ArchivoBoletaAnalisis ?? "", carpeta = "boletaAnalisis" })">
+                    <i class="fas fa-download"></i>
+                </a>
+            </div>
+        </div>
+
+        <br />
+
+        <div class="row">
+            <div class="col-6">
+                <label for="txtNombreResponsableIndeca" class="control-label">Nombre Responsable Análisis INDECA</label>
+                <input type="text" class="form-control" id="txtNombreResponsableIndeca">
+            </div>
+        </div>
+        
+        <br />
+
+        <div class="row">
+            <div class="col-4">
+                <label for="txtDPI" class="control-label">No. Licencia Piloto / DPI</label>
+                <input type="text" class="form-control" id="txtDPI" disabled>
+            </div>
+        </div>
+
+        <br />
+
+        <div class="row">
+            <div class="col-4">
+                <div class="form-check form-switch">
+                    <br />
+                    <br />
+                    <label class="form-check-label" for="flexSwitchCheckDefault">Se acepta</label>
+                    <input class="form-check-input" type="checkbox" id="seAceptaBoletaAnalisis">
+                    @* <label class="form-check-label" for="flexSwitchCheckDefault">Se rechaza</label> *@
+                </div>
+            </div>
+        </div>
+
+        <br />
+        <br />
+
+        <div class="row float-end">
+            <div class="col-6">
+                <a type="button" class="btn btn-secondary btn-sm" asp-action="Index">Regresar</a>
+            </div>
+            <div class="col-6">
+                <input type="button" value="Guardar" class="btn btn-primary" onclick="return ConfirmSave();" />
+            </div>
+        </div>
+
+    </form>
+</div>
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        $( document ).ready(function() {
+
+            var urlObj = new URL(window.location.href);
+            var id = window.location.pathname.split('/').pop();
+
+            if (parseInt(id) != 0){
+                abrirYActualizarUrl(id);
+            }
+        });
+
+        function abrirYActualizarUrl(id) {
+
+            $('#divBtnDescarga').hide();
+
+            if (id == 0) {
+                
+            }
+            else {
+
+                $.ajax({
+                    url: `@ViewData["rutaApp"]/IngresoAlimentos/ObtenerBoletaAnalisis/${id}`, // URL para obtener los datos
+                    type: 'GET',
+                    success: function (data) {
+
+                        console.log('data' + JSON.stringify(data));
+
+                        // Llenar el formulario con los datos de Ingreso de Alimentos
+                        var ia = data.ingresoAlimentos;
+
+                        $('#idIngresoAlimentos').val(ia.idIngresoAlimentos);
+                        $('#cbPrograma').val(data.programa);
+                        $('#cbConvenio').val(data.convenio);
+                        $('#cbBodega').val(data.bodega);
+
+                        BusquedaLicencia();
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error al obtener los datos de ingreso de alimentos: ', error);
+                    }
+                });
+            }
+        }
+
+        function BusquedaLicencia(){
+
+            var id = $('#cbIdPiloto').val();
+
+            $.ajax({
+                url: `@ViewData["rutaApp"]/IngresoAlimentos/ObtenerDatosPiloto/${id}`, // URL para obtener los datos
+                type: 'GET',
+                success: function (data) {
+
+                    console.log('data' + JSON.stringify(data));
+
+                    // Completa el DPI o licencia del piloto
+                    var piloto = data.piloto;
+
+                    $('#txtDPI').val(piloto.noLicencia);
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error al obtener los datos del piloto: ', error);
+                }
+            });
+        }
+
+        function ConfirmSave(){
+            Swal.fire({
+              title: "Está seguro de almacenar la Boleta de Análisis?",
+              showCancelButton: true,
+              confirmButtonText: "Guardar",
+              icon: "question"
+            }).then((result) => {
+              if (result.isConfirmed) {
+                  GuardarBoleta();
+              }
+            });
+        }
+
+        function GuardarBoleta() {
+            let ingresoAlimentos = {
+                IdIngresoAlimentos: $("#idIngresoAlimentos").val(),
+                NoBoletaAnalisis: $("#txtNoBoletaAnalisis").val(),
+                NombreResponsableIndeca: $("#txtNombreResponsableIndeca").val(),
+                IdTransportista: $("#cbIdTransportista").val(),
+                IdVehiculo: $("#cbIdVehiculo").val(),
+                IdPiloto: $("#cbIdPiloto").val(),
+                ObservacionesBoletaAnalisis: $("#txtObservacionesBoleta").val(),
+                SeAceptaBoletaAnalisis: $('#seAceptaBoletaAnalisis').prop('checked') == true ? 0 : 1,
+                // UbicacionNombramiento: $("#archivoNombramiento").val(),
+            };
+
+            if (!ingresoAlimentos.NoBoletaAnalisis || !ingresoAlimentos.NombreResponsableIndeca || !ingresoAlimentos.IdTransportista || !ingresoAlimentos.IdVehiculo || !ingresoAlimentos.IdPiloto){
+                Swal.fire({
+                    title: "Error!",
+                    text: "Debe de Completar todos los campos.",
+                    icon: "warning"
+                });
+
+                return;
+            }
+
+            if ($('#archivoBoletaAnalisis')[0].files[0] == undefined){
+                Swal.fire({
+                    title: "Error!",
+                    text: "Debe de Cargar un archivo de Boleta de Análisis.",
+                    icon: "warning"
+                });
+
+                return;
+            }
+
+            let datosEnvio = {
+                IngresoAlimentos: ingresoAlimentos
+            };
+
+            // Crear un objeto FormData
+            var formData = new FormData();
+
+            // Agregar los datos del formulario al objeto FormData
+            formData.append('modelo', JSON.stringify(datosEnvio)); // Enviar el modelo como JSON
+            formData.append('file', $('#archivoBoletaAnalisis')[0].files[0]); // Agregar el archivo
+
+            console.log(datosEnvio);
+            
+            $.ajax({
+                url: `@ViewData["rutaApp"]/IngresoAlimentos/GuardarBoletaAnalisis`,
+                type: "POST",
+                contentType: false,
+                processData: false,
+                data: formData,
+                success: function (respuesta) {
+
+                    Swal.fire("Almacenado!", "", "success");
+
+                    // Redireccionar o limpiar formulario si es necesario
+                    window.location.href = `@ViewData["rutaApp"]/IngresoAlimentos/Index`;
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error al guardar:", error);
+                    alert("Ocurrió un error al guardar la junta receptora.");
+                }
+            });
+        }
+
+        function confirmar(e){
+            var res=confirm("Esta seguro de eliminar la junta receptora");
+            if (res) return true;
+            if (res==false) e.preventDefault();
+
+            //return false;
+        }
+    </script>
+}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+

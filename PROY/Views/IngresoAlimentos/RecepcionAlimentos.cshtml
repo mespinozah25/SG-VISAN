@@ -1,0 +1,1268 @@
+﻿<head>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
+</head>
+
+<style>
+    table thead th {
+        pointer-events: none; /* Desactiva la interacción con los títulos */
+    }
+
+    .barra-horizontal {
+        width: 100%;
+        height: 4px; /* Grosor de la barra */
+        background-color: gray; /* Color azul */
+        margin: 20px 0;
+    }
+</style>
+
+@model PROY.ViewModels.IngresoAlimentosVM
+
+@{
+    ViewData["Title"] = "Registrarse";
+}
+
+<h1>Recepción de Alimentos en Bodega</h1>
+
+<br />
+
+<div>
+    <form id="frmRecepcion">
+
+        <input type="hidden" id="idIngresoAlimentos" asp-for="@Model.IngresoAlimentos.IdIngresoAlimentos" />
+
+        <br />
+
+        <h4><u> Revisión de Documento WAYBILL </u></h4>
+        
+        <br />
+
+        <div class="row">
+            <div class="col-4">
+                <label for="txtNoWaibil" class="control-label">No. WAYBILL</label>
+                <input type="text" class="form-control" id="txtNoWaibil" required>
+            </div>
+            <div class="col-4">
+                <label for="txtFechaWaibil" class="control-label">Fecha WAYBILL</label>
+                <input type="date" class="form-control" id="txtFechaWaibil" required>
+            </div>
+            <div class="col-4 camposAlmacenamiento">
+                <br />
+                <a type="button" href="#" class="btn btn-secondary" onclick="return LimpiarDetallesWaybill();">Limpiar</a>
+                <a type="button" href="#" class="btn btn-primary" onclick="return GuardarDetalleWaybill();">Agregar Detalle</a>
+            </div>
+        </div>
+
+        <br />
+
+        <divr class="row">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="checkAll">
+                <label class="form-check-label" for="flexSwitchCheckDefault">Seleecionar todo</label>
+            </div>
+        </divr>
+
+        <div class="row col-12">
+            <div class="">
+                <table id="tableDetalleProductosWaybill" class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th width="5%">No.</th>
+                            <th width="10%">CANTIDAD</th>
+                            <th width="50%">PRODUCTO</th>
+                            <th width="35%">SELECCIÓN WAYBILL</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+
+        <br />
+
+        <div class="row col-12">
+            <div class="">
+                <table id="tableDetalleWaybill" class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th width="5%">No.</th>
+                            <th width="10%">NO WAYBILL</th>
+                            <th width="50%">FECHA WAYBILL</th>
+                            <th width="35%">ACCIONES</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+
+
+
+        <br />
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <div class="barra-horizontal"></div>
+                </div>
+            </div>
+        </div>
+        <br />
+
+
+
+        <h4><u> Registro Boletas de Análisis </u></h4>
+
+        <br />
+
+        <div class="row">
+            <div class="col-5">
+                <label for="txtNombreResponsableIndeca" class="control-label">Nombre Responsable Análisis INDECA</label>
+                <input type="text" class="form-control" id="txtNombreResponsableIndeca">
+            </div>
+            <div class="col-5 camposAlmacenamiento">
+                <label for="txtNoBoletaAnalisis" class="control-label">Número de Boleta de Análisis</label>
+                <input type="text" class="form-control" id="txtNoBoletaAnalisis" required>
+            </div>
+            <div class="col-2 camposAlmacenamiento">
+                <br />
+                <button type="button" href="#" class="btn btn-primary" id="btnAgregarDetalle" onclick="return AgregarDetalle();">Agregar</button>
+            </div>
+        </div>
+
+        <br />
+
+        <div class="row col-12">
+            <div class="">
+                <table id="tableDetalleBoletas" class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>No.</th>
+                            <th>NUM. BOLETA DE ANÁLISIS</th>
+                            <th>ACCIONES</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+
+        <br />
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <div class="barra-horizontal"></div>
+                </div>
+            </div>
+        </div>
+        <br />
+
+
+
+
+        <h4><u> Revisón Acta de Recepción de Alimentos </u></h4>
+
+        <br />
+
+        <p> Selección de Miembros Presentes de Junta de Recepción</p>
+        <div class="row col-12">
+            <div class="">
+                <table id="tableDetalleJunta" class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th width="5%" >No.</th>
+                            <th width="45%" >NOMBRE</th>
+                            <th width="20%" >DPI</th>
+                            <th width="15%" >NOMBRAMIENTO</th>
+                            <th width="15%" >ESTÁ PRESENTE</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+
+        <br />
+
+        <div class="row">
+            <div class="col-2">
+                <label for="txtNoActa" class="control-label">No. Acta</label>
+                <input type="text" class="form-control" id="txtNoActa" required>
+            </div>
+            <div class="col-2">
+                <label for="txtFolioInicial" class="control-label">Folio Inicial</label>
+                <input type="number" class="form-control" id="txtFolioInicial" required>
+            </div>
+            <div class="col-2">
+                <label for="txtFolioFinal" class="control-label">Folio Final</label>
+                <input type="number" class="form-control" id="txtFolioFinal" required>
+            </div>
+            <div class="col-5">
+                <label for="documentoActa" class="control-label">Archivo de Acta de Recepción</label>
+                <input type="file" name="file" id="documentoActa" class="form-control" />
+            </div>
+            <div class="col-2 text-center" id="divBtnDescargaArchivoActa">
+                <label for="btnDescarga" class="control-label text-center"> Descargar Docto </label>
+                <input type="hidden" id="txtArchivoActa" value="@Model.IngresoAlimentos.DocumentoActa" />
+                <a type="button" id="btnDescarga" class="btn btn-primary btn-sm text-center" href="@Url.Action("DownloadFile", new { fileName = Model.IngresoAlimentos.DocumentoActa ?? "", carpeta = "actaRecepcion" })">
+                    <i class="fas fa-download"></i>
+                </a>
+            </div>
+        </div>
+
+        <br />
+
+        <div class="row">
+            <div class="col-4">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="" id="firmaMiembrosJuntaActa">
+                    <label class="form-check-label" for="firmaMiembrosJuntaActa">
+                        <b> 3 Firmas miebros de Junta Receptora </b>
+                    </label>
+                </div>
+            </div>
+            <div class="col-4">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="" id="firmaEncargadoBodegaActa">
+                    <label class="form-check-label" for="firmaEncargadoBodegaActa">
+                        <b> Firma Encargado de Bodega </b>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <br />
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <div class="barra-horizontal"></div>
+                </div>
+            </div>
+        </div>
+        <br />
+
+
+
+
+        <h4><u> Registro de Fechas de Vencimiento de los Productos y Asignación de Ubicación </u></h4>
+
+        <br />
+
+        <div class="row">
+            <div class="col-4">
+                <label for="txtFechaIngreso" class="control-label">Fecha Ingreso</label>
+                <input type="date" class="form-control" id="txtFechaIngreso" required>
+            </div>
+            @* <div class="col-4">
+                <label for="txtFechaVencimiento" class="control-label">Fecha Vencimiento</label>
+                <input type="date" class="form-control" id="txtFechaVencimiento" required>
+            </div> *@
+        </div>
+
+        <br />
+
+        <div class="row col-12">
+            <div class="">
+                <table id="tableDetalleProductos" class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th width="5%">No.</th>
+                            <th width="10%">CANTIDAD</th>
+                            <th width="35%">PRODUCTO</th>
+                            <th width="30%">ESTIBA</th>
+                            @* <th width="10%">FECHA INGRESO</th>*@
+                            <th width="10%">FECHA VENCIMIENTO</th> 
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+
+        <br />
+        <br />
+
+        <div class="row float-end">
+            <div class="col-6">
+                <a type="button" class="btn btn-secondary btn" asp-action="Index">Regresar</a>
+            </div>
+            <div class="col-6 camposAlmacenamiento">
+                <input type="button" value="Guardar" class="btn btn-primary" onclick="return ConfirmSave();" />
+            </div>
+        </div>
+
+        <div class="row" style="display:none;">
+            <div class="col">
+                <label for="cbIdProductoAlimenticio" class="control-label">Producto Alimenticio</label>
+                <select class="form-select" id="cbIdProductoAlimenticio" asp-items="ViewBag.ProductoAlimenticio"></select>
+            </div>
+            <div class="col">
+                <label for="cbIdPresentacionPA" class="control-label">Presentación</label>
+                <select class="form-select" id="cbIdPresentacionPA" asp-items="ViewBag.PresentacionPA"></select>
+            </div>
+            <div class="col">
+                <label for="cbIdUnidadMedida" class="control-label">Unidad de Medida</label>
+                <select class="form-select" id="cbIdUnidadMedida" asp-items="ViewBag.UnidadMedida"></select>
+            </div>
+            <div class="col">
+                <label for="cbIdTipoNombramiento" class="control-label">Tipo de Nombramiento</label>
+                <select class="form-select" id="cbIdTipoNombramiento" asp-items="ViewBag.TiposNombramientos"></select>
+            </div>
+        </div>
+
+    </form>
+</div>
+
+
+<!-- Modal -->
+<div class="modal fade" id="wViewDetalles" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="height:100%;">
+            <form>
+                <div class="modal-header bg-secondary">
+                    <h5 class="modal-title text-white" id="lblModalTitle">Revisión de Waybill</h5>
+                    <button type="button" id="btnClose" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+
+                    <div class="row">
+                        <div class="col">
+                            <label for="txtMdlNoWaybill" class="control-label"><b> No. Waybill </b></label>
+                            <input class="form-control" id="txtMdlNoWaybill" disabled>
+                        </div>
+                        <div class="col">
+                            <label for="txtMdlFechaWaybill" class="control-label"><b> Fecha Waybill </b></label>
+                            <input class="form-control" id="txtMdlFechaWaybill" disabled>
+                        </div>
+                    </div>
+
+                    <br />
+                    <br />
+
+                    <div class="row">
+                        <div class="">
+                            <table id="tableMdlDetalle" class="table table-hover" width="100%">
+                                <thead>
+                                    <tr>
+                                        <th>NO.</th>
+                                        <th>CANTIDAD</th>
+                                        <th>PRODUCTO</th>
+                                    </tr>
+                                </thead>
+                            </table>
+                        </div>
+                    </div>
+
+                    <br />
+                    <br />
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+
+
+@section Scripts {
+
+    <script>
+        $( document ).ready(function() {
+
+            $("#tableDetalleProductosWaybill tbody").empty();
+            $('#tableDetalleProductosWaybill_paginate').hide();
+            $('#tableDetalleProductosWaybill_info').hide();
+            $('#tableDetalleProductosWaybill_filter').hide();
+
+            $("#tableDetalleWaybill tbody").empty();
+            $('#tableDetalleWaybill_paginate').hide();
+            $('#tableDetalleWaybill_info').hide();
+            $('#tableDetalleWaybill_filter').hide();
+
+            $("#tableDetalleProductos tbody").empty();
+            $('#tableDetalleProductos_paginate').hide();
+            $('#tableDetalleProductos_info').hide();
+            $('#tableDetalleProductos_filter').hide();
+
+            $("#tableDetalleBoletas tbody").empty();
+            $('#tableDetalleBoletas_paginate').hide();
+            $('#tableDetalleBoletas_info').hide();
+            $('#tableDetalleBoletas_filter').hide();
+
+            $("#tableDetalleJunta tbody").empty();
+            $('#tableDetalleJunta_paginate').hide();
+            $('#tableDetalleJunta_info').hide();
+            $('#tableDetalleJunta_filter').hide();
+
+            $("#tableMdlDetalle tbody").empty();
+            $('#tableMdlDetalle_paginate').hide();
+            $('#tableMdlDetalle_info').hide();
+            $('#tableMdlDetalle_filter').hide();
+
+            var urlObj = new URL(window.location.href);
+            var type = urlObj.searchParams.get("type");
+            var id = window.location.pathname.split('/').pop();
+
+            // Inicializa la tabla (si no está inicializada)
+            var table = $('#tableDetalleProductosWaybill').DataTable();
+            var table2 = $('#tableDetalleProductos').DataTable();
+            var table3 = $('#tableDetalleBoletas').DataTable();
+            var table4 = $('#tableDetalleJunta').DataTable();
+            var table5 = $('#tableDetalleWaybill').DataTable();
+            var table6 = $('#tableMdlDetalle').DataTable();
+
+            // Oculta las flechas de ordenamiento
+            $('table.dataTable thead th').removeClass('sorting sorting_asc sorting_desc');
+
+            // Evento de selección de un máximo de 3 miembros de Junta Receptora
+            $(document).on('change', 'input[name="EstaPresente"]', function () {
+                let seleccionados = $('input[name="EstaPresente"]:checked').length;
+
+                if (seleccionados > 3) {
+
+                    Swal.fire({
+                        title: "Error!",
+                        text: "Solo puedes seleccionar un máximo de 3 Miembros de Junta Receptora.",
+                        icon: "warning"
+                    });
+
+                    $(this).prop('checked', false); // Desmarca el intento extra
+                }
+            });
+
+            document.getElementById("checkAll").addEventListener("click", function () {
+                let isChecked = this.checked;
+                document.querySelectorAll("#tableDetalleProductosWaybill input[name='checkRow']:not(:disabled)").forEach(checkbox => {
+                    checkbox.checked = isChecked;
+                });
+            });
+
+            if (parseInt(id) != 0){
+                abrirYActualizarUrl(id, type);
+            }
+        });
+
+        function abrirYActualizarUrl(id, tipoApertura) {
+
+            // Se inicia reiniciando la tabla
+             $("#tableDetalleProductos tbody").empty();
+             $("#tableDetalleBoletas tbody").empty();
+
+             // El tipo de apertura 1 indica que se var almacenar o editar un registro
+            // El tipo de apertura 2 indica solo de observación
+            let disabled = tipoApertura == 1 ? "" : "disabled" ;
+            if(tipoApertura == 1){
+                $('.camposAlmacenamiento').show();
+                $("#frmRecepcion input:not([disabled])").attr("disabled", false);  // Hace los inputs solo lectura
+                $("#frmRecepcion select").prop("disabled", false); // Deshabilita los selects
+            } else {
+                $('.camposAlmacenamiento').hide();
+                $("#frmRecepcion input").attr("disabled", true);  // Hace los inputs solo lectura
+                $("#frmRecepcion select").prop("disabled", true); // Deshabilita los selects
+            }
+            
+
+            if (id == 0) {
+                // $('#divBtnDescarga').hide();
+            }
+            else {
+
+                $.ajax({
+                    url: `@ViewData["rutaApp"]/IngresoAlimentos/ObtenerRecepcionAlimentosBodega/${id}`, // URL para obtener los datos
+                    type: 'GET',
+                    success: function (data) {
+
+                        console.log('data' + JSON.stringify(data));
+
+                        // Llenar el formulario con los datos de Ingreso de Alimentos
+                        var ia = data.ingresoAlimentos;
+
+                        var fechaFormateada = '';
+                        if(ia.fechaWaybill != null){
+                            var fecha = ia.fechaWaybill;  // Fecha recibida
+                            fechaFormateada = fecha.split("T")[0]; // Extrae solo la parte "YYYY-MM-DD"
+                        }
+
+                        $('#idIngresoAlimentos').val(ia.idIngresoAlimentos);
+                        $('#txtNombreResponsableIndeca').val(ia.nombreResponsableIndeca);
+                        $('#txtNoActa').val(ia.noActa);
+                        $('#txtFolioInicial').val(ia.folioInicialActa);
+                        $('#txtFolioFinal').val(ia.folioFinalActa);
+
+                        if (ia.firmaMiembrosJuntaActa == 0)
+                            $('#firmaMiembrosJuntaActa').prop("checked", true);
+
+                        if (ia.firmaEncargadoBodegaActa == 0)
+                            $('#firmaEncargadoBodegaActa').prop("checked", true);
+
+                        if (ia.documentoActa == null){
+                            $('#divBtnDescargaArchivoActa').hide();
+                        }
+
+                        // Agregar Detalle de Productos de Waybill
+                        if (data.productosIngreso.length > 0){
+
+                            let tabla = document.getElementById("tableDetalleProductosWaybill");
+                            let tbody = tabla.getElementsByTagName("tbody")[0];
+
+                            data.productosIngreso.forEach((detalle, index) => {
+
+                                let fila = document.createElement("tr");
+
+                                let txtProducto = $("#cbIdProductoAlimenticio option[value='" + detalle.idProductoAlimenticio + "']").text(); // Nombre del producto
+                                let txtPresentacion = $("#cbIdPresentacionPA option[value='" + detalle.idPresentacion + "']").text(); // Nombre de la presentación
+                                let cantidadUnidad = detalle.cantidadUnidad;
+                                let txtUnidad = $("#cbIdUnidadMedida option[value='" + detalle.idUnidadMedida + "']").text(); // Nombre de la unidad de medida
+
+                                var nombreFinalProducto = txtPresentacion + ' de ' + txtProducto + ' en presentación de ' + cantidadUnidad + ' ' + txtUnidad;
+
+                                var botoncheck = '<input class="form-check-input" type="checkbox" name="checkRow">';
+
+                                fila.innerHTML = `
+                                    <td>${index + 1}</td>
+                                    <td>${detalle.cantidadRecibir}</td>
+                                    <td>${nombreFinalProducto}</td>
+                                    <td>
+                                        ${botoncheck}
+
+                                        <input type="hidden" name="IdProductosIngreso" value="${detalle.idProductosIngreso}">
+                                        <input type="hidden" name="IdProductoAlimenticio" value="${detalle.idProductoAlimenticio}">
+                                        <input type="hidden" name="IdPresentacion" value="${detalle.idPresentacion}">
+                                        <input type="hidden" name="CantidadUnidad" value="${cantidadUnidad}">
+                                        <input type="hidden" name="IdUnidadMedida" value="${detalle.idUnidadMedida}">
+
+                                    </td>
+                                `;
+
+                                tbody.appendChild(fila);
+                            });
+                        }
+                        cargaDetalleWaybill(true);
+
+
+                        // Agregar detalle de boletas de análisis
+                        if (data.detalleBoletaAnalisis.length > 0){
+
+                            let tabla = document.getElementById("tableDetalleBoletas");
+                            let tbody = tabla.getElementsByTagName("tbody")[0];
+
+                            data.detalleBoletaAnalisis.forEach((detalle, index) => {
+
+                                let fila = document.createElement("tr");
+
+                                var botonEliminar = tipoApertura == 1
+                                    ? `<button type="button" class="btn btn-danger btn-sm" onclick="EliminarFilaBoleta(this, ${detalle.idDetalleBoletaAnalisis})">Eliminar</button>`
+                                    : '';
+
+                                fila.innerHTML = `
+                                    <td>${index + 1}</td>
+                                    <td>${detalle.noBoletaAnalisis}</td>
+                                    <td>
+                                        ${botonEliminar}
+                                        <input type="hidden" name="IdDetalleBoletaAnalisis" value="${detalle.idDetalleBoletaAnalisis}">
+                                        <input type="hidden" name="IdIngresoAlimentos" value="${detalle.idIngresoAlimentos}">
+                                        <input type="hidden" name="NoBoletaAnalisis" value="${detalle.noBoletaAnalisis}">
+                                    </td>
+                                `;
+
+                                tbody.appendChild(fila);
+                            });
+                        }
+
+
+                        // Agregar detalle de Junta Receptora
+                        if (data.detalleJuntaReceptora.length > 0){
+
+                            let tabla = document.getElementById("tableDetalleJunta");
+                            let tbody = tabla.getElementsByTagName("tbody")[0];
+
+                            data.detalleJuntaReceptora.forEach((detalle, index) => {
+
+                                let fila = document.createElement("tr");
+
+                                let txtTipoNomb = $("#cbIdTipoNombramiento option[value='" + detalle.idTipoNombramiento + "']").text(); // Nombre del tipo de nombramiento
+                                let checkear = detalle.estaPresente == 0 ? "checked" : "";
+
+                                fila.innerHTML = `
+                                    <td>${index + 1}</td>
+                                    <td>${detalle.nombreCompleto}</td>
+                                    <td>${detalle.dpi}</td>
+                                    <td>${txtTipoNomb}</td>
+                                    <td>
+                                        <input class="form-check-input camposAlmacenamiento" type="checkbox" value="" name="EstaPresente" ${checkear} ${disabled}>
+
+                                        <input type="hidden" name="IdDetalleJuntaReceptora" value="${detalle.idDetalleJuntaReceptora}">
+                                        <input type="hidden" name="IdJuntaReceptora" value="${detalle.idJuntaReceptora}">
+                                        <input type="hidden" name="NombreCompleto" value="${detalle.nombreCompleto}">
+                                        <input type="hidden" name="DPI" value="${detalle.dpi}">
+                                        <input type="hidden" name="IdTipoNombramiento" value="${detalle.idTipoNombramiento}">
+                                    </td>
+                                `;
+
+                                tbody.appendChild(fila);
+                            });
+                        }
+
+
+                        // Agregar Detalle de Productos
+                        if (data.productosIngreso.length > 0){
+
+                            let tabla = document.getElementById("tableDetalleProductos");
+                            let tbody = tabla.getElementsByTagName("tbody")[0];
+
+                            data.productosIngreso.forEach((detalle, index) => {
+
+                                let fila = document.createElement("tr");
+
+                                let idProductosIngreso = detalle.idProductosIngreso; // Id del Producto
+                                let txtProducto = $("#cbIdProductoAlimenticio option[value='" + detalle.idProductoAlimenticio + "']").text(); // Nombre del producto
+                                let txtPresentacion = $("#cbIdPresentacionPA option[value='" + detalle.idPresentacion + "']").text(); // Nombre de la presentación
+                                let cantidadUnidad = detalle.cantidadUnidad;
+                                let txtUnidad = $("#cbIdUnidadMedida option[value='" + detalle.idUnidadMedida + "']").text(); // Nombre de la unidad de medida
+                                let cantidadRecibir = detalle.cantidadRecibir;
+                                let estiba = detalle.estiba ?? "";
+
+                                var nombreFinalProducto = txtPresentacion + ' de ' + txtProducto + ' en presentación de ' + cantidadUnidad + ' ' + txtUnidad;
+
+                                // Generar el select con las opciones de estibas
+                                // let selectEstiba = `<select name="IdEstiba" class="form-select" ${disabled}>`;
+                                // data.estibas.forEach(estiba => {
+                                //     if (detalle.idEstiba == estiba.idEstiba)
+                                //         selectEstiba += `<option selected value="${estiba.idEstiba}">${estiba.codigoEstiba}</option>`;
+                                //     else
+                                //         selectEstiba += `<option value="${estiba.idEstiba}">${estiba.codigoEstiba}</option>`;
+                                // });
+                                // selectEstiba += `</select>`;
+
+                                var fechaFormateadaIngreso = '';
+                                if(detalle.fechaIngreso != null){
+                                    var fecha = detalle.fechaIngreso;  // Fecha recibida Ingreso
+                                    fechaFormateadaIngreso = fecha.split("T")[0]; // Extrae solo la parte "YYYY-MM-DD"
+                                }
+
+                                var fechaFormateadaVenci = '';
+                                if(detalle.fechaVencimiento != null){
+                                    var fecha = detalle.fechaVencimiento;  // Fecha recibida Vencimiento
+                                    fechaFormateadaVenci = fecha.split("T")[0]; // Extrae solo la parte "YYYY-MM-DD"
+                                }
+
+                                fila.innerHTML = `
+                                    <td>
+                                        ${index + 1}
+                                        <input type="hidden" name="IdProductosIngreso" value="${idProductosIngreso}">
+                                    </td>
+                                    <td>${cantidadRecibir}</td>
+                                    <td>${nombreFinalProducto}</td>
+                                    <td>
+                                        <input type="text" name="Estiba" class="form-control" value="${estiba}" ${disabled}>
+                                    </td>
+                                    <td>
+                                        <input type="date" name="FechaVencimiento" class="form-control" value="${fechaFormateadaVenci}" ${disabled}>
+                                    </td>
+                                `;
+
+                                tbody.appendChild(fila);
+                            });
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error al obtener los datos de productos: ', error);
+                    }
+                });
+            }
+        }
+
+        function cargaDetalleWaybill(apertura){
+
+            var id = $("#idIngresoAlimentos").val();
+            $("#tableDetalleWaybill tbody").empty();
+
+            $.ajax({
+                url: `@ViewData["rutaApp"]/IngresoAlimentos/ObtenerDetallesWaybill/${id}`, // URL para obtener los datos
+                type: 'GET',
+                success: function (data) {
+
+                    console.log('data' + JSON.stringify(data));
+
+                    // Agregar Constancias de salida
+                    if (data.listaWaybill.length > 0){
+
+                        let tabla = document.getElementById("tableDetalleWaybill");
+                        let tbody = tabla.getElementsByTagName("tbody")[0];
+
+                        data.listaWaybill.forEach((detalle, index) => {
+
+                            let fila = document.createElement("tr");
+
+                            let NoBoleta = detalle.noBoleta;
+                            let fechaBoleta = new Date(detalle.fechaBoleta).toLocaleDateString('es-ES');
+
+                            var botonEliminar = `<button type="button" class="btn btn-danger btn-sm camposAlmacenamiento" onclick="ConfirmDeleteDetalleWaybill(this, ${detalle.idDetalleWaybill})">Eliminar</button>`;
+
+                            var verProductos = `<button type="button" class="btn btn-info btn-sm camposAlmacenamiento" onclick="VerProductosWaybill(this, ${detalle.idDetalleWaybill})"> Ver Productos</button>`;
+
+                            fila.innerHTML = `
+                                <td>${index + 1}</td>
+                                <td>${NoBoleta}</td>
+                                <td>${fechaBoleta}</td>
+                                <td>
+                                    ${verProductos}
+                                    ${botonEliminar}
+
+                                    <input type="hidden" name="IdDetalleWaybill" value="${detalle.idDetalleWaybill}">
+                                    <input type="hidden" name="IdIngresoAlimentos" value="${detalle.idIngresoAlimentos}">
+                                    <input type="hidden" name="NoBoleta" value="${detalle.noBoleta}">
+                                    <input type="hidden" name="FechaBoleta" value="${detalle.fechaBoleta}">
+                                </td>
+                            `;
+
+                            tbody.appendChild(fila);
+                        });
+
+                        if (apertura && data.listaDetalles.length > 0)
+                            CalcularDetallesProductos(data.listaDetalles, 1);
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error al obtener los datos de Egreso de alimentos: ', error);
+                }
+            });
+        }
+
+        // detalles: listado de productos almacenados en DetallesSalidaAlimentos;
+        // type: 1) calculo inicial de deselección; 2) eliminación de una constancia para habilitar botón de selección
+        function CalcularDetallesProductos(listaDetalles, type){
+
+            listaDetalles.forEach((detalle, index) => {
+
+                $("#tableDetalleProductosWaybill tbody tr").each(function () {
+                    let fila = $(this);
+
+                    var idProd = fila.find("input[name='IdProductoAlimenticio']").val();
+                    var idPres = fila.find("input[name='IdPresentacion']").val();
+                    var cantUni = fila.find("input[name='CantidadUnidad']").val();
+                    var idUnid = fila.find("input[name='IdUnidadMedida']").val();
+
+                    // Se busca el producto exacto que se tomo para validar el total que le corresponde
+                    if (idProd == detalle.idProductoAlimenticio && idPres  == detalle.idPresentacion && cantUni == detalle.cantidadUnidad && idUnid == detalle.idUnidadMedida){
+
+                        if (type == 1){
+                            // Se deshabilita el check
+                            fila.find("input[name='checkRow']").prop("disabled", true);
+                            fila.find("input[name='checkRow']").prop("checked", false);
+                        }
+                        else {
+                            // Se habilita el check
+                            fila.find("input[name='checkRow']").prop("disabled", false);
+                        }
+                    }
+                });
+            });
+        }
+
+        function ConfirmDeleteDetalleWaybill(boton, idDetalle){
+            Swal.fire({
+              title: "Está seguro de eliminar el Detalle Waybill?",
+              showCancelButton: true,
+              confirmButtonText: "Eliminar",
+              icon: "question"
+            }).then((result) => {
+              if (result.isConfirmed) {
+                  EliminarFilaWaybill(boton, idDetalle);
+              }
+            });
+        }
+
+        function EliminarFilaWaybill(boton, idDetalle) {
+
+            // En el escenario en donde el ID de es diferente de cero, se elimina en la BD
+            if (idDetalle != 0){
+
+                $.ajax({
+                url: `@ViewData["rutaApp"]/IngresoAlimentos/EliminarDetalleWaybill?id=${idDetalle}`,
+                type: "POST",
+                success: function (data) {
+                    CalcularDetallesProductos(data.listaDetallesWaybill, 2);
+
+                    Swal.fire("Eliminado!", "Detalle Waybill Eliminada Correctamente", "success");
+
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error al eliminar:", error);
+                    alert("Ocurrió un error al eliminar el Detalle Waybill.");
+                }
+            });
+            }
+
+            let fila = boton.closest("tr");
+            fila.remove();
+
+            ActualizarContador();
+        }
+
+        function VerProductosWaybill(tr, id){
+
+            $("#tableMdlDetalle tbody").empty();
+
+            $.ajax({
+                url: `@ViewData["rutaApp"]/IngresoAlimentos/ObtenerDetallesPorductosWaybill/${id}`, // URL para obtener los datos
+                type: 'GET',
+                success: function (data) {
+
+                    console.log('data' + JSON.stringify(data));
+
+                    var ea = data.detalleWaybill;
+                    var dp = data.detalleProductos;
+
+                    // Llenar el formulario con los datos de Egreso de Alimentos
+                    $('#txtMdlNoWaybill').val(ea.noBoleta);
+                    $('#txtMdlFechaWaybill').val(new Date(ea.fechaBoleta).toLocaleDateString('es-ES'));
+
+                    // Agregar Detalles de Salida
+                    if (data.detalleProductos.length > 0){
+
+                        let tabla = document.getElementById("tableMdlDetalle");
+                        let tbody = tabla.getElementsByTagName("tbody")[0];
+
+                        data.detalleProductos.forEach((detalle, index) => {
+
+                            let fila = document.createElement("tr");
+
+                            let txtProducto = $("#cbIdProductoAlimenticio option[value='" + detalle.idProductoAlimenticio + "']").text(); // Nombre del producto
+                            let txtPresentacion = $("#cbIdPresentacionPA option[value='" + detalle.idPresentacion + "']").text(); // Nombre de la presentación
+                            let cantidadUnidad = detalle.cantidadUnidad;
+                            let txtUnidad = $("#cbIdUnidadMedida option[value='" + detalle.idUnidadMedida + "']").text(); // Nombre de la unidad de medida
+
+                            var nombreFinalProducto = txtPresentacion + ' de ' + txtProducto + ' en presentación de ' + cantidadUnidad + ' ' + txtUnidad;
+
+                            fila.innerHTML = `
+                                <td>${index + 1}</td>
+                                <td>${detalle.cantidadRecibir}</td>
+                                <td>${nombreFinalProducto}</td>
+                            `;
+
+                            tbody.appendChild(fila);
+                        });
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error al obtener los datos de Egreso de alimentos: ', error);
+                }
+            });
+
+            var modal = new bootstrap.Modal(document.getElementById('wViewDetalles'));
+            modal.show();
+        }
+
+        function GuardarDetalleWaybill() {
+            let detalleWaybill = {
+                IdDetalleWaybill: 0,
+                IdIngresoAlimentos: $("#idIngresoAlimentos").val(),
+                NoBoleta: $("#txtNoWaibil").val(),
+                FechaBoleta: $('#txtFechaWaibil').val(),
+            };
+
+            if (!detalleWaybill.NoBoleta || !detalleWaybill.FechaBoleta ){
+                Swal.fire({
+                    title: "Error!",
+                    text: "Debe de Completar todos los campos la Creación de Waybill.",
+                    icon: "warning"
+                });
+
+                return;
+            }
+
+            let detalles = [];
+
+            $("#tableDetalleProductosWaybill tbody tr").each(function () {
+                let fila = $(this);
+
+                if (fila.find("input[name='checkRow']").prop('checked') == true){
+                    let detalle = {
+                        IdProductosIngreso: fila.find("input[name='IdProductosIngreso']").val(),
+                    };
+
+                    // Se deshabilita el Check y se deselecciona
+                    fila.find("input[name='checkRow']").prop("disabled", true);
+                    fila.find("input[name='checkRow']").prop("checked", false);
+
+                    detalles.push(detalle);
+                }
+            });
+
+            if (detalles.length == 0) {
+
+                Swal.fire({
+                    title: "Error!",
+                    text: "Debe de Seleccionar Productos.",
+                    icon: "warning"
+                });
+
+                return;
+            }
+
+            let datosEnvio = {
+                DetalleWaybill: detalleWaybill,
+                listaProductosIngreso: detalles
+            };
+
+            console.log(datosEnvio);
+
+
+            $.ajax({
+                url: `@ViewData["rutaApp"]/IngresoAlimentos/GuardarDetallesWaybill`,
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify(datosEnvio),
+                success: function (respuesta) {
+
+                    Swal.fire("Almacenado!", "", "success");
+
+                    // Se carga la tabla de solicitudes
+                    cargaDetalleWaybill();
+
+                    // Redireccionar o limpiar formulario si es necesario
+                    // window.location.href = `@ViewData["rutaApp"]/EgresoAlimentos/Index`;
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error al guardar:", error);
+                    alert("Ocurrió un error al guardar la solicitud.");
+                }
+            });
+        }
+
+        function AgregarDetalle() {
+
+            let noBoleta = $("#txtNoBoletaAnalisis").val();
+            let idIngresoAlimentos = $("#idIngresoAlimentos").val();
+
+            if (!noBoleta) {
+                Swal.fire({
+                    title: "Error!",
+                    text: "Debe de ingresar un número de Boleta para poder agregarlo.",
+                    icon: "warning"
+                });
+
+                return false;
+            }
+
+            let tabla = document.getElementById("tableDetalleBoletas");
+            let tbody = tabla.getElementsByTagName("tbody")[0];
+
+            if (!tbody) {
+                tbody = document.createElement("tbody");
+                tabla.appendChild(tbody);
+            }
+
+            let fila = document.createElement("tr");
+
+            fila.innerHTML = `
+                <td></td>
+                <td>${noBoleta}</td>
+                <td>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="EliminarFilaBoleta(this, 0)">Eliminar</button>
+
+                    <input type="hidden" name="IdDetalleBoletaAnalisis" value="0">
+                    <input type="hidden" name="IdIngresoAlimentos" value="${idIngresoAlimentos}">
+                    <input type="hidden" name="NoBoletaAnalisis" value="${noBoleta}">
+                </td>
+            `;
+
+            tbody.appendChild(fila);
+            ActualizarContador();
+
+            LimpiarDetalles();
+            return false;
+        }
+
+        function ActualizarContador() {
+            let filas = document.querySelectorAll("#tableDetalleBoletas tbody tr");
+            filas.forEach((fila, index) => {
+                fila.cells[0].innerHTML = `${index + 1}`;
+            });
+        }
+
+        function LimpiarDetalles(){
+            $('#txtNoBoletaAnalisis').val('');
+        }
+
+        function LimpiarDetallesWaybill(){
+            $('#txtNoWaibil').val('');
+            $('#txtFechaWaibil').val('');
+        }
+
+        function EliminarFilaBoleta(boton, idDetalle) {
+
+            // En el escenario en donde el ID de es diferente de cero, se elimina en la BD
+            if (idDetalle != 0){
+
+                Swal.fire({
+                    title: "Desea eliminar el Detalle de la Boleta de Análisis?",
+                    text: "Este proceso eliminará el Detalle.",
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#3085d6",
+                    cancelButtonColor: "#d33",
+                    confirmButtonText: "Eliminar!"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+
+                        $.ajax({
+                            url: `@ViewData["rutaApp"]/IngresoAlimentos/EliminarDetalleBoletaAnalisis?id=${idDetalle}`,
+                            type: "POST",
+                            success: function (respuesta) {
+                                Swal.fire({
+                                    title: "Eliminado!",
+                                    text: "Detalle de Boleta eliminada con éxito.",
+                                    icon: "success"
+                                });
+
+                                boton.closest("tr").remove();
+                            },
+                            error: function (xhr, status, error) {
+                                console.error("Error al eliminar:", error);
+                                alert("Ocurrió un error al eliminar el detalle.");
+                            }
+                        });
+                    } else {
+                        return false;
+                    }
+                });
+            } else {
+                boton.closest("tr").remove();
+            }
+
+            ActualizarContador();
+        }
+
+
+        // Si el tipo es 1 - mostrará los campos faltantes
+        function ValidarTabla(type) {
+            let valido = true;
+
+            $("#tableDetalleProductos tbody tr").each(function () {
+                $(this).find("input").each(function () {
+                    if ($(this).val().trim() === "") {
+                        valido = false;
+
+                        if(type == 1)
+                            $(this).addClass("is-invalid"); // Agrega una clase de error si está vacío
+                    } else {
+                        if(type == 1)
+                            $(this).removeClass("is-invalid"); // Remueve la clase si el campo está lleno
+                    }
+                });
+            });
+
+            return valido;
+        }
+
+        function ConfirmSave(){
+            Swal.fire({
+              title: "Está seguro de almacenar la Recepción de Alimentos En Bodega?",
+              showCancelButton: true,
+              confirmButtonText: "Guardar",
+              icon: "question"
+            }).then((result) => {
+              if (result.isConfirmed) {
+                  GuardarAlimentosBodega();
+              }
+            });
+        }
+
+        function GuardarAlimentosBodega() {
+            let ingresoAlimentos = {
+                IdIngresoAlimentos: $("#idIngresoAlimentos").val(),
+                // NoWaybill: $("#txtNoWaibil").val(),
+                // FechaWaybill: $("#txtFechaWaibil").val(),
+                // NoLti: $("#txtNoLti").val(),
+                FirmaSelloEncargadoWaybill: null,
+                NombreResponsableIndeca: $("#txtNombreResponsableIndeca").val(),
+                NoActa: $("#txtNoActa").val(),
+                FolioInicialActa: $("#txtFolioInicial").val(),
+                FolioFinalActa: $("#txtFolioFinal").val(),
+                FirmaMiembrosJuntaActa: $("#firmaMiembrosJuntaActa").prop('checked') == true ? 0 : 1,
+                FirmaEncargadoBodegaActa: $("#firmaEncargadoBodegaActa").prop('checked') == true ? 0 : 1,
+            };
+
+            if (!ingresoAlimentos.NombreResponsableIndeca || !ingresoAlimentos.NoActa ||
+                !ingresoAlimentos.FolioInicialActa || !ingresoAlimentos.FolioFinalActa ){
+                Swal.fire({
+                    title: "Error!",
+                    text: "Debe de completar todos los campos.",
+                    icon: "warning"
+                });
+
+                return;
+            }
+
+            if (!$("#txtFechaIngreso").val()){
+                Swal.fire({
+                    title: "Error!",
+                    text: "Debe de agregar fecha de Ingreso.",
+                    icon: "warning"
+                });
+
+                return;
+            }
+
+            if (($('#documentoActa')[0].files[0] == undefined && $('#txtArchivoActa').val == "")){
+                Swal.fire({
+                    title: "Error!",
+                    text: "Debe de Cargar ambos documentos.",
+                    icon: "warning"
+                });
+
+                return;
+            }
+
+            // Se ejecutará validación que indicará si todos los campos de la tabla se encuentran correctos
+            if(!ValidarTabla(1)){
+                Swal.fire({
+                    title: "Error!",
+                    text: "Debe de completar todos los campos de la tabla.",
+                    icon: "warning"
+                });
+
+                return;
+            }
+
+            // Almacenamiento de Boletas
+            let detallesBoletas = [];
+            $("#tableDetalleBoletas tbody tr").each(function () {
+                let fila = $(this);
+
+                let detalle = {
+                    IdDetalleBoletaAnalisis: fila.find("input[name='IdDetalleBoletaAnalisis']").val(),
+                    IdIngresoAlimentos: fila.find("input[name='IdIngresoAlimentos']").val(),
+                    NoBoletaAnalisis: fila.find("input[name='NoBoletaAnalisis']").val(),
+                };
+
+                detallesBoletas.push(detalle);
+            });
+
+            // Almacenamiento de Junta Receptora
+            let detallesJuntas = [];
+            $("#tableDetalleJunta tbody tr").each(function () {
+                let fila = $(this);
+
+                let detalle = {
+                    IdDetalleJuntaReceptora: fila.find("input[name='IdDetalleJuntaReceptora']").val(),
+                    EstaPresente: fila.find("input[name='EstaPresente']").prop('checked') == true ? 0 : 1,
+                };
+
+                detallesJuntas.push(detalle);
+            });
+
+            // Almacenamiento de Productos
+            let detallesProductos = [];
+            let estibasSeleccionadas = new Set(); // Conjunto para rastrear IdEstiba únicos
+            let errorEstiba = false;
+            let errorFechas = false;
+            let mensajeFechas = "";
+            let noFila = 0;
+            $("#tableDetalleProductos tbody tr").each(function () {
+                let fila = $(this);
+                noFila ++;
+
+                let Estiba = fila.find("input[name='Estiba']").val();
+
+                // Verifica si el IdEstiba ya fue seleccionado
+                if (estibasSeleccionadas.has(Estiba)) {
+                    errorEstiba = true;
+                    return false; // Detiene el `.each()` al encontrar un error
+                }
+
+                // Agrega el IdEstiba al conjunto para futuras comparaciones
+                estibasSeleccionadas.add(Estiba);
+
+                let fechaIngreso = new Date($("#txtFechaIngreso").val());
+                let fechaVencimiento = new Date(fila.find("input[name='FechaVencimiento']").val());
+
+                // Validar que ambas fechas sean válidas antes de continuar
+                if (isNaN(fechaIngreso) || isNaN(fechaVencimiento)) {
+                    mensajeFechas = `Ingrese fechas válidas en la fila ${noFila}.`;
+                    errorFechas = true;
+                    return false; // Detiene el `.each()`
+                }
+
+                // Obtener la fecha mínima válida (FechaIngreso + 6 meses)
+                let fechaMinimaValida = new Date(fechaIngreso);
+                fechaMinimaValida.setMonth(fechaMinimaValida.getMonth() + 6);
+
+                // Validar que la fecha de vencimiento sea al menos 6 meses después de la fecha de ingreso
+                if (fechaVencimiento < fechaMinimaValida) {
+                    mensajeFechas = `La Fecha de Vencimiento debe ser al menos 6 meses mayor que la Fecha de Ingreso, en la fila ${noFila}.`;
+                    errorFechas = true;
+                    return false; // Detiene el `.each()`
+                }
+
+                let detalle = {
+                    IdProductosIngreso: fila.find("input[name='IdProductosIngreso']").val(),
+                    Estiba: Estiba,
+                    FechaIngreso: $('#txtFechaIngreso').val(),
+                    FechaVencimiento: fila.find("input[name='FechaVencimiento']").val(),
+                };
+
+                detallesProductos.push(detalle);
+            });
+
+            if(errorEstiba){
+                Swal.fire({
+                    title: "Error!",
+                    text: `Estiba asignado en la fila ${noFila}, se encuentra duplicado.`,
+                    icon: "warning"
+                });
+
+                return;
+            }
+
+            if(errorFechas){
+                Swal.fire({
+                    title: "Error!",
+                    text: mensajeFechas,
+                    icon: "warning"
+                });
+
+                return;
+            }
+
+            let datosEnvio = {
+                IngresoAlimentos: ingresoAlimentos,
+                listaProductosIngreso: detallesProductos,
+                listaDetalleBoletaAnalisis: detallesBoletas,
+                listaDetalleJuntaReceptora: detallesJuntas
+            };
+
+            // Crear un objeto FormData
+            var formData = new FormData();
+
+            // Agregar los datos del formulario al objeto FormData
+            formData.append('modelo', JSON.stringify(datosEnvio)); // Enviar el modelo como JSON
+            // formData.append('fileWaibil', $('#archivoWaibil')[0].files[0]); // Agregar el archivo Waibil
+            formData.append('fileActa', $('#documentoActa')[0].files[0]); // Agregar el archivo Acta Recepcion
+
+            $.ajax({
+                url: `@ViewData["rutaApp"]/IngresoAlimentos/GuardarRecepcionAlimentosBodega`,
+                type: "POST",
+                contentType: false,
+                processData: false,
+                data: formData,
+                success: function (respuesta) {
+
+                    Swal.fire("Almacenado!", "", "success");
+
+                    // Redireccionar o limpiar formulario si es necesario
+                    window.location.href = `@ViewData["rutaApp"]/IngresoAlimentos/Index`;
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error al guardar:", error);
+                    alert("Ocurrió un error al guardar la recepción de alimentos.");
+                }
+            });
+        }
+
+
+    </script>
+}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+

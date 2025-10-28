@@ -1,0 +1,153 @@
+﻿@model PROY.ViewModels.RenglonPresupuestarioVM;
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
+<head>
+</head>
+@{
+
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Mensaje"]
+    </div>
+}
+
+@* <div class="=row">
+        <div class="col-sm-8"> *@
+<h2 class="float-start">Administración de Renglones Presupuestarios</h2> <a class="btn btn-primary btn-sm float-end" onclick="abrirModalYActualizarUrl(0)"><i class="fas fa-plus-square"></i> Renglón Presupuestario</a>
+<p><br /></p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>No.</th>
+            <th>RENGLÓN PRESUPUESTARIO</th>
+            <th>DESCRIPCIÓN</th>
+            <th>OPCIONES</th>
+        </tr>
+    </thead>
+    <tbody>
+        @try
+        {
+            int indexCount = 0;
+
+            foreach (var item in Model.listaRenglones)
+            {
+                <tr>
+                    <td>
+                        @{
+                            indexCount++;
+                        }
+                        @indexCount
+                    </td>
+                    <td>@item.Renglon</td>
+                    <td>@item.Descripcion</td>
+                    <td class="text-center">
+                        <a class="btn btn-info btn-sm" onclick="abrirModalYActualizarUrl(@item.IdRenglonPresupuestario)"><i class="fas fa-edit"></i> Editar</a>
+                        <a class="btn btn-danger btn-sm" asp-controller="RenglonPresupuestario" asp-action="Eliminar" asp-route-id="@item.IdRenglonPresupuestario" onclick="confirmar(event)"><i class="fas fa-trash"></i> Eliminar</a>
+                    </td>
+                </tr>
+            }
+        }
+        catch
+        {
+
+        }
+
+    </tbody>
+</table>
+
+<!-- Modal -->
+<div class="modal fade" id="wNewPuesto" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="height:300px;">
+            <form asp-action="GuardarRenglonPresupuestario" asp-controller="RenglonPresupuestario" method="post">
+                <div class="modal-header bg-secondary">
+                    <h5 class="modal-title text-white" id="lblModalTitle">@ViewBag.ModalTitle</h5>
+                    <button type="button" id="btnClose" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <input type="hidden" id="idRenglonPresupuestario" asp-for="@Model.Renglon.IdRenglonPresupuestario" />
+                    <div>
+                        <div class="col">
+                            <label for="txtNombreRenglon" class="control-label">Renglón</label>
+                            <input type="text" class="form-control" id="txtRenglon" asp-for="@Model.Renglon.Renglon" required></input>
+                            <span asp-validation-for="@Model.Renglon.Renglon" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="col">
+                            <label for="txtDescripcion" class="control-label">Descripción</label>
+                            <input type="text" class="form-control" id="txtDescripcion" asp-for="@Model.Renglon.Descripcion" required></input>
+                            <span asp-validation-for="@Model.Renglon.Descripcion" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <input type="submit" value="Guardar" class="btn btn-primary" />
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        function abrirModalYActualizarUrl(id) {
+            if (id == 0) {
+                var ventanaTitle = document.getElementById("lblModalTitle");
+                ventanaTitle.textContent = "REGISTRO RENGLÓN PRESUPUESTARIO";
+
+                $('#idRenglonPresupuestario').val(0);
+                $('#txtRenglon').val('');
+                $('#txtDescripcion').val('');
+            }
+            else {
+
+                $.ajax({
+                    url: `@ViewData["rutaApp"]/RenglonPresupuestario/ObtenerRenglonPresupuestario/${id}`, // URL para obtener los datos
+                    type: 'GET',
+                    success: function (data) {
+
+                        console.log('data' + JSON.stringify(data));
+                        // Llenar el formulario del modal con los datos del puesto
+                        $('#idRenglonPresupuestario').val(id);
+                        $('#txtRenglon').val(data.nombre);
+                        $('#txtDescripcion').val(data.descripcion);
+
+                        var ventanaTitle = document.getElementById("lblModalTitle");
+                        ventanaTitle.textContent = "MODIFICAR RENGLÓN PRESUPUESTARIO";
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error al obtener los datos del Renglón Presupuestario:', error);
+                    }
+                });
+            }
+
+            var modal = new bootstrap.Modal(document.getElementById('wNewPuesto'));
+            modal.show();
+
+            
+        }
+
+        function confirmar(e){
+            var res=confirm("Esta seguro de eliminar el renglón presupuestario");
+            if (res) return true;
+            if (res==false) e.preventDefault();
+
+            //return false;
+        }
+    </script>
+}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+

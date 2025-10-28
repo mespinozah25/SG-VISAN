@@ -1,0 +1,419 @@
+﻿<head>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
+</head>
+
+<style>
+    table thead th {
+        pointer-events: none; /* Desactiva la interacción con los títulos */
+    }
+</style>
+
+@model PROY.ViewModels.EgresoAlimentosVM
+
+@{
+    ViewData["Title"] = "Traslado Alimentos";
+}
+
+<h1>Recepción de Traslado de Alimentos</h1>
+
+<br />
+
+<div>
+    <form id="frmDespacho">
+
+        <input type="hidden" id="idEgresoAlimentos" asp-for="@Model.EgresoAlimentos.IdEgresoAlimentos" />
+        <input type="hidden" id="idTrasladoAlimentos" asp-for="@Model.TrasladoAlimentos.IdTrasladoAlimentos" />
+
+        <br />
+
+        <div class="row">
+            <div class="col">
+                <label for="noDespachoAlmacen" class="control-label">No. Despacho de Almacén</label>
+                <input type="text" class="form-control" id="noDespachoAlmacen" disabled>
+            </div>
+            <div class="col">
+                <label for="txtFechaSolicitud" class="control-label"><b> Fecha de Solicitud </b></label>
+                <input class="form-control" id="txtFechaSolicitud" disabled>
+            </div>
+            <div class="col">
+                <label for="txtTotalRaciones" class="control-label"><b> Total de Raciones </b></label>
+                <input class="form-control" id="txtTotalRaciones" disabled>
+            </div>
+            <div class="col">
+                <label for="txtTipoAsistencia" class="control-label"><b> Tipo de Asistencia </b></label>
+                <input class="form-control" id="txtTipoAsistencia" disabled>
+            </div>
+        </div>
+
+        <br />
+
+        <div class="row">
+            <div class="col">
+                <label for="txtDepartamentoSolicitante" class="control-label"><b> Departamento Solicitante </b></label>
+                <input class="form-control" id="txtDepartamentoSolicitante" disabled>
+            </div>
+            <div class="col">
+                <label for="noAutorizacion" class="control-label">No. de Autorizacion</label>
+                <input type="text" class="form-control" id="noAutorizacion" disabled>
+            </div>
+        </div>
+
+        <br />
+
+        <div class="row">
+            <div class="col">
+                <label for="cbIdDepartamentoCarga" class="control-label">Departamento de Carga</label>
+                <input class="form-control" id="cbIdDepartamentoCarga" disabled>
+            </div>
+            <div class="col">
+                <label for="cbIdBodegaCarga" class="control-label">Bodega de Carga</label>
+                <input class="form-control" id="cbIdBodegaCarga" disabled>
+            </div>
+        </div>
+
+        <br />
+
+        <div class="row">
+            <div class="col">
+                <label for="cbIdDepartamentoDetino" class="control-label">Departamento de Destino</label>
+                <input class="form-control" id="cbIdDepartamentoDetino" disabled>
+            </div>
+            <div class="col">
+                <label for="cbIdBodegaDestino" class="control-label">Bodega Destino</label>
+                <input class="form-control" id="cbIdBodegaDestino" disabled>
+            </div>
+            <div class="col">
+                <label for="direccionFinal" class="control-label">Dirección Final</label>
+                <input type="text" class="form-control" id="direccionFinal" disabled>
+            </div>
+        </div>
+
+        <br />
+        <br />
+
+        <h3>Detalle de la Carga</h3>
+
+
+        <div class="row" style="display:none">
+            <div class="col">
+                <label for="cbIdProductoAlimenticio" class="control-label">Producto Alimenticio</label>
+                <select class="form-select" id="cbIdProductoAlimenticio" asp-items="ViewBag.ProductoAlimenticio"></select>
+            </div>
+            <div class="col">
+                <label for="cbIdPresentacionPA" class="control-label">Presentación</label>
+                <select class="form-select" id="cbIdPresentacionPA" asp-items="ViewBag.PresentacionPA"></select>
+            </div>
+            <div class="col">
+                <label for="cbIdUnidadMedida" class="control-label">Unidad de Medida</label>
+                <select class="form-select" id="cbIdUnidadMedida" asp-items="ViewBag.UnidadMedida"></select>
+            </div>
+        </div>
+
+        <br />
+
+        <div class="row col-12">
+            <div class="">
+                <table id="tableDetalle" class="table" width="100%">
+                    <thead>
+                        <tr>
+                            <th>No.</th>
+                            <th>PRODUCTO</th>
+                            <th>EMBALAJE O EMPAQUE</th>
+                            <th>NO. UNIDADES</th>
+                            <th>ESTIBA</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+
+        <br />
+
+        <div class="row">
+            <div class="col">
+                <div class="form-group">
+                    <label class="control-label">Comentarios </label>
+                    <textarea class="form-control" rows="2" id="comentarios" asp-for="@Model.EgresoAlimentos.Comentarios" disabled></textarea>
+                </div>
+            </div>
+        </div>
+
+        <br />
+
+        <h3>Detalle de la Revisión de Despacho y Condiciones Sanitarias del Transporte</h3>
+
+        <br />
+
+        <div class="row">
+            <div class="col-4">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="" id="AutorizaRecepcion">
+                    <label class="form-check-label" for="AutorizaRecepcion">
+                        La revisión de recepicón es correcta
+                    </label>
+                </div>
+            </div>
+            <div class="col-7">
+                <label for="archivoDespachoAlmacen" class="control-label">Archivo Despacho de Almacén con todas sus firmas y sellos</label>
+                <input type="file" name="file" id="archivoDespachoAlmacen" class="form-control" />
+            </div>
+            <div class="col-2 text-center" id="divBtnDescarga">
+                <label for="btnDescarga" class="control-label text-center"> Descargar Docto </label>
+                <input type="hidden" id="txtUbicacionArchivo" value="@Model.TrasladoAlimentos.ArchivoDespachoAlmacenTraslado" />
+                <a type="button" id="btnDescarga" class="btn btn-primary btn-sm text-center" href="@Url.Action("DownloadFile", new { fileName = Model.TrasladoAlimentos.ArchivoDespachoAlmacenTraslado, carpeta = "despachoAlmacenTraslado" })">
+                    <i class="fas fa-download"></i>
+                </a>
+            </div>
+        </div>
+
+        <br />
+        <br />
+
+        <div class="row float-end">
+            <div class="col">
+                <a type="button" class="btn btn-secondary btn" asp-action="Index">Regresar</a>
+            </div>
+            <div class="col">
+                <input type="button" value="Guardar" class="btn btn-primary" onclick="return ConfirmSave();" />
+            </div>
+        </div>
+
+        <br />
+
+    </form>
+</div>
+
+
+@section Scripts {
+
+    <script>
+        $( document ).ready(function() {
+
+            $("#tableDetalle tbody").empty();
+            $('#tableDetalle_paginate').hide();
+            $('#tableDetalle_info').hide();
+            $('#tableDetalle_filter').hide();
+
+            var urlObj = new URL(window.location.href);
+            var type = urlObj.searchParams.get("type");
+            var id = window.location.pathname.split('/').pop();
+
+            // Inicializa la tabla (si no está inicializada)
+            var table = $('#tableDetalle').DataTable();
+
+            // Oculta las flechas de ordenamiento
+            $('table.dataTable thead th').removeClass('sorting sorting_asc sorting_desc');
+
+            if (parseInt(id) != 0){
+                abrirYActualizarUrl(id, type);
+            }
+        });
+
+        function abrirYActualizarUrl(id, tipoApertura) {
+
+            // Se inicia reiniciando la tabla
+             $("#tableDetalle tbody").empty();
+
+            // El tipo de apertura 1 indica que se va almacenar o editar un registro
+            // El tipo de apertura 2 indica solo de observación
+            if(tipoApertura == 1){
+                $('.camposAlmacenamiento').show();
+                $("#frmDespacho input").attr("readonly", false);  // Hace los inputs solo lectura
+                $("#frmDespacho select").prop("disabled", false); // Deshabilita los selects
+            }else{
+                $('.camposAlmacenamiento').hide();
+                $("#frmDespacho input").attr("readonly", true);  // Hace los inputs solo lectura
+                $("#frmDespacho select").prop("disabled", true); // Deshabilita los selects
+            }
+
+            if (id == 0) {
+
+                $('#noDespachoAlmacen').val();
+                $('#cbIdDepartamentoCarga').val(0);
+                $('#cbIdBodegaCarga').val(0);
+                $('#noAutorizacion').val();
+                $('#cbIdDepartamentoDetino').val(0);
+                $('#cbIdMunicipioDestino').val('');
+                $('#cbIdBodegaDestino').val('');
+                $('#direccionFinal').val();
+                $('#comentarios').val();
+
+            }
+            else {
+
+                $.ajax({
+                    url: `@ViewData["rutaApp"]/EgresoAlimentos/ObtenerRecepcionTraslado/${id}`, // URL para obtener los datos
+                    type: 'GET',
+                    success: function (data) {
+
+                        console.log('data' + JSON.stringify(data));
+
+                        var ea = data.egresoAlimentos;
+                        var ta = data.trasladoAlimentos
+
+                        // Llenar el formulario con los datos de Egreso de Alimentos
+                        $('#idEgresoAlimentos').val(ea.idEgresoAlimentos);
+                        $('#txtFechaSolicitud').val(new Date(ea.fechaSolicitud).toLocaleDateString('es-ES'));
+                        $('#txtTotalRaciones').val(ea.totalRaciones);
+                        $('#txtTipoAsistencia').val(ea.tipoAsistencia);
+                        $('#txtDepartamentoSolicitante').val(data.programa);
+                        $('#noDespachoAlmacen').val(ea.noDespachoAlmacen);
+                        $('#cbIdDepartamentoCarga').val(data.departamentoCarga);
+                        $('#cbIdBodegaCarga').val(data.bodegaCarga);
+                        $('#noAutorizacion').val(ea.noAutorizacion);
+                        $('#cbIdDepartamentoDetino').val(data.departamentoDestino);
+                        $('#cbIdBodegaDestino').val(data.bodegaDestino);
+                        $('#direccionFinal').val(ea.direccionFinal);
+                        $('#comentarios').val(ea.comentarios);
+
+                        if (ta.archivoDespachoAlmacenTraslado == null){
+                            $('#divBtnDescarga').hide();
+                        }
+
+                        if (ta.autorizaRecepcion == 0)
+                            $('#AutorizaRecepcion').prop('checked', true);
+
+                        // Agregar Detalle
+                        if (data.detEgresoAlimentos.length > 0){
+
+                            let tabla = document.getElementById("tableDetalle");
+                            let tbody = tabla.getElementsByTagName("tbody")[0];
+
+                            data.detEgresoAlimentos.forEach((detalle, index) => {
+
+                                let fila = document.createElement("tr");
+
+                                let txtProducto = $("#cbIdProductoAlimenticio option[value='" + detalle.idProductoAlimenticio + "']").text(); // Nombre del producto
+                                let txtpresentacion = $("#cbIdPresentacionPA option[value='" + detalle.idPresentacion + "']").text(); // Nombre de la presentación
+                                let cantidadUnidad = detalle.cantidadUnidad;
+                                let txtUnidad = $("#cbIdUnidadMedida option[value='" + detalle.idUnidadMedida + "']").text(); // Nombre de la unidad de medida
+                                let noUnidades = detalle.noUnidades;
+
+                                var embalaje = txtpresentacion + " de " + cantidadUnidad + " " + txtUnidad
+
+                                var campoEstiba = `<input type="text" class="form-control" name="EstibaTraslado" value="">`;
+
+                                fila.innerHTML = `
+                                    <td>${index + 1}</td>
+                                    <td>${txtProducto}</td>
+                                    <td>${embalaje}</td>
+                                    <td>${noUnidades}</td>
+                                    <td>
+                                        ${campoEstiba}
+
+                                        <input type="hidden" name="IdDetalleEgresoAlimentos" value="${detalle.idDetalleEgresoAlimentos}">
+                                    </td>
+                                `;
+
+                                tbody.appendChild(fila);
+                            });
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error al obtener los datos de Egreso de alimentos: ', error);
+                    }
+                });
+            }
+        }
+
+        function ConfirmSave(){
+            Swal.fire({
+              title: "Está seguro de almacenar la revisión del Traslado de Almacén?",
+              showCancelButton: true,
+              confirmButtonText: "Guardar",
+              icon: "question"
+            }).then((result) => {
+              if (result.isConfirmed) {
+                  GuardarRecepcionTraslado();
+              }
+            });
+        }
+
+        function GuardarRecepcionTraslado() {
+
+            let trasladoAlimentos = {
+                IdTrasladoAlimentos: $("#idTrasladoAlimentos").val(),
+                IdEgresoAlimentos: $("#idEgresoAlimentos").val(),
+                AutorizaRecepcion: $('#AutorizaRecepcion').prop('checked') == true ? 0 : 1,
+            };
+
+            if ($('#archivoDespachoAlmacen')[0].files[0] == undefined && $('txtUbicacionArchivo').val() == ''){
+                Swal.fire({
+                    title: "Error!",
+                    text: "Debe de Cargar el Archivo de Despacho de almacén.",
+                    icon: "warning"
+                });
+
+                return;
+            }
+
+            // Almacenamiento de Detalles
+            let detalles = [];
+            var countEstibas = 0;
+
+            $("#tableDetalle tbody tr").each(function () {
+                let fila = $(this);
+
+                // Se Validarán las Estibas que no fueron ingresadas
+                if (fila.find("input[name='EstibaTraslado']").val() == ""){
+                    countEstibas += 1;
+                }
+
+                let detalle = {
+                    IdDetalleEgresoAlimentos: fila.find("input[name='IdDetalleEgresoAlimentos']").val(),
+                    EstibaTraslado: fila.find("input[name='EstibaTraslado']").val(),
+                };
+
+                    detalles.push(detalle);
+            });
+
+            if (countEstibas > 0){
+
+                Swal.fire({
+                    title: "Error!",
+                    text: "Debe de ingresar todas las Estibas a los productos.",
+                    icon: "warning"
+                });
+
+                return;
+            }
+
+
+            let datosEnvio = {
+                TrasladoAlimentos: trasladoAlimentos,
+                listaDetalleEgresoAlimentos: detalles
+            };
+
+            // Crear un objeto FormData
+            var formData = new FormData();
+
+            // Agregar los datos del formulario al objeto FormData
+            formData.append('modelo', JSON.stringify(datosEnvio)); // Enviar el modelo como JSON
+            formData.append('file', $('#archivoDespachoAlmacen')[0].files[0]); // Agregar el archivo
+
+            $.ajax({
+                url: `@ViewData["rutaApp"]/EgresoAlimentos/GuardarRecepcionTraslado`,
+                type: "POST",
+                contentType: false,
+                processData: false,
+                data: formData,
+                success: function (respuesta) {
+
+                    Swal.fire("Almacenado!", "", "success");
+
+                    // Redireccionar o limpiar formulario si es necesario
+                    window.location.href = `@ViewData["rutaApp"]/EgresoAlimentos/Index`;
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error al guardar:", error);
+                    alert("Ocurrió un error al guardar el despacho de almacén.");
+                }
+            });
+        }
+
+    </script>
+}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+

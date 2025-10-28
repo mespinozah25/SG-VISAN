@@ -1,0 +1,369 @@
+﻿<head>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
+</head>
+
+@model PROY.ViewModels.EgresoAlimentosVM
+
+@{
+    ViewData["Title"] = "Egreso de Alimentos";
+}
+
+<h3>Creación de Egreso de Alimentos de Bodega</h3>
+
+<br />
+
+<div>
+    <form id="frmEgreso">
+
+        <input type="hidden" id="idEgresoAlimentos" asp-for="@Model.EgresoAlimentos.IdEgresoAlimentos" />
+
+        <br />
+        <br />
+
+       <div class="row mb-3">
+            <div class="col-md-6">
+                <label asp-for="Solicitud.IdSolicitud" class="form-label">Solicitudes en Programación</label>
+                <select asp-for="Solicitud.IdSolicitud" id="cbIdSolicitud" class="form-select" required>                    
+                    <option value="">-- Seleccione una solicitud --</option>
+                </select>
+                <span asp-validation-for="Solicitud.IdSolicitud" class="text-danger"></span>
+
+                <div id="alertaNoSolicitudes" class="alert alert-warning mt-2 d-none" role="alert">
+                    No hay solicitudes disponibles en estado programación.
+                </div>
+            </div>
+        </div>
+        <br />
+        <div class="row">
+            <div class="col-6">
+                <label for="txtFechaSolicitud" class="control-label">Fecha de Solicitud</label>
+                <input type="date" id="txtFechaSolicitud" class="form-control" readonly />
+            </div>
+        </div>
+        <br />
+        <div class="row">
+            <div class="col-6">
+                <label for="cbIdPrograma" class="control-label">Departamento Solicitante</label>
+                <select class="form-select" id="cbIdPrograma" asp-for="@Model.EgresoAlimentos.IdPrograma" asp-items="ViewBag.Programas" disabled required></select>
+                <input type="hidden" name="EgresoAlimentos.IdPrograma" value="@Model.EgresoAlimentos.IdPrograma" />
+                <span asp-validation-for="@Model.EgresoAlimentos.IdPrograma" class="text-danger"> </span>
+            </div>
+        </div>
+        <br />
+        <div class="row">
+            <div class="col-6">
+                <label for="txtTotalRaciones" class="control-label">Total de Raciones</label>
+                <input type="number" min="0" id="txtTotalRaciones" class="form-control" readonly />
+            </div>
+        </div>
+        <br />
+        <div class="row">
+            <div class="col-6">
+                <label for="cbIdTipoAsistencia" class="control-label">Tipo de Asistencia</label>
+                <select class="form-select" id="cbIdTipoAsistencia" asp-for="@Model.EgresoAlimentos.IdTipoAsistencia" asp-items="ViewBag.TipoAsistencias" disabled required></select>
+                <span asp-validation-for="@Model.EgresoAlimentos.IdTipoAsistencia" class="text-danger"></span>
+            </div>
+        </div>
+        <br />
+        <div class="row">
+            <div class="col-6">
+                <label for="cbIdConvenio" class="control-label">Convenio</label>
+                <select class="form-select" id="cbIdConvenio" asp-for="@Model.EgresoAlimentos.IdConvenio" asp-items="ViewBag.Convenios" required></select>
+                <span asp-validation-for="@Model.EgresoAlimentos.IdConvenio" class="text-danger"></span>
+            </div>
+        </div> 
+        <br />
+        <div class="row">
+            <div class="col-6">
+                <label for="idTipoSalidaAlimento" class="control-label">Tipo de Salida de Alimentos</label>
+                <select class="form-select" id="idTipoSalidaAlimento" required>
+                    <option value="1" selected>Egreso de Alimentos</option>
+                    <option value="2">Traslado de Alimentos</option>
+                </select>
+            </div>
+        </div>
+        <br />
+        <br />
+
+        <div class="row float-end">
+            <div class="col-6">
+                <a type="button" class="btn btn-secondary btn" asp-action="Index">Regresar</a>
+            </div>
+            <div class="col-6">
+                <input type="button" value="Guardar" class="btn btn-primary camposAlmacenamiento" onclick="return ConfirmSave();" />
+            </div>
+        </div>
+
+    </form>
+</div>
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        $(document).ready(function () {
+
+            // carga las solicitudes
+            cargarSolicitudesProgramacion();
+
+            // Maneja cambio en el dropdown de solicitudes
+            $('#cbIdSolicitud').change(function () {
+                var solicitudId = $(this).val();
+                if (solicitudId) {
+                    cargarDatosSolicitud(solicitudId);
+                } else {
+                    limpiarCamposSolicitud();
+                }
+            });
+
+            var urlObj = new URL(window.location.href);
+            var type = urlObj.searchParams.get("type");
+            var id = window.location.pathname.split('/').pop();
+
+            if (parseInt(id) != 0) {
+                abrirYActualizarUrl(id, type);
+            }
+        });
+
+        function abrirYActualizarUrl(id, tipoApertura) {
+
+            // El tipo de apertura 1 indica que se var almacenar o editar un registro
+            // El tipo de apertura 2 indica solo de observación
+            if (tipoApertura == 1) {
+                $('.camposAlmacenamiento').show();
+                $("#frmEgreso input:not([disabled])").attr("disabled", false);  // Hace los inputs solo lectura
+                $("#frmEgreso select").prop("disabled", false); // Deshabilita los selects
+            } else {
+                $('.camposAlmacenamiento').hide();
+                $("#frmEgreso input").attr("disabled", true);  // Hace los inputs solo lectura
+                $("#frmEgreso select").prop("disabled", true); // Deshabilita los selects
+            }
+
+            if (id == 0) {
+
+                $('#idEgresoAlimentos').val(0);
+                $('#cbIdPrograma').val();
+                $('#cbIdConvenio').val();
+                $('#txtFechaSolicitud').val();
+                $('#txtTotalRaciones').val();
+                $('#cbIdTipoAsistencia').val();
+            }
+            else {
+
+                $.ajax({
+                    url: `@ViewData["rutaApp"]/EgresoAlimentos/ObtenerEgresoAlimentos/${id}`, // URL para obtener los datos
+                    type: 'GET',
+                    success: function (data) {
+
+                        console.log('data' + JSON.stringify(data));
+
+                        var ea = data.egresoAlimentos;
+
+                        var fechaFormateada = '';
+
+                        if (ea.fechaSolicitud != null) {
+                            var fecha = ea.fechaSolicitud;  // Fecha recibida
+                            var fechaFormateada = fecha.split("T")[0]; // Extrae solo la parte "YYYY-MM-DD"
+                        }
+
+                        // Llenar el formulario con los datos de Egreso de Alimentos
+                        $('#idEgresoAlimentos').val(ea.idEgresoAlimentos);
+                        $('#cbIdPrograma').val(ea.idPrograma);
+                        $('#cbIdConvenio').val(ea.idConvenio);
+                        $('#txtFechaSolicitud').val(fechaFormateada);
+                        $('#txtTotalRaciones').val(ea.totalRaciones);
+                        $('#cbIdTipoAsistencia').val(ea.idTipoAsistencia);
+                        $('#idTipoSalidaAlimento').val(ea.idTipoSalidaAlimento);
+
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error al obtener los datos del egreso de alimentos: ', error);
+                    }
+                });
+            }
+        }
+
+        // Función para cargar las solicitudes en programación
+        function cargarSolicitudesProgramacion() {
+            $.ajax({
+                url: '@Url.Action("GetSolicitudesProgramacion", "EgresoAlimentos")',
+                type: 'GET',
+                beforeSend: showLoading,
+                success: function (response) {
+                    var $dropdown = $('#cbIdSolicitud');
+                    var $alerta = $('#alertaNoSolicitudes');
+                    $dropdown.empty();
+                    $dropdown.append('<option value="">-- Seleccione una solicitud --</option>');
+
+                    if (response.success && response.data && response.data.length > 0) {
+                        $.each(response.data, function (index, item) {
+                            var texto = item.descripcion;
+                            $dropdown.append($('<option></option>').val(item.idSolicitud).text(texto));
+                        });
+                        $dropdown.prop('disabled', false); // habilitamos la lista
+                        $alerta.addClass('d-none'); // ocultamos la alerta al momento que si hay solicitudes
+                    } else {
+                        $dropdown.append($('<option></option>').val('').text('No hay solicitudes disponibles'));
+                        $dropdown.prop('disabled', true);  // deshabilitamos la lista
+                        $alerta.removeClass('d-none');
+                        if (!response.success) {
+                            showError(response.message);
+                        }
+                    }
+                },
+                error: function (xhr) {
+                    showError('Error al cargar solicitudes: ' + xhr.statusText);
+                },
+                complete: hideLoading
+            });
+        }
+
+        // Función para cargar datos de una solicitud específica
+        function cargarDatosSolicitud(solicitudId) {
+            showLoading();
+
+            $.ajax({
+                url: '@Url.Action("GetDatosSolicitud", "EgresoAlimentos")',
+                type: 'GET',
+                data: { id: solicitudId },
+                success: function (response) {
+                    if (response.success) {
+                        // 1. Fecha de Solicitud
+                        $('#txtFechaSolicitud').val(response.fechaIngresoDespacho);
+
+                        // 2. Total de Raciones
+                        $('#txtTotalRaciones').val(response.raciones);
+
+                        // 3. Departamento Solicitante (Programa)
+                        if (response.depto === "1") {
+                            $('#cbIdPrograma').val("1"); // 1 -> ASISTENCIA ALIMENTARIA - AA
+                        } else if (response.depto === "2") {
+                            $('#cbIdPrograma').val("2"); // 2 -> ALIMENTOS POR ACCIONES - APA
+                        }
+
+                        // 4. Tipo de Asistencia (Intervención)
+                        if (response.idIntervencion) {
+                            $('#cbIdTipoAsistencia').val(response.idIntervencion);
+                        }
+
+                    } else {
+                        showError(response.message);
+                        limpiarCamposSolicitud();
+                    }
+                },
+                error: function (xhr) {
+                    showError('Error al cargar datos: ' + xhr.statusText);
+                    limpiarCamposSolicitud();
+                },
+                complete: hideLoading
+            });
+        }
+
+        // Función para limpiar campos cuando no hay selección
+        function limpiarCamposSolicitud() {
+            $('#txtFechaSolicitud').val('');
+            $('#txtTotalRaciones').val('');
+            $('#cbIdPrograma').val('');            
+        }
+
+        // Funciones auxiliares de UI
+        function showLoading() {
+            $('button').prop('disabled', true);
+        }
+
+        function hideLoading() {
+            $('button').prop('disabled', false);
+        }
+
+        function showError(message) {
+            Swal.fire({
+                title: 'Error',
+                text: message,
+                icon: 'error'
+            });
+        }
+
+
+        function ConfirmSave() {
+            Swal.fire({
+                title: "Está seguro de Guardar el Egreso de Alimentos?",
+                showCancelButton: true,
+                confirmButtonText: "Guardar",
+                icon: "question"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    GuardarEgresoAlimentosBodega();
+                }
+            });
+        }
+
+        function GuardarEgresoAlimentosBodega() {
+            let egresoAlimentos = {
+                IdEgresoAlimentos: $("#idEgresoAlimentos").val(),
+                FechaSolicitud: $("#txtFechaSolicitud").val(),
+                IdPrograma: $("#cbIdPrograma").val(),
+                IdConvenio: $("#cbIdConvenio").val(),
+                TotalRaciones: $("#txtTotalRaciones").val(),
+                IdTipoAsistencia: $("#cbIdTipoAsistencia").val(),
+                IdTipoSalidaAlimento: $("#idTipoSalidaAlimento").val(),
+                IdSolicitud: $('#cbIdSolicitud').val()
+        };
+        console.log(egresoAlimentos)
+            // Validación de todos los datos
+            if (!egresoAlimentos.FechaSolicitud || !egresoAlimentos.IdPrograma || !egresoAlimentos.IdConvenio || !egresoAlimentos.TotalRaciones || !egresoAlimentos.IdTipoAsistencia || !egresoAlimentos.IdTipoSalidaAlimento) {
+                Swal.fire({
+                    title: "Error!",
+                    text: "Debe de Completar todos los campos.",
+                    icon: "warning"
+                });
+
+                return;
+            }
+
+            let datosEnvio = {
+                EgresoAlimentos: egresoAlimentos
+            };
+
+            $.ajax({
+                url: `@ViewData["rutaApp"]/EgresoAlimentos/GuardarEgresoAlimentos`,
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify(datosEnvio),
+                success: function (respuesta) {
+
+                    Swal.fire("Almacenado!", "", "success");
+
+                    // Aca Actualizamos la solicitud para quitarla del dropdown
+                    actualizarEstadoSolicitud(egresoAlimentos.IdSolicitud);
+
+                    // Redireccionar o limpiar formulario si es necesario
+                    window.location.href = `@ViewData["rutaApp"]/EgresoAlimentos/Index`;
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error al guardar:", error);
+                    alert("Ocurrió un error al guardar el Egreso de Alimentos.");
+                }
+            });
+        }
+
+        function actualizarEstadoSolicitud(idSolicitud) {
+            $.ajax({
+                url: `@ViewData["rutaApp"]/EgresoAlimentos/ActualizarEstadoSolicitud`,
+                type: "POST",
+                data: { idSolicitud: idSolicitud },
+                success: function (respuesta) {
+                    console.log(respuesta.mensaje);
+                },
+                error: function () {
+                    console.error("Error al actualizar el estado de la solicitud.");
+                }
+            });
+        }
+
+    </script>
+}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+

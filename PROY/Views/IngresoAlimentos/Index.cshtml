@@ -1,0 +1,267 @@
+﻿@using PROY.Enum
+@model PROY.ViewModels.IngresoAlimentosVM;
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
+<head>
+</head>
+@{
+
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@{
+    ViewData["Title"] = "Ingreso Alimentos";
+}
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Mensaje"]
+    </div>
+}
+
+
+<h2 class="float-start">Ingreso de Alimentos</h2> 
+@if (Model.Rol == "Encargado de Bodega" || Model.Rol == "Admin")
+{
+    <a class="btn btn-primary btn-sm float-end" asp-controller="IngresoAlimentos" asp-action="IngresoAlimentos" asp-route-id="0" asp-route-type="1"><i class="fas fa-plus-square"></i> Ingreso de Alimentos</a>
+}
+<p><br /></p>
+
+<br />
+
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th>No.</th>
+            <th>PROGRAMA</th>
+            <th>CONVENIO</th>
+            <th>LUGAR RECEPCIÓN</th>
+            <th>BODEGA RECEPCIÓN</th>
+            <th>ESTADO</th>
+            <th>OPCIONES</th>
+        </tr>
+    </thead>
+    <tbody>
+        @try
+        {
+            int indexCount = 0;
+
+            foreach (var item in Model.listaIngresoAlimentos)
+            {
+                <tr>
+                    <td>
+                        @{
+                            indexCount++;
+                        }
+                        @indexCount
+                    </td>
+                    <td>
+                        @{
+                            // Obtener la descripción usando el diccionario
+                            string descripcionPrograma = Model.ProgramaDict.TryGetValue(item.IdPrograma ?? 0, out var descPrograma)
+                            ? descPrograma
+                            : "Programa no encontrado";
+                        }
+                        @descripcionPrograma
+                    </td>
+                    <td>
+                        @{
+                            // Obtener la descripción usando el diccionario
+                            string descripcionConvenio = Model.ConvenioDict.TryGetValue(item.IdConvenio ?? 0, out var descConvenio)
+                            ? descConvenio
+                            : "Convenio no encontrado";
+                        }
+                        @descripcionConvenio
+                    </td>
+                    <td>
+                        @{
+                            // Obtener el Departamento usando el diccionario
+
+                            var idDepto = Model.ListaBodegas.Where(o => o.IdBodega == item.IdBodegaRecibe).Select(s => s.IdDepartamento).First();
+
+                            string descripcionDepartamento = Model.DepartamentoDict.TryGetValue(idDepto ?? 0, out var descDepto)
+                            ? descDepto
+                            : "Departamento no encontrado";
+
+                            // Obtener el Municipio usando el diccionario
+
+                            var idMun = Model.ListaBodegas.Where(o => o.IdBodega == item.IdBodegaRecibe).Select(s => s.IdMunicipio).First();
+
+                            string descripcionMunicipio = Model.MunicipioDict.TryGetValue(idMun ?? 0, out var descMuni)
+                            ? descMuni
+                            : "Municipio no encontrado";
+
+                            string lugarRecepcion = descripcionDepartamento + " " + descripcionMunicipio;
+                        }
+                        @lugarRecepcion
+                    </td>
+                    <td>
+                        @{
+                            // Obtener la descripción usando el diccionario
+                            string descripcionBodega = Model.BodegaDict.TryGetValue(item.IdBodegaRecibe ?? 0, out var descBodega)
+                            ? descBodega
+                            : "Bodega no encontrado";
+                        }
+                        @descripcionMunicipio
+                    </td>
+                    <td>
+                        @{
+                            // Obtener el Estado usando el diccionario
+                            string descripcionEstado = Model.EstadoIngresoDict.TryGetValue(item.IdEstadoIngreso ?? 0, out var descEstado)
+                            ? descEstado
+                            : "Estado no encontrado";
+                        }
+                        @descripcionEstado
+                    </td>
+                    <td class="text-center">
+
+                        @if (item.IdEstadoIngreso == (int)@EstadosIngresoEnum.Inicio) // 1: Iniciada
+                        { 
+                            @if (Model.Rol == "Encargado de Bodega" || Model.Rol == "Admin")
+                            {
+                                <a class="btn btn-info btn-sm" asp-controller="IngresoAlimentos" asp-action="IngresoAlimentos" asp-route-id="@item.IdIngresoAlimentos" asp-route-type="2"> Ver </a>
+                                <a class="btn btn-info btn-sm" asp-controller="IngresoAlimentos" asp-action="IngresoAlimentos" asp-route-id="@item.IdIngresoAlimentos" asp-route-type="1"> Editar </a>
+
+                                var idUsuario = Model.listaBitacoraInicio.Where(o => o.IdRegistro == item.IdIngresoAlimentos).Select(s => s.IdUsuario).First();
+
+                                // Se valida que el mismo usuario que crea el ingreso, puede eliminarlos
+                                if (idUsuario == Model.IdUsuario){
+                                    <a class="btn btn-danger btn-sm" asp-controller="IngresoAlimentos" asp-action="EliminarIngresoAlimentos" asp-route-id="@item.IdIngresoAlimentos" onclick="confirmarEliminacionIngreso(event)"><i class="fas fa-trash"></i> Eliminar</a>
+                                }
+                                
+                                <a class="btn btn-success btn-sm" asp-controller="IngresoAlimentos" asp-action="CambioEstado" asp-route-id="@item.IdIngresoAlimentos" asp-route-estado="2" onclick="confirmar(event, 'Está seguro de enviar el Ingreso de Alimentos a Recepción?')"> Recibir Alimentos </a>
+                            } 
+                            else
+                            {
+                                @* <a class="btn btn-info btn-sm" asp-controller="IngresoAlimentos" asp-action="JuntaReceptora" asp-route-id="@item.IdIngresoAlimentos" asp-route-type="2"> Ver Junta Recepción </a> *@
+                                @* <a class="btn btn-info btn-sm" asp-controller="IngresoAlimentos" asp-action="IngresoAlimentos" asp-route-id="@item.IdIngresoAlimentos" asp-route-type="2"> Ver Ingreso de Alimentos</a> *@
+                                <a class="btn btn-info btn-sm" asp-controller="IngresoAlimentos" asp-action="IngresoAlimentosFinalizado" asp-route-id="@item.IdIngresoAlimentos" asp-route-estado="1"> Ver Ingreso de Alimentos</a>
+
+                            }
+                        
+                        }
+                        @if (item.IdEstadoIngreso == (int)@EstadosIngresoEnum.EnRecepcionDeAlimentos) // 2: En recepción de Alimentos
+                        {
+                            @if (Model.Rol == "Encargado de Bodega" || Model.Rol == "Admin")
+                            {
+                                <a class="btn btn-info btn-sm" asp-controller="IngresoAlimentos" asp-action="RecepcionAlimentos" asp-route-id="@item.IdIngresoAlimentos" asp-route-type="1"> Recibir Ingreso </a>
+                                <a class="btn btn-info btn-sm" asp-controller="IngresoAlimentos" asp-action="CambioEstado" asp-route-id="@item.IdIngresoAlimentos" asp-route-estado="3" onclick="confirmar(event, 'Está seguro de enviar el Ingreso de Alimentos a Registro 1-H?')"> Crear 1-H </a>
+                            }
+                            else
+                            {
+                                @* <a class="btn btn-info btn-sm" asp-controller="IngresoAlimentos" asp-action="RecepcionAlimentos" asp-route-id="@item.IdIngresoAlimentos" asp-route-type="2"> Ver Recepción Ingreso </a> *@
+                                <a class="btn btn-info btn-sm" asp-controller="IngresoAlimentos" asp-action="IngresoAlimentosFinalizado" asp-route-id="@item.IdIngresoAlimentos" asp-route-estado="2"> Ver Ingreso de Alimentos</a>
+                            }
+                        }
+                        @if (item.IdEstadoIngreso == (int)@EstadosIngresoEnum.Registrar1H) // 3: Registrar 1-H
+                        {
+                            @if (Model.Rol == "Encargado de Bodega" || Model.Rol == "Admin")
+                            {
+                                <a class="btn btn-info btn-sm" asp-controller="IngresoAlimentos" asp-action="RegistroForma1H" asp-route-id="@item.IdIngresoAlimentos" asp-route-type="1"> Registrar 1-H </a>
+                            }
+                            else
+                            {
+                                @* <a class="btn btn-info btn-sm" asp-controller="IngresoAlimentos" asp-action="RegistroForma1H" asp-route-id="@item.IdIngresoAlimentos" asp-route-type="2"> Ver Registo 1-H </a> *@
+                                <a class="btn btn-info btn-sm" asp-controller="IngresoAlimentos" asp-action="IngresoAlimentosFinalizado" asp-route-id="@item.IdIngresoAlimentos" asp-route-estado="3"> Ver Ingreso de Alimentos</a>
+                            }
+                        }
+                        @if (item.IdEstadoIngreso == (int)@EstadosIngresoEnum.PendienteDeFinalizar) // 4: Pendiente de Finalizar
+                        {
+                            @if (Model.Rol == "Encargado de Bodega" || Model.Rol == "Admin")
+                            {
+                                <a class="btn btn-info btn-sm" asp-controller="IngresoAlimentos" asp-action="CopiasFirmadas" asp-route-id="@item.IdIngresoAlimentos" asp-route-type="1"> Copias Firmadas </a>
+                            }
+                            else
+                            {
+                                @* <a class="btn btn-info btn-sm" asp-controller="IngresoAlimentos" asp-action="CopiasFirmadas" asp-route-id="@item.IdIngresoAlimentos" asp-route-type="2"> Ver Copias Firmadas </a> *@
+                                <a class="btn btn-info btn-sm" asp-controller="IngresoAlimentos" asp-action="IngresoAlimentosFinalizado" asp-route-id="@item.IdIngresoAlimentos" asp-route-estado="4"> Ver Ingreso de Alimentos</a>
+                            }
+                        }
+                        @if (item.IdEstadoIngreso == (int)@EstadosIngresoEnum.IngresoFinalizado) // 5: Ingreso Finalizado
+                        {
+
+                            @* @if (Model.Rol == "Jefe de Bodega" || Model.Rol == "Admin")
+                            {
+                                <a class="btn btn-info btn-sm" asp-controller="IngresoAlimentos" asp-action="CopiasFirmadas" asp-route-id="@item.IdIngresoAlimentos" asp-route-type="1"> Copias Firmadas </a>
+                            }
+                            else
+                            {
+                                <a class="btn btn-info btn-sm" asp-controller="IngresoAlimentos" asp-action="CopiasFirmadas" asp-route-id="@item.IdIngresoAlimentos" asp-route-type="2"> Ver Copias Firmadas </a>
+                            } *@
+
+                            <a class="btn btn-info btn-sm" asp-controller="IngresoAlimentos" asp-action="IngresoAlimentosFinalizado" asp-route-id="@item.IdIngresoAlimentos" asp-route-estado="5"> Ver Ingreso de Alimentos</a>
+                        }
+                        
+                    </td>
+
+                </tr>
+            }
+        }
+        catch
+        {
+
+        }
+
+    </tbody>
+</table>
+
+
+
+@section Scripts {
+
+    <script>
+
+        function confirmar(e, mensaje){
+
+            e.preventDefault();
+
+            Swal.fire({
+              title: mensaje,
+              showCancelButton: true,
+              confirmButtonText: "Enviar",
+              icon: "question"
+            }).then((result) => {
+              if (result.isConfirmed) {
+
+                  window.location.href = e.target.href;
+
+                  return true;
+              } else{
+                  e.preventDefault();
+              }
+            });
+
+        }
+
+        function confirmarEliminacionIngreso(e){
+
+            e.preventDefault();
+
+            Swal.fire({
+                title: "Desea eliminar el Ingreso de Alimentos?",
+                text: "Este proceso eliminará el Ingreso de Alimentos.",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#3085d6",
+                cancelButtonColor: "#d33",
+                confirmButtonText: "Eliminar!"
+            }).then((result) => {
+                if (result.isConfirmed) {
+
+                    Swal.fire({
+                        title: "Eliminado!",
+                        text: "Ingreso eliminado con éxito.",
+                        icon: "success"
+                    });
+
+                    window.location.href = e.target.href;
+
+                    return true;
+                } else{
+                    e.preventDefault();
+                }
+            });
+
+        }
+    </script>
+}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>

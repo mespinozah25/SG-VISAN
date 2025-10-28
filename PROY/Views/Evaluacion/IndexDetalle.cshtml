@@ -1,0 +1,721 @@
+﻿@inject IHttpContextAccessor HttpContextAccessor
+<head>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
+    @* <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" /> *@
+    <style>
+        .modal-header .btn-close {
+            color: white !important; /* Asegura que el ícono de la "X" sea blanco */
+            opacity: 1;
+            -webkit-filter: invert(1);
+        }
+    </style>
+
+</head>
+
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Mensaje"]
+    </div>
+}
+
+@model PROY.ViewModels.SolicitudesVM;
+
+@{
+    ViewData["rutaApp"] = @Model.rutaApp;
+    //var claimDepto = User.FindFirst("Depto");
+    var depto = "";
+
+    try
+    {
+        depto = User.FindFirst("depto")?.Value;
+    }
+    catch
+    {
+
+    }
+
+    var rol = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+
+    // Usamos el HttpContext inyectado para acceder al QueryString
+    var valorK = HttpContextAccessor.HttpContext?.Request.Query["k"].ToString();
+    bool tieneValorK = !string.IsNullOrEmpty(valorK);
+    
+    var valorRetorno = HttpContextAccessor.HttpContext?.Request.Query["returnController"].ToString();
+    var valorProceso = HttpContextAccessor.HttpContext?.Request.Query["proceso"].ToString();
+    var condicion = "";
+
+    if ((depto == "DAAN" && rol != "Admin") || (tieneValorK && valorK == "1" && rol == "Admin"))
+        condicion = "1";
+    else if ((depto == "DAPA" && rol != "Admin") || (tieneValorK && valorK == "2" && rol == "Admin"))
+        condicion = "2";
+}
+
+@if (condicion == "1")
+{
+    <input type="hidden" name="idSOL" value="@Model.Solicitud.IdSolicitud" />
+    <h2 class="float-start">MEDIOS DE VERIFICACION SOLICITUD @Model.Solicitud.Codigo</h2>    
+    @if (valorRetorno == "Ejecucion" || ViewBag.RC=="Ejecucion")
+    {
+        <a class="btn btn-warning btn-sm btn-fixed-end" style="margin-right:135px; position:absolute; z-index:1;" asp-controller="Ejecucion" asp-action="Index" asp-route-k="1"><i class="fas fa-undo"></i> Regresar</a>
+    }
+    else if (valorRetorno=="Programacion" || ViewBag.RC=="Programacion")
+    {
+        <a class="btn btn-warning btn-sm btn-fixed-end" style="margin-right:135px; position:absolute; z-index:1;" asp-controller="Programacion" asp-action="Index" asp-route-k="1"><i class="fas fa-undo"></i> Regresar</a>
+    }
+    else
+    {
+        <a class="btn btn-warning btn-sm btn-fixed-end" style="margin-right:135px; position:absolute; z-index:1;" asp-controller="Evaluacion" asp-action="Index" asp-route-k="1"><i class="fas fa-undo"></i> Regresar</a>
+    }
+    
+
+    <a class="btn btn-primary btn-sm btn-fixed-end" style="margin-right:15px; position:absolute; z-index:1;" onclick="abrirModalYActualizarUrl(@Model.Solicitud.IdSolicitud,0,'@Model.Solicitud.Codigo')"><i class="fas fa-plus-square"></i> Validación</a>
+    <p><br /></p>
+    <table class="table" style="width:100%; position:relative; z-index:2;">
+        <thead>
+            <tr>
+                <th>
+                    ID EVALUACION
+                </th>
+                <th>
+                    TIPO VALIDACIÓN
+                </th>
+                <th>
+                    ARCHIVO
+                </th>
+                <th>
+                    OBSERVACIONES
+                </th>                
+                <th>OPCIONES</th>
+            </tr>
+        </thead>
+        <tbody>
+            @try
+            {
+                foreach (var item in Model.listaDetallesEvaluacion)
+                {
+                    <tr>
+                        <td>
+                            @item.IdDetalleEvaluacion
+                        </td>
+                        <td>
+                            @*item.Descripcion*@
+                            @{
+                                // Obtener la descripción usando el diccionario
+                                string descripcionTipoValidacion = Model.ValidacionDict.TryGetValue(item.IdTipoValidacion, out var descTipoValidacion)
+                                ? descTipoValidacion
+                                : "Validación no encontrada";
+                            }
+                            @descripcionTipoValidacion
+                        </td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(item.Archivo))
+                            {
+                                var extension = System.IO.Path.GetExtension(item.Archivo).ToLower();
+
+                                if (extension == ".pdf")
+                                {
+                                    <a href="@Url.Action("PreviewFile", new { fileName = item.Archivo })" target="_blank">
+                                        <i class="fas fa-file-pdf"></i> Ver PDF
+                                    </a>
+                                }
+                                else if (extension == ".xls" || extension == ".xlsx")
+                                {
+                                    @* <a href="@Url.Action("PreviewFile", new { fileName = item.Archivo })" target="_blank">
+                                       <i class="fas fa-file-excel"></i> Ver Excel
+                                       </a> *@
+                                    @*<a class="btn btn-success btn-sm" style="margin-right:160px;" data-bs-toggle="modal" data-bs-target="#wCargaExcel" onclick="limpiarINFO()">
+                                         <i class="fas fa-plus-square"></i> Ver Excel
+                                     </a>*@
+                                    <a href="@Url.Action("DownloadFile", new { fileName = item.Archivo })">
+                                        <i class="fas fa-file-excel"></i> Descargar
+                                    </a>
+                                }
+                                else if (extension==".doc" || extension == ".docx")
+                                {
+                                    <a href="@Url.Action("DownloadFile", new { fileName = item.Archivo })">
+                                        <i class="fas icon-file-word"></i> Descargar
+                                    </a>
+                                }
+                                else if (extension==".ppt" || extension == ".pptx")
+                                {
+                                    <a href="@Url.Action("DownloadFile", new { fileName = item.Archivo })">
+                                        <i class="fas icon-file-ppt"></i> Descargar
+                                    </a>
+                                }
+                            }
+                            else
+                            {
+                                <span>No disponible</span>
+                            }
+                        </td>
+                        <td>
+                            @item.Observaciones
+                        </td>                        
+                        <td>
+                            <a class="btn btn-info btn-sm" onclick="abrirModalYActualizarUrl(@item.IdSolicitud, @item.IdDetalleEvaluacion,'@item.Solicitud.Codigo')"><i class="fas fa-edit"></i> Editar...</a>
+                            <a class="btn btn-danger btn-sm" asp-action="EliminarDetalleEvaluacion" asp-route-idEvaluacion="@item.IdSolicitud" asp-route-idDetalleEvaluacion="@item.IdDetalleEvaluacion" onclick="confirmarDetalle(event)"><i class="fas fa-trash"></i> Eliminar</a>
+                        </td>
+                    </tr>
+                }
+            }
+            catch
+            {
+
+            }
+        </tbody>
+    </table>
+}
+else if (condicion == "2")
+{
+    <input type="hidden" name="idSOL" value="@Model.Solicitud.IdSolicitud" />    
+    <h2 class="float-start">MEDIOS DE VERIFICACION SOLICITUD @Model.Solicitud.Codigo</h2> 
+    
+    @if (valorRetorno == "Ejecucion" || ViewBag.RC == "Ejecucion")
+    {
+        <a class="btn btn-warning btn-sm btn-fixed-end" style="margin-right:300px; position:absolute; z-index:1;" asp-controller="Ejecucion" asp-action="Index" asp-route-k="2"><i class="fas fa-undo"></i> Regresar</a>
+    }
+    else if (valorRetorno == "Programacion" || ViewBag.RC == "Programacion")
+    {
+        <a class="btn btn-warning btn-sm btn-fixed-end" style="margin-right:300px; position:absolute; z-index:1;" asp-controller="Programacion" asp-action="Index" asp-route-k="2"><i class="fas fa-undo"></i> Regresar</a>
+    }
+    else
+    {
+        <a class="btn btn-warning btn-sm btn-fixed-end" style="margin-right:300px; position:absolute; z-index:1;" asp-controller="Evaluacion" asp-action="Index" asp-route-k="2"><i class="fas fa-undo"></i> Regresar</a>
+    }
+    
+    <a class="btn btn-primary btn-sm btn-fixed-end" style="margin-right:50px; position:absolute; z-index:1;" onclick="abrirModalYActualizarUrlAPA(@Model.Solicitud.IdSolicitud,0,'@Model.Solicitud.Codigo')"><i class="fas fa-plus-square"></i> Validación</a>
+    <p><br /></p>
+    <table class="table" style="width:100%; position:relative; z-index:2;">
+        <thead>
+            <tr>
+                <th>
+                    ID EVALUACION
+                </th>
+                <th>
+                    DESCRIPCION
+                </th>
+                <th>
+                    ARCHIVO
+                </th>
+                <th>
+                    OBSERVACIONES
+                </th>                
+                <th>OPCIONES</th>
+            </tr>
+        </thead>
+        <tbody>
+            @try
+            {
+                if (Model.listaDetallesEvaluacionAPA != null)
+                {
+                    foreach (var item in Model.listaDetallesEvaluacionAPA)
+                    {
+                        <tr>
+                            <td>
+                                @item.IdDetalleEvaluacion
+                            </td>
+                            <td>
+                                @*item.Descripcion*@
+                                @{
+                                    // Obtener la descripción usando el diccionario
+                                    string descripcionTipoValidacion = Model.ValidacionDict.TryGetValue(item.IdTipoValidacion, out var descTipoValidacion)
+                                    ? descTipoValidacion
+                                    : "Validación no encontrada";
+                                }
+                                @descripcionTipoValidacion
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(item.Archivo))
+                                {
+                                    var extension = System.IO.Path.GetExtension(item.Archivo).ToLower();
+
+                                    if (extension == ".pdf")
+                                    {
+                                        <a href="@Url.Action("PreviewFile", new { fileName = item.Archivo })" target="_blank">
+                                            <i class="fas fa-file-pdf"></i> Ver PDF
+                                        </a>
+                                    }
+                                    else if (extension == ".xls" || extension == ".xlsx")
+                                    {
+                                        @* <a href="@Url.Action("PreviewFile", new { fileName = item.Archivo })" target="_blank">
+                                           <i class="fas fa-file-excel"></i> Ver Excel
+                                           </a> *@
+                                        @*<a class="btn btn-success btn-sm" style="margin-right:160px;" data-bs-toggle="modal" data-bs-target="#wCargaExcel" onclick="limpiarINFO()">
+                                             <i class="fas fa-plus-square"></i> Ver Excel
+                                         </a>*@
+                                        <a href="@Url.Action("DownloadFile", new { fileName = item.Archivo })">
+                                            <i class="fas fa-file-excel"></i> Descargar
+                                        </a>
+                                    }
+                                    else if (extension==".doc" || extension == ".docx")
+                                    {
+                                        <a href="@Url.Action("DownloadFile", new { fileName = item.Archivo })">
+                                            <i class="fas icon-file-word"></i> Descargar
+                                        </a>
+                                    }
+                                    else if (extension==".ppt" || extension == ".pptx")
+                                    {
+                                        <a href="@Url.Action("DownloadFile", new { fileName = item.Archivo })">
+                                            <i class="fas icon-file-ppt"></i> Descargar
+                                        </a>
+                                    }
+                                }
+                                else
+                                {
+                                    <span>No disponible</span>
+                                }
+                            </td>
+                            <td>
+                                @item.Observaciones
+                            </td>
+                            <td>
+                                <a class="btn btn-info btn-sm" onclick="abrirModalYActualizarUrlAPA(@item.IdSolicitud, @item.IdDetalleEvaluacion, '@item.Solicitud.Codigo')"><i class="fas fa-edit"></i> Editar</a>
+                                <a class="btn btn-danger btn-sm" asp-action="EliminarDetalleEvaluacion" asp-route-idEvaluacion="@item.IdSolicitud" asp-route-idDetalleEvaluacion="@item.IdDetalleEvaluacion" onclick="confirmarDetalle(event)"><i class="fas fa-trash"></i> Eliminar</a>
+                            </td>
+                        </tr>
+                    }
+                }                
+            }
+            catch
+            {
+
+            }
+        </tbody>
+    </table>
+}
+
+@if (condicion == "1")
+{
+    <!-- Modal -->
+    <div class="modal fade" id="wAddEditDetalleEvaluacion" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content" style="height:530px;">
+               
+                @*asp-route-returnController="@valorRetorno"*@
+                <form asp-action="GuardarDetalleEvaluacion" asp-controller="Evaluacion" asp-route-idDetalleEvaluacion="@Model.DetalleEvaluacion.IdDetalleEvaluacion" asp-route-k="1" asp-route-returnController="@(ViewBag.RC ?? "Evaluacion")" asp-route-proceso="@valorProceso" enctype="multipart/form-data" method="post">
+                    <div class="modal-header bg-secondary">
+                        <h5 class="modal-title text-white" id="lblModalTitle">@ViewBag.ModalTitle</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <input type="hidden" id="hiddenEvaluacionId" name="idEvaluacion" asp-for="@Model.Solicitud.IdSolicitud" />
+                        <input type="hidden" id="hiddenDetEvaluacionId" name="idDetalleEvaluacion" asp-for="@Model.DetalleEvaluacion.IdDetalleEvaluacion" />
+                        @* <div class="form-group">
+                        <label>Correlativo</label>
+                        <input asp-for="@Model.Solicitud.Correlativo" class="form-control" required/>
+                        <span asp-validation-for="@Model.Solicitud.Correlativo" class="text-danger"></span>
+                        </div> *@
+                        @*<div class="form-group">
+                            <label class="control-label">Descripcion</label>
+                            <input class="form-control" id="txtDescripcionEval" asp-for="@Model.DetalleEvaluacion.Descripcion" required />
+                            <span asp-validation-for="@Model.DetalleEvaluacion.Descripcion" class="text-danger"></span>
+                        </div>*@
+                        <div class="form-group">
+                            <label for="cbTipoValidacion" class="control-label">Tipo de validación</label>
+                            <select class="form-select" id="cbTipoValidacion" asp-for="@Model.DetalleEvaluacion.IdTipoValidacion" asp-items="ViewBag.Validaciones" required></select>
+                            <span asp-validation-for="@Model.DetalleEvaluacion.IdTipoValidacion" class="text-danger"></span>
+                        </div>
+                        <div>
+                            <label class="control-label">Medio de verificación actual</label>
+                            <input asp-for="@Model.DetalleEvaluacion.Archivo" type="text" id="oldFileEval" class="form-control" disabled />
+                        </div>
+                        <div class="form-group">
+                            <label for="file">Medio de verificación:</label>
+                            <input type="file" name="file" id="fileEval" class="form-control" />
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label">Observaciones</label>
+                            <textarea class="form-control" rows="3" id="txtObservacionesEval" asp-for="@Model.DetalleEvaluacion.Observaciones" required ></textarea>
+                            <span asp-validation-for="@Model.DetalleEvaluacion.Observaciones" class="text-danger"></span>
+                        </div>                    
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                        <input type="submit" value="Guardar" class="btn btn-primary" onclick="enviarHiddenField()" />
+                        @* <input type="submit" value="Guardar" class="btn btn-primary" /> *@
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="wCargaExcel" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            
+            <div class="modal-content" style="min-height:750px;">
+                <form id="uploadExcelForm" enctype="multipart/form-data">
+                    <div class="modal-header bg-secondary">
+                        <h5 class="modal-title text-white" id="lblModalTitle">Cargar Excel</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <input type="hidden" id="hiddenSolicitudId" name="idSolicitud" asp-for="@Model.Solicitud.IdSolicitud" />
+
+                        <div class="form-group">
+                            <label for="file">Selecciona archivo excel:</label>
+                            <div class="row">
+                                <div class="col-10">
+                                    <input type="file" name="fileExcel" id="fileExcel" class="form-control" />
+                                </div>
+                                <div class="col-2">
+                                    <button type="button" class="btn btn-primary" onclick="cargarINFO()">Cargar</button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                    <div>
+                    </div>
+
+                    <h2>Datos del Archivo Excel</h2>
+
+                    <table class="table" id="excelDataTable">
+                        <thead>
+                            <tr>
+                                <th>DEPARTAMENTO</th>
+                                <th>MUNICIPIO</th>
+                                <th>COMUNIDAD</th>
+                                <th>NO. BENEFICIARIOS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var row in Model.listaDetallesEvaluacion)
+                            {
+                                <tr>
+                                    <td>@row.IdDetalleEvaluacion</td>
+                                    <td>@row.Archivo</td>
+                                    <td>@row.IdTipoValidacion</td>
+                                    <td>@row.Observaciones</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </form>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-secondary" asp-controller="Solicitud" asp-route-id="@Model.Solicitud.IdSolicitud" onclick="guardarINFO(document.getElementById('hiddenSolicitudId').value)">Guardar</button>
+                </div>
+
+            </div>
+        </div>
+    </div>    
+}
+else if (condicion == "2")
+{
+    <!-- Modal -->
+    <div class="modal fade" id="wAddEditDetalleEvaluacionAPA" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content" style="height:530px;">
+                <form asp-action="GuardarDetalleEvaluacion" asp-controller="Evaluacion" asp-route-idDetalleEvaluacion="@Model.DetalleEvaluacionAPA.IdDetalleEvaluacion" asp-route-k="2" asp-route-returnController="@valorRetorno" asp-route-proceso="@valorProceso" enctype="multipart/form-data" method="post">
+                    <div class="modal-header bg-secondary">
+                        <h5 class="modal-title text-white" id="lblModalTitleAPA">@ViewBag.ModalTitle</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <input type="hidden" id="hiddenEvaluacionId" name="idEvaluacion" asp-for="@Model.Solicitud.IdSolicitud" />
+                        <input type="hidden" id="hiddenDetEvaluacionId" name="idDetalleEvaluacion" asp-for="@Model.DetalleEvaluacionAPA.IdDetalleEvaluacion" />
+                        @* <div class="form-group">
+                        <label>Correlativo</label>
+                        <input asp-for="@Model.Solicitud.Correlativo" class="form-control" required/>
+                        <span asp-validation-for="@Model.Solicitud.Correlativo" class="text-danger"></span>
+                        </div> *@
+                        @*<div class="form-group">
+                            <label class="control-label">Descripción</label>
+                            <input class="form-control" id="txtDescripcionEval" asp-for="@Model.DetalleEvaluacionAPA.Descripcion" required />
+                            <span asp-validation-for="@Model.DetalleEvaluacionAPA.Descripcion" class="text-danger"></span>
+                        </div>*@
+                        <div class="form-group">
+                            <label for="cbTipoValidacion" class="control-label">Tipo de validación</label>
+                            <select class="form-select" id="cbTipoValidacion" asp-for="@Model.DetalleEvaluacionAPA.IdTipoValidacion" asp-items="ViewBag.Validaciones" required></select>
+                            <span asp-validation-for="@Model.DetalleEvaluacionAPA.IdTipoValidacion" class="text-danger"></span>
+                        </div>
+                        <div>
+                            <label class="control-label">Archivo actual</label>
+                            <input asp-for="@Model.DetalleEvaluacionAPA.Archivo" type="text" id="oldFileEval" class="form-control" disabled />
+                        </div>
+                        <div class="form-group">
+                            <label for="file">Selecciona un archivo:</label>
+                            <input type="file" name="file" id="fileEval" class="form-control" />
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label">Observaciones</label>
+                            <textarea class="form-control" rows="3" id="txtObservacionesEval" asp-for="@Model.DetalleEvaluacionAPA.Observaciones" required ></textarea>
+                            <span asp-validation-for="@Model.DetalleEvaluacionAPA.Observaciones" class="text-danger"></span>
+                        </div>                    
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                        <input type="submit" value="Guardar" class="btn btn-primary" onclick="enviarHiddenField()" />
+                        @* <input type="submit" value="Guardar" class="btn btn-primary" /> *@
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="wCargaExcel" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content" style="height:750px;">
+                <form id="uploadExcelForm" enctype="multipart/form-data">
+                    <div class="modal-header bg-secondary">
+                        <h5 class="modal-title text-white" id="lblModalTitle">CARGA MASIVA BENEFICIARIOS SOLICITUD @Model.Solicitud.Codigo</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <input type="hidden" id="hiddenSolicitudId" name="idSolicitud" asp-for="@Model.Solicitud.IdSolicitud" />
+
+                        <div class="form-group">
+                            <label for="file">Selecciona archivo excel:</label>
+                            <div class="row">
+                                <div class="col-10">
+                                    <input type="file" name="fileExcel" id="fileExcel" class="form-control" />
+                                </div>
+                                <div class="col-2">
+                                    <button type="button" class="btn btn-primary" onclick="cargarINFO()">Cargar</button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                    <div>
+                    </div>
+
+                    <h2>Datos del Archivo Excel</h2>
+
+                    <table class="table" id="excelDataTable">
+                        <thead>
+                            <tr>
+                                <th>DEPARTAMENTO</th>
+                                <th>MUNICIPIO</th>
+                                <th>COMUNIDAD</th>
+                                <th>NO. BENEFICIARIOS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var row in Model.listaDetallesEvaluacionAPA)
+                            {
+                                <tr>
+                                    <td>@row.IdDetalleEvaluacion</td>
+                                    <td>@row.Archivo</td>
+                                    <td>@row.IdTipoValidacion</td>
+                                    <td>@row.Observaciones</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </form>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-secondary" asp-controller="Solicitud" asp-route-id="@Model.Solicitud.IdSolicitud" onclick="guardarINFO(document.getElementById('hiddenSolicitudId').value)">Guardar</button>
+                </div>
+
+            </div>
+        </div>
+    </div>    
+}
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+
+<script>
+
+    $(document).ready(function () {
+        var abrirModalEditar = '@ViewBag.AbrirModalEditar';
+        //console.log(abrirModalEditar);
+        if (abrirModalEditar === 'edit') {
+            var modal = new bootstrap.Modal(document.getElementById('wAddEditDetalleEvaluacion'));
+            modal.show();
+            //abrirModalYActualizarUrl(0);
+        }
+        else {
+            //alert('xxxxx');
+            //console.log(abrirModalEditar);
+            $('#wAddEditDetalleEvaluacion').on('show.bs.modal', function (event) {
+
+                $('#hiddenDetEvaluacionId').val(0);
+                //$('#cbIntervencion').val('');
+                //$('#txtDescripcionEval').val('');
+                $('#cbTipoValidacion').val('');
+                $('#txtObservacionesEval').val('');
+                //$('#txtComunidad').val('');
+                //$('#txtCantBenef').val('');
+                //$('#oldfile').val('');
+            });
+        }
+    });    
+
+    function abrirModalYActualizarUrl(idEvaluacion, idDetalleEvaluacion, codigo) {
+        //alert(valorProceso);
+        const nuevaUrl = `@ViewData["rutaApp"]/Evaluacion/IndexDetalle?idEvaluacion=${idEvaluacion}&idDetalleEvaluacion=${idDetalleEvaluacion}`;
+        
+        history.pushState(null, '', nuevaUrl);
+        //alert(nuevaUrl);
+        //alert('SOL:' + idSolicitud + ' DET:' + idDetalle);
+        ///alert('PARAMS:' + idEvaluacion + '--' + idDetalleEvaluacion);
+        
+        if (idDetalleEvaluacion == 0) {
+            var ventanaTitle = document.getElementById("lblModalTitle");
+            ventanaTitle.textContent = "REGISTRO VALIDACIÓN SOLICITUD " + codigo;
+
+            $('#hiddenDetEvaluacionId').val(0);
+            //$('#cbIntervencion').val('');
+            //$('#txtDescripcionEval').val('');
+            $('#cbTipoValidacion').val('');
+            //$('#cbMunicipio').val('');
+            $('#txtObservacionesEval').val('');            
+            $('#oldFileEval').val('');
+        }
+        else {
+            //$('#lblModalTitle').val('MODIFICAR SOLICITUD');
+            var ventanaTitle = document.getElementById("lblModalTitle");
+            ventanaTitle.textContent = "MODIFICAR DETALLE DE SOLICITUD";
+
+        }
+
+        // Abre el modal
+        var modal = new bootstrap.Modal(document.getElementById('wAddEditDetalleEvaluacion'));
+        modal.show();
+
+        // Llamada AJAX para obtener los datos de la solicitud
+        $.ajax({
+            url: `@ViewData["rutaApp"]/Evaluacion/ObtenerDetalleEvaluacion?idDetalleEvaluacion=${idDetalleEvaluacion}`, // URL para obtener los datos
+            type: 'GET',
+            success: function (data) {
+                console.log('data' + JSON.stringify(data));
+                // Llenar el formulario del modal con los datos de la solicitud
+                $('#hiddenDetEvaluacionId').val(data.idDetalleEvaluacion);
+                //$('#cbIntervencion').val(data.idIntervencion);
+                //$('#txtDescripcionEval').val(data.descripcion);
+                $('#cbTipoValidacion').val(data.idTipoValidacion);
+                $('#txtObservacionesEval').val(data.observaciones);                
+                $('#oldFileEval').val(data.archivo);
+
+                var ventanaTitle = document.getElementById("lblModalTitle");
+                ventanaTitle.textContent = "MODIFICAR VALIDACIÓN SOLICITUD " + codigo;
+            },
+            error: function (xhr, status, error) {
+                console.error('Error al obtener los datos de la solicitud:', error);
+            }
+        });
+
+    }
+
+    function abrirModalYActualizarUrlAPA(idEvaluacion, idDetalleEvaluacion, codigo) {
+        //alert(valorProceso);
+        const nuevaUrl = `@ViewData["rutaApp"]/Evaluacion/IndexDetalle?idEvaluacion=${idEvaluacion}&idDetalleEvaluacion=${idDetalleEvaluacion}`;
+        
+        history.pushState(null, '', nuevaUrl);
+        //alert(nuevaUrl);
+        //alert('SOL:' + idSolicitud + ' DET:' + idDetalle);
+        ///alert('PARAMS:' + idEvaluacion + '--' + idDetalleEvaluacion);
+        
+        if (idDetalleEvaluacion == 0) {
+            var ventanaTitle = document.getElementById("lblModalTitleAPA");
+            ventanaTitle.textContent = "REGISTRO VALIDACIÓN SOLICITUD " + codigo;
+
+            $('#hiddenDetEvaluacionId').val(0);
+            //$('#cbIntervencion').val('');
+            //$('#txtDescripcionEval').val('');
+            $('#cbTipoValidacion').val('');
+            //$('#cbMunicipio').val('');
+            $('#txtObservacionesEval').val('');            
+            $('#oldFileEval').val('');
+        }
+        else {
+            //$('#lblModalTitle').val('MODIFICAR SOLICITUD');
+            var ventanaTitle = document.getElementById("lblModalTitleAPA");
+            ventanaTitle.textContent = "MODIFICAR VALIDACIÓN SOLICITUD " + codigo;
+
+        }
+
+        // Abre el modal
+        var modal = new bootstrap.Modal(document.getElementById('wAddEditDetalleEvaluacionAPA'));
+        modal.show();
+
+        // Llamada AJAX para obtener los datos de la solicitud
+        $.ajax({
+            url: `@ViewData["rutaApp"]/Evaluacion/ObtenerDetalleEvaluacionAPA?idDetalleEvaluacion=${idDetalleEvaluacion}`, // URL para obtener los datos
+            type: 'GET',
+            success: function (data) {
+                //console.log('data' + JSON.stringify(data));
+                // Llenar el formulario del modal con los datos de la solicitud
+                $('#hiddenDetEvaluacionId').val(data.idDetalleEvaluacion);
+                //$('#cbIntervencion').val(data.idIntervencion);
+                //$('#txtDescripcionEval').val(data.descripcion);
+                $('#cbTipoValidacion').val(data.idTipoValidacion);
+                $('#txtObservacionesEval').val(data.observaciones);                
+                $('#oldFileEval').val(data.archivo);
+
+                var ventanaTitle = document.getElementById("lblModalTitleAPA");
+                ventanaTitle.textContent = "MODIFICAR VALIDACIÓN SOLICITUD " + codigo;
+            },
+            error: function (xhr, status, error) {
+                console.error('Error al obtener los datos de la solicitud:', error);
+            }
+        });
+    }
+
+    function limpiarINFO() {
+        var table = $('#excelDataTable').DataTable();
+        
+        $('#fileExcel').val('');
+        // Limpiar la tabla de datos
+        table.clear().draw();
+        
+    }
+
+    function enviarHiddenField() {
+        var idEvaluacion = document.getElementById("hiddenEvaluacionId").value;
+        var idDetalleEvaluacion = document.getElementById("hiddenDetEvaluacionId").value;
+
+        //alert('IDs enviados: ' + idEvaluacion + '----' + idDetalleEvaluacion);
+
+        $.ajax({
+            url: '@ViewData["rutaApp"]/Evaluacion/IndexDetalle', // La URL del método en el controlador
+            type: 'POST',
+            data: { idEvaluacion: idEvaluacion, idDetalleEvaluacion: idDetalleEvaluacion, k: '1' }, // Enviar los datos
+            success: function (response) {
+                console.log('Datos enviados correctamente:', response);
+            },
+            error: function (xhr, status, error) {
+                console.error('Error al enviar los datos:', error);
+            }
+        });
+    }
+
+    window.onpopstate = function (event) {
+        // Cierra el modal si el usuario va hacia atrás
+        var modalElement = document.getElementById('wAddEditDetalleEvaluacion');
+        var modal = bootstrap.Modal.getInstance(modalElement);
+
+        if (modal) {
+            modal.hide();
+        }
+    };
+
+    function confirmarDetalle(e) {
+        var res = confirm("Esta seguro de eliminar el detalle de la solicitud");
+        if (res) {
+            //enviarHiddenField();
+            return true;
+        }
+        if (res == false) e.preventDefault();
+
+        //return false;
+    }
+</script>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>

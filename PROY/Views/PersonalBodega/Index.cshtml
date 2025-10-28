@@ -1,0 +1,228 @@
+﻿@model PROY.ViewModels.PersonalBodegaVM;
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
+<head>
+</head>
+@{
+
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Mensaje"]
+    </div>
+}
+
+@* <div class="=row">
+        <div class="col-sm-8"> *@
+<h2 class="float-start">Personal de Bodegas</h2> <a class="btn btn-primary btn-sm float-end" onclick="abrirModalYActualizarUrl(0)"><i class="fas fa-plus-square"></i> Personal Bodegas</a>
+<p><br /></p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>DPI</th>
+            <th>NIT</th>
+            <th>NOMBRE</th>
+            <th>PUESTO</th>
+            <th>RENGLÓN</th>
+            <th>EMAIL</th>
+            <th>TELÉFONO</th>
+            <th>BODEGA</th>
+            <th>OPCIONES</th>
+        </tr>
+    </thead>
+    <tbody>
+        @try
+        {
+            foreach (var item in Model.listaPersonalBodegas)
+            {
+                <tr>
+                    <td>@item.Dpi</td>
+                    <td>@item.Nit</td>
+                    <td>@item.Nombres @item.Apellidos</td>
+                    <td>
+                        @{
+                            // Obtener el puesto usando el diccionario
+                            string descripcionPuestos = Model.PuestoDict.TryGetValue(item.IdPuesto ?? 0, out var descPuesto)
+                            ? descPuesto
+                            : "Puesto no encontrado";
+                        }
+                        @descripcionPuestos
+                    </td>
+                    <td>
+                        @{
+                            // Obtener el renglón usando el diccionario
+                            string descripcionRenglon = Model.RenglonPreDict.TryGetValue(item.IdRenglonPresupuestario ?? 0, out var descRenglon)
+                            ? descRenglon
+                            : "Renglón Presupuestario no encontrado";
+                        }
+                        @descripcionRenglon
+                    </td>
+                    <td>@item.Email</td>
+                    <td>@item.Telefono</td>
+                    <td>
+                        @{
+                            // Obtener la descripción usando el diccionario
+                            string descripcionBodega = Model.BodegaDict.TryGetValue(item.IdBodega ?? 0, out var descBodega)
+                            ? descBodega
+                            : "Bodega no encontrado";
+                        }
+                        @descripcionBodega
+                    </td>
+                    <td class="text-center">
+                        <a class="btn btn-info btn-sm" onclick="abrirModalYActualizarUrl(@item.IdPersonalBodega)"><i class="fas fa-edit"></i> Editar</a>
+                        <a class="btn btn-danger btn-sm" asp-controller="PersonalBodega" asp-action="Eliminar" asp-route-id="@item.IdPersonalBodega" onclick="confirmar(event)"><i class="fas fa-trash"></i> Eliminar</a>
+                    </td>
+
+                </tr>
+            }
+        }
+        catch
+        {
+
+        }
+
+    </tbody>
+</table>
+
+<!-- Modal -->
+<div class="modal fade" id="wNewPersonalBodega" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="height:780px;">
+            <form asp-action="GuardarPersonalBodega" asp-controller="PersonalBodega" method="post">
+                <div class="modal-header bg-secondary">
+                    <h5 class="modal-title text-white" id="lblModalTitle">@ViewBag.ModalTitle</h5>
+                    <button type="button" id="btnClose" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <input type="hidden" id="idPersonalBodega" asp-for="@Model.PersonalBodega.IdPersonalBodega" />
+                    <div>
+                        <div class="col">
+                            <label for="txtDPI" class="control-label">DPI</label>
+                            <input type="text" class="form-control" id="txtDPI" asp-for="@Model.PersonalBodega.Dpi" required></input>
+                            <span asp-validation-for="@Model.PersonalBodega.Dpi" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label for="txtNIT" class="control-label">NIT</label>
+                            <input type="text" class="form-control" id="txtNIT" asp-for="@Model.PersonalBodega.Nit" required></input>
+                            <span asp-validation-for="@Model.PersonalBodega.Nit" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label for="txtNombres" class="control-label">Nombres</label>
+                            <input type="text" class="form-control" id="txtNombres" asp-for="@Model.PersonalBodega.Nombres" required></input>
+                            <span asp-validation-for="@Model.PersonalBodega.Nombres" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label for="txtApellidos" class="control-label">Apellidos</label>
+                            <input type="text" class="form-control" id="txtApellidos" asp-for="@Model.PersonalBodega.Apellidos" required></input>
+                            <span asp-validation-for="@Model.PersonalBodega.Apellidos" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label for="cbIdPuesto" class="control-label">Puesto</label>
+                            <select class="form-select" id="cbIdPuesto" asp-for="@Model.PersonalBodega.IdPuesto" asp-items="ViewBag.Puestos" required></select>
+                            <span asp-validation-for="@Model.PersonalBodega.IdPuesto" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label for="cbIdRenglon" class="control-label">Renglón Presupuestario</label>
+                            <select class="form-select" id="cbIdRenglon" asp-for="@Model.PersonalBodega.IdRenglonPresupuestario" asp-items="ViewBag.RenglonesPresupuestarios" required></select>
+                            <span asp-validation-for="@Model.PersonalBodega.IdRenglonPresupuestario" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label for="txtEmail" class="control-label">Email</label>
+                            <input type="email" class="form-control" id="txtEmail" asp-for="@Model.PersonalBodega.Email" required></input>
+                            <span asp-validation-for="@Model.PersonalBodega.Email" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label for="txtTelefono" class="control-label">Teléfono</label>
+                            <input type="text" class="form-control" id="txtTelefono" asp-for="@Model.PersonalBodega.Telefono" required></input>
+                            <span asp-validation-for="@Model.PersonalBodega.Telefono" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label for="cbIdBodega" class="control-label">Bodegas</label>
+                            <select class="form-select" id="cbIdBodega" asp-for="@Model.PersonalBodega.IdBodega" asp-items="ViewBag.Bodegas" required></select>
+                            <span asp-validation-for="@Model.PersonalBodega.IdBodega" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <input type="submit" value="Guardar" class="btn btn-primary" />
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        function abrirModalYActualizarUrl(id) {
+            if (id == 0) {
+                var ventanaTitle = document.getElementById("lblModalTitle");
+                ventanaTitle.textContent = "REGISTRO PERSONAL DE BODEGA";
+
+                $('#idPersonalBodega').val(0);
+                $('#txtDPI').val('');
+                $('#txtNIT').val('');
+                $('#txtNombres').val('');
+                $('#txtApellidos').val('');
+                $('#cbIdPuesto').val();
+                $('#cbIdRenglon').val();
+                $('#txtEmail').val('');
+                $('#txtTelefono').val('');
+                $('#cbIdBodega').val();
+            }
+            else {
+
+                $.ajax({
+                    url: `@ViewData["rutaApp"]/PersonalBodega/ObtenerPersonalBodega/${id}`, // URL para obtener los datos
+                    type: 'GET',
+                    success: function (data) {
+
+                        console.log('data' + JSON.stringify(data));
+                        // Llenar el formulario del modal con los datos de la solicitud
+                        $('#idPersonalBodega').val(id);
+                        $('#txtDPI').val(data.dpi);
+                        $('#txtNIT').val(data.nit);
+                        $('#txtNombres').val(data.nombres);
+                        $('#txtApellidos').val(data.apellidos);
+                        $('#cbIdPuesto').val(data.idPuesto);
+                        $('#cbIdRenglon').val(data.idRenglonPresupuestario);
+                        $('#txtEmail').val(data.email);
+                        $('#txtTelefono').val(data.telefono);
+                        $('#cbIdBodega').val(data.idBodega);
+                        //alert(id);
+
+                        var ventanaTitle = document.getElementById("lblModalTitle");
+                        ventanaTitle.textContent = "MODIFICAR PERSONAL DE BODEGA ";
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error al obtener los datos del personal de bodega:', error);
+                    }
+                });
+            }
+
+            var modal = new bootstrap.Modal(document.getElementById('wNewPersonalBodega'));
+            modal.show();
+
+            
+        }
+
+        function confirmar(e){
+            var res=confirm("Esta seguro de eliminar personal de bodega");
+            if (res) return true;
+            if (res==false) e.preventDefault();
+
+            //return false;
+        }
+    </script>
+}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+

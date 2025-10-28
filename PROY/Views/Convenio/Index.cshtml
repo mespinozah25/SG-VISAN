@@ -1,0 +1,174 @@
+﻿@model PROY.ViewModels.ConvenioVM;
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
+<head>
+</head>
+@{
+
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@{
+    ViewData["Title"] = "Convenios";
+}
+
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Mensaje"]
+    </div>
+}
+
+
+@* <div class="=row">
+        <div class="col-sm-8"> *@
+<h2 class="float-start">Administración de Convenios</h2> <a class="btn btn-primary btn-sm float-end" onclick="abrirModalYActualizarUrl(0)"><i class="fas fa-plus-square"></i> Convenio</a>
+<p><br /></p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>CONVENIO</th>
+            <th>DESCRIPCION</th>
+            <th>VIDA UTIL (MESES)</th>
+            <th>TOTAL RACIONES</th>
+            <th>OPCIONES</th>
+        </tr>
+    </thead>
+    <tbody>
+        @try
+        {
+            foreach (var item in Model.listaConvenios)
+            {
+                <tr>
+                    <td>@item.IdConvenio</td>
+                    <td>@item.NombreConvenio</td>
+                    <td>@item.Descripcion</td>
+                    <td>@item.VidaUtil</td>
+                    <td>@((item.TotalRaciones ?? 0).ToString("N0"))</td>
+
+                    <td class="text-center">
+                        <a class="btn btn-info btn-sm" onclick="abrirModalYActualizarUrl(@item.IdConvenio)"><i class="fas fa-edit"></i> Editar</a>
+                        <a class="btn btn-danger btn-sm" asp-controller="Convenio" asp-action="Eliminar" asp-route-id="@item.IdConvenio" onclick="confirmar(event)"><i class="fas fa-trash"></i> Eliminar</a>
+                    </td>
+
+                </tr>
+            }
+        }
+        catch
+        {
+
+        }
+
+    </tbody>
+</table>
+
+<!-- Modal -->
+<div class="modal fade" id="wNewConvenio" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="height:475px;">
+            <form asp-action="GuardarConvenio" asp-controller="Convenio" method="post">
+                <div class="modal-header bg-secondary">
+                    <h5 class="modal-title text-white" id="lblModalTitle">@ViewBag.ModalTitle</h5>
+                    <button type="button" id="btnClose" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <input type="hidden" id="idConvenio" asp-for="@Model.Convenio.IdConvenio" />
+                    <div>
+                        <div class="col">
+                            <label for="txtNombreConvenio" class="control-label">Nombre Convenio</label>
+                            <input type="text" class="form-control" id="txtNombreConvenio" asp-for="@Model.Convenio.NombreConvenio" required></input>
+                            <span asp-validation-for="@Model.Convenio.NombreConvenio" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="col">
+                            <label for="txtDescripcion" class="control-label">Descripcion</label>
+                            <input type="text" class="form-control" id="txtDescripcion" asp-for="@Model.Convenio.Descripcion" required></input>
+                            <span asp-validation-for="@Model.Convenio.Descripcion" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="col">
+                            <label for="txtVidaUtil" class="control-label">Vida Util (Meses)</label>
+                            <input type="text" class="form-control" id="txtVidaUtil" asp-for="@Model.Convenio.VidaUtil" required></input>
+                            <span asp-validation-for="@Model.Convenio.VidaUtil" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="col">
+                            <label for="txtTotalRaciones" class="control-label">Total Raciones</label>
+                            <input type="text" class="form-control" id="txtTotalRaciones" asp-for="@Model.Convenio.TotalRaciones" required></input>
+                            <span asp-validation-for="@Model.Convenio.TotalRaciones" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <input type="submit" value="Guardar" class="btn btn-primary" />
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        function abrirModalYActualizarUrl(id) {
+            if (id == 0) {
+                var ventanaTitle = document.getElementById("lblModalTitle");
+                ventanaTitle.textContent = "REGISTRO CONVENIO";
+
+                $('#idConvenio').val(0);
+                $('#txtNombreConvenio').val('');
+                $('#txtDescripcion').val('');
+                $('#txtVidaUtil').val('');
+                $('#txtTotalRaciones').val('');
+            }
+            else {
+                var ventanaTitle = document.getElementById("lblModalTitle");
+                ventanaTitle.textContent = "MODIFICAR CONVENIO";
+            }
+
+            var modal = new bootstrap.Modal(document.getElementById('wNewConvenio'));
+            modal.show();
+
+            $.ajax({
+                url: `@ViewData["rutaApp"]/Convenio/ObtenerConvenio/${id}`, // URL para obtener los datos
+                type: 'GET',
+                success: function (data) {
+
+                    console.log('data' + JSON.stringify(data));
+                    // Llenar el formulario del modal con los datos de la solicitud
+                    $('#idConvenio').val(id);
+                    $('#txtNombreConvenio').val(data.nombre);
+                    $('#txtDescripcion').val(data.descripcion);
+                    $('#txtVidaUtil').val(data.vidaUtil);
+                    $('#txtTotalRaciones').val(data.totalRaciones);
+                    //alert(id);
+
+                    var ventanaTitle = document.getElementById("lblModalTitle");
+                    ventanaTitle.textContent = "MODIFICAR CONVENIO ";
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error al obtener los datos del convenio:', error);
+                }
+            });
+        }
+
+        function confirmar(e){
+            var res=confirm("Esta seguro de eliminar el convenio");
+            if (res) return true;
+            if (res==false) e.preventDefault();
+
+            //return false;
+        }
+    </script>
+}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>

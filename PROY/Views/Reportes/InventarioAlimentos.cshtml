@@ -1,0 +1,231 @@
+﻿@model PROY.ViewModels.MovimientoProductosVM;
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
+<head>
+</head>
+
+<style>
+    table thead th {
+        pointer-events: none; /* Desactiva la interacción con los títulos */
+    }
+</style>
+
+@{
+
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@{
+    ViewData["Title"] = "Inventario Alimentos";
+}
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Mensaje"]
+    </div>
+}
+
+
+<h2 class="float-start">Reporte Inventario de Alimentos</h2>
+<p><br /></p>
+
+<br />
+
+@await Html.PartialAsync("_CriteriosDeBusqueda")
+
+<table class="table" id="tableDetalle">
+    <thead>
+        <tr>
+            <th>BODEGA</th>
+            <th>CONVENIO</th>
+            <th>PRODUCTO</th>
+            <th>PRESENTACIÓN</th>
+            <th>UNIDAD MEDIDA</th>
+            <th>CANTIDAD UNIDADES</th>
+            <th>FECHA VENCIMIENTO</th>
+        </tr>
+    </thead>
+    <tbody>
+        @try
+        {
+            int indexCount = 0;
+
+            foreach (var item in Model.listaMovimientosProductos)
+            {
+                <tr>
+
+                    <td>
+                        @{
+                            // Obtener la descripción usando el diccionario
+                            string bodega = Model.BodegaDict.TryGetValue(item.IdBodega ?? 0, out var descTipo)
+                            ? descTipo
+                            : "Bodega no encontrado";
+                        }
+                        @bodega
+                    </td>
+                    <td>
+                        @{
+                            // Obtener la descripción usando el diccionario
+                            string convenio = Model.ConvenioDict.TryGetValue(item.IdConvenio ?? 0, out var descCon)
+                            ? descCon
+                            : "Convenio no encontrado";
+                        }
+                        @convenio
+                    </td>
+                    <td>
+                        @{
+                            // Obtener la descripción usando el diccionario
+                            string producto = Model.ProductoAlimenticioDict.TryGetValue(item.IdProductoAlimenticio ?? 0, out var descProd)
+                            ? descProd
+                            : "Producto Alimenticio no encontrado";
+                        }
+                        @producto
+                    </td>
+                    <td>
+                        @{
+                            // Obtener la descripción usando el diccionario
+                            string presentacion = Model.PresentacionDict.TryGetValue(item.IdPresentacion ?? 0, out var descPres)
+                            ? descPres
+                            : "Presentación no encontrado";
+                        }
+                        @presentacion
+                    </td>
+                    <td>
+                        @{
+                            // Obtener la descripción usando el diccionario
+                            string unidad = Model.UnidadMedidaDict.TryGetValue(item.IdUnidadMedida ?? 0, out var descUni)
+                            ? descUni
+                            : "Unidad no encontrado";
+                        }
+                        @unidad
+                    </td>
+                    <td>@item.CantidadUnidad</td>
+                    <td>
+                        @{
+                            var fechaVen = item.FechaVencimiento != null ? item.FechaVencimiento.Value.ToString("dd/MM/yyyy") : " ";
+                        }
+                        @fechaVen
+                    </td>
+
+                </tr>
+            }
+        }
+        catch
+        {
+
+        }
+
+    </tbody>
+</table>
+
+
+
+@section Scripts {
+
+    <script>
+
+        var tipoReporte = 7;
+        var nombreReporte = "Inventario de Alimentos";
+
+        $( document ).ready(function() {
+
+            $('#tableDetalle_paginate').hide();
+            $('#tableDetalle_info').hide();
+            $('#tableDetalle_filter').hide();
+
+            // Oculta las flechas de ordenamiento
+            $('table.dataTable thead th').removeClass('sorting sorting_asc sorting_desc');
+
+            HabilitarBusquedas();
+        });
+
+        // Función que habilita los criterios de búsqueda que necesita para el reporte
+        function HabilitarBusquedas(){
+
+            $('#divCriteriosBusqueda').show(); // Habilita los criterios
+
+            // Colocar .show() los criterios que desean que se visualicen
+            $('#divIdBodega').show();
+            $('#divIdConvenio').show();
+        }
+
+        function Buscar(){
+
+            // Se inicia reiniciando la tabla
+             $("#tableDetalle tbody").empty();
+
+             let filtros = {
+                IdBodega: parseInt($("#cbIdBodega").val()),
+                IdConvenio: $("#cbIdConvenio").val(),
+            };
+
+             let datosEnvio = {
+                FiltrosReportesDTO: filtros,
+            };
+
+            // Crear un objeto FormData
+            var formData = new FormData();
+
+            // Agregar los datos del formulario al objeto FormData
+            formData.append('modelo', JSON.stringify(datosEnvio)); // Enviar el modelo como JSON
+
+             $.ajax({
+                url: `@ViewData["rutaApp"]/Reportes/BusquedaInventarioAlimentos`,
+                type: "POST",
+                contentType: false,
+                processData: false,
+                data: formData,
+                success: function (data) {
+
+                    console.log(data.tabla);
+
+                    let tabla = document.getElementById("tableDetalle");
+                    let tbody = tabla.getElementsByTagName("tbody")[0];
+
+                    data.tabla.forEach((detalle, index) => {
+
+                        let fila = document.createElement("tr");
+
+                        var fechaMov = '';
+
+                        if(detalle.fechaVencimiento != null)
+                            var fechaMov = new Date(detalle.fechaVencimiento).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+                        let txtBodega = $("#cbIdBodega option[value='" + detalle.idBodega + "']").text(); // Nombre de Bodega
+                        let txtConvenio = $("#cbIdConvenio option[value='" + detalle.idConvenio + "']").text(); // Nombre del Convenio
+                        let txtProducto = $("#cbIdProductoAlimenticio option[value='" + detalle.idProductoAlimenticio + "']").text(); // Nombre del Producto
+                        let txtPresentacion = $("#cbIdPresentacionPA option[value='" + detalle.idPresentacion + "']").text(); // Nombre de Presentación
+                        let txtUnidad = $("#cbIdUnidadMedida option[value='" + detalle.idUnidad + "']").text(); // Nombre de Unidad
+
+                        fila.innerHTML = `
+                            <td>${txtBodega}</td>
+                            <td>${txtConvenio}</td>
+                            <td>${txtProducto}</td>
+                            <td>${txtPresentacion}</td>
+                            <td>${detalle.unidadMedida}</td>
+                            <td>${detalle.cantidadUnidad}</td>
+                            <td>${fechaMov}</td>
+                        `;
+
+                        tbody.appendChild(fila);
+                    });
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error al mostrar Tabla:", error);
+                    alert("Ocurrió un error al extraer los datos de la tabla.");
+                }
+            });
+        }
+
+
+    </script>
+}
+
+<script src="~/js/reportes.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+@* CDN para la creación del archivo xlsx *@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+@* CDN para la creación del archivo PDF *@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>

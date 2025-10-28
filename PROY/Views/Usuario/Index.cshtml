@@ -1,0 +1,81 @@
+﻿@model List<PROY.Models.Usuario>;
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
+<head></head>
+@{
+    
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+    @if (TempData["Mensaje"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["Mensaje"]
+        </div>
+    }
+    
+    @* <div class="=row">
+        <div class="col-sm-8"> *@
+<h2 class="float-start">Administración de Usuarios</h2> <a class="btn btn-primary btn-sm float-end" asp-controller="Usuario" asp-action="Registrarse" asp-method="get"><i class="fas fa-plus-square"></i> Nuevo Usuario</a>
+            <p><br /></p>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>NOMBRE</th>
+                        <th>APELLIDOS</th>
+                        <th>CORREO</th>
+                        <th>DEPARTAMENTO</th>
+                        <th>OPCIONES</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @try
+                     {
+                        foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.Nombre</td>
+                                <td>@item.Apellidos</td>
+                                <td>@item.Correo</td>
+                                <td>
+                                    @{
+                                        string descripDepto = "";
+                                        if (item.Depto == "1")
+                                            descripDepto = "DAAN";
+                                        else
+                                            descripDepto = "DAPA";
+                                    }
+                                    @descripDepto
+                                </td>
+                                <td class="text-center"><a class="btn btn-info btn-sm" asp-controller="Usuario" asp-action="Editar" asp-route-id="@item.IdUsuario"><i class="fas fa-edit"></i> Editar</a>
+                        <a class="btn btn-danger btn-sm" asp-controller="Usuario" asp-action="Eliminar" asp-route-id="@item.IdUsuario" onclick="confirmar(event)"><i class="fas fa-trash"></i> Eliminar</a>
+                                </td>
+
+                            </tr>
+                        }
+                     }
+                     catch
+                     {
+                        
+                     }
+                    
+                </tbody>
+            </table>
+        @* </div>
+    </div> *@
+
+    @section Scripts{
+    <partial name="_ValidationScriptsPartial" />
+
+        <script>
+            function confirmar(e){
+                var res=confirm("Esta seguro de eliminar el usuario");
+                if (res) return true;
+                if (res==false) e.preventDefault();
+
+                //return false;
+            }
+        </script>
+    }
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    

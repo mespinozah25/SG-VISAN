@@ -1,0 +1,163 @@
+﻿@model PROY.ViewModels.VehiculoVM;
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
+<head>
+</head>
+@{
+
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@{
+    ViewData["Title"] = "Vehículos";
+}
+
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Mensaje"]
+    </div>
+}
+
+@* <div class="=row">
+        <div class="col-sm-8"> *@
+<h2 class="float-start">Administración de Vehículos</h2> <a class="btn btn-primary btn-sm float-end" onclick="abrirModalYActualizarUrl(0)"><i class="fas fa-plus-square"></i> Vehículos</a>
+<p><br /></p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>TRANSPORTISTA</th>
+            <th>PLACA DEL CABEZAL</th>
+            <th>PLACA DE PLATAFORMA</th>
+            <th>OPCIONES</th>
+        </tr>
+    </thead>
+    <tbody>
+        @try
+        {
+            foreach (var item in Model.listaVehiculos)
+            {
+                <tr>
+                    <td>
+                        @{
+                            // Obtener la descripción usando el diccionario
+                            string descripcionTransportista = Model.TransportistaDict.TryGetValue(item.IdTransportista ?? 0, out var descTransportista)
+                            ? descTransportista
+                            : "Transportista no encontrado";
+                        }
+                        @descripcionTransportista
+                    </td>
+                    <td>@item.PlacaCabezal</td>
+                    <td>@item.PlacaPlataforma</td>
+                    <td class="text-center">
+                        <a class="btn btn-info btn-sm" onclick="abrirModalYActualizarUrl(@item.IdVehiculo)"><i class="fas fa-edit"></i> Editar</a>
+                        <a class="btn btn-danger btn-sm" asp-controller="Vehiculo" asp-action="Eliminar" asp-route-id="@item.IdVehiculo" onclick="confirmar(event)"><i class="fas fa-trash"></i> Eliminar</a>
+                    </td>
+
+                </tr>
+            }
+        }
+        catch
+        {
+
+        }
+
+    </tbody>
+</table>
+
+<!-- Modal -->
+<div class="modal fade" id="wNewVehiculo" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="height:400px;">
+            <form asp-action="GuardarVehiculo" asp-controller="Vehiculo" method="post">
+                <div class="modal-header bg-secondary">
+                    <h5 class="modal-title text-white" id="lblModalTitle">@ViewBag.ModalTitle</h5>
+                    <button type="button" id="btnClose" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <input type="hidden" id="idVehiculo" asp-for="@Model.Vehiculo.IdVehiculo" />
+                    <div>
+                        <div class="col">
+                            <label for="cbIdTransportista" class="control-label">Transportista</label>
+                            <select class="form-select" id="cbIdTransportista" asp-for="@Model.Vehiculo.IdTransportista" asp-items="ViewBag.Transportistas" required></select>
+                            <span asp-validation-for="@Model.Vehiculo.IdTransportista" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label for="txtPlacaCabezal" class="control-label">Placa Cabezal</label>
+                            <input type="text" class="form-control" id="txtPlacaCabezal" asp-for="@Model.Vehiculo.PlacaCabezal" required></input>
+                            <span asp-validation-for="@Model.Vehiculo.PlacaCabezal" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label for="txtPlacaPlataforma" class="control-label">Placa Plataforma</label>
+                            <input type="text" class="form-control" id="txtPlacaPlataforma" asp-for="@Model.Vehiculo.PlacaPlataforma" required></input>
+                            <span asp-validation-for="@Model.Vehiculo.PlacaPlataforma" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <input type="submit" value="Guardar" class="btn btn-primary" />
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        function abrirModalYActualizarUrl(id) {
+            if (id == 0) {
+                var ventanaTitle = document.getElementById("lblModalTitle");
+                ventanaTitle.textContent = "REGISTRO VEHÍCULO";
+
+                $('#idVehiculo').val(0);
+                $('#cbIdTransportista').val();
+                $('#txtPlacaCabezal').val('');
+                $('#txtPlacaPlataforma').val('');
+            }
+            else {
+
+                $.ajax({
+                    url: `@ViewData["rutaApp"]/Vehiculo/ObtenerVehiculo/${id}`, // URL para obtener los datos
+                    type: 'GET',
+                    success: function (data) {
+
+                        console.log('data' + JSON.stringify(data));
+                        // Llenar el formulario del modal con los datos del vehículo
+                        $('#idVehiculo').val(id);
+                        $('#cbIdTransportista').val(data.idTransportista);
+                        $('#txtPlacaCabezal').val(data.placaCabezal);
+                        $('#txtPlacaPlataforma').val(data.plazaPlataforma);
+                        //alert(id);
+
+                        var ventanaTitle = document.getElementById("lblModalTitle");
+                        ventanaTitle.textContent = "MODIFICAR VEHÍCULO ";
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error al obtener los datos del vehículo:', error);
+                    }
+                });
+            }
+
+            var modal = new bootstrap.Modal(document.getElementById('wNewVehiculo'));
+            modal.show();
+
+        }
+
+        function confirmar(e){
+            var res=confirm("Esta seguro de eliminar el vehículo");
+            if (res) return true;
+            if (res==false) e.preventDefault();
+
+            //return false;
+        }
+    </script>
+}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+

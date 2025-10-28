@@ -1,0 +1,186 @@
+﻿@model PROY.ViewModels.RacionVM;
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
+<head>
+</head>
+
+<style>
+    table thead th {
+        pointer-events: none; /* Desactiva la interacción con los títulos */
+    }
+</style>
+
+@{
+
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@{
+    ViewData["Title"] = "Reporte de Raciones";
+}
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Mensaje"]
+    </div>
+}
+
+
+<h2 class="float-start">Reporte Listado de Raciones</h2>
+<p><br /></p>
+
+<br />
+
+@await Html.PartialAsync("_CriteriosDeBusqueda")
+
+<table class="table" id="tableDetalle">
+    <thead>
+        <tr>
+            <th>PROGRAMA</th>
+            <th>CONVENIO</th>
+            <th>KILOCALORIAS</th>
+            <th>CARBOHIDRATOS</th>
+            <th>PROTEINAS</th>
+            <th>GRASAS</th>
+        </tr>
+    </thead>
+    <tbody>
+        @try
+        {
+            foreach (var item in Model.listaRacionReporte)
+            {
+                <tr>
+                    <td>
+                        @{
+                            // Obtener la descripción usando el diccionario
+                            string descripcionPrograma = Model.ProgramaDict.TryGetValue(item.IdPrograma ?? 0, out string descPrograma)
+                            ? descPrograma
+                            : "Programa no encontrado";
+                        }
+                        @descripcionPrograma
+                    </td>
+                    <td>
+                        @{
+                            // Obtener la descripción usando el diccionario
+                            string descripcionConvenio = Model.ConvenioDict.TryGetValue(item.IdConvenio ?? 0, out string descConvenio)
+                            ? descConvenio
+                            : "Convenio no encontrado";
+                        }
+                        @descripcionConvenio
+                    </td>
+                    <td>@item.TotalKilocalorias</td>
+                    <td>@item.TotalCarbohidratos</td>
+                    <td>@item.TotalProteinas</td>
+                    <td>@item.TotalGrasas</td>
+                </tr>
+            }
+        }
+        catch
+        {
+
+        }
+
+    </tbody>
+</table>
+
+
+
+@section Scripts {
+
+    <script>
+
+        var tipoReporte = 6;
+        var nombreReporte = "Reporte Listado de Raciones";
+
+        $( document ).ready(function() {
+
+            $('#tableDetalle_paginate').hide();
+            $('#tableDetalle_info').hide();
+            $('#tableDetalle_filter').hide();
+
+            // Oculta las flechas de ordenamiento
+            $('table.dataTable thead th').removeClass('sorting sorting_asc sorting_desc');
+
+            HabilitarBusquedas();
+        });
+
+        // Función que habilita los criterios de búsqueda que necesita para el reporte
+        function HabilitarBusquedas(){
+
+            $('#divCriteriosBusqueda').show(); // Habilita los criterios
+
+            // Colocar .show() los criterios que desean que se visualicen
+            $('#divIdConvenio').show();
+
+        }
+
+        function Buscar(){
+
+            // Se inicia reiniciando la tabla
+             $("#tableDetalle tbody").empty();
+
+             let filtros = {
+                IdConvenio: parseInt($("#cbIdConvenio").val())
+            };
+
+             let datosEnvio = {
+                FiltrosReportesDTO: filtros,
+            };
+
+            // Crear un objeto FormData
+            var formData = new FormData();
+
+            // Agregar los datos del formulario al objeto FormData
+            formData.append('modelo', JSON.stringify(datosEnvio)); // Enviar el modelo como JSON
+
+             $.ajax({
+                url: `@ViewData["rutaApp"]/Reportes/BusquedaRaciones`,
+                type: "POST",
+                contentType: false,
+                processData: false,
+                data: formData,
+                success: function (data) {
+
+                    console.log(data.tabla);
+
+                    let tabla = document.getElementById("tableDetalle");
+                    let tbody = tabla.getElementsByTagName("tbody")[0];
+
+                    data.tabla.forEach((detalle, index) => {
+
+                        let fila = document.createElement("tr");
+
+                        let txtPrograma = $("#cbIdPrograma option[value='" + detalle.idPrograma + "']").text(); // Nombre del programa
+                        let txtConvenio = $("#cbIdConvenio option[value='" + detalle.idConvenio + "']").text(); // Nombre del convenio
+
+                        fila.innerHTML = `
+                            <td>${txtPrograma}</td>
+                            <td>${txtConvenio}</td>
+                            <td>${detalle.totalKilocalorias}</td>
+                            <td>${detalle.totalCarbohidratos}</td>
+                            <td>${detalle.totalProteinas}</td>
+                            <td>${detalle.totalGrasas}</td>
+                        `;
+
+                        tbody.appendChild(fila);
+                    });
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error al mostrar Tabla:", error);
+                    alert("Ocurrió un error al extraer los datos de la tabla.");
+                }
+            });
+        }
+
+    </script>
+}
+
+<script src="~/js/reportes.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+@* CDN para la creación del archivo xlsx *@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+@* CDN para la creación del archivo PDF *@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+

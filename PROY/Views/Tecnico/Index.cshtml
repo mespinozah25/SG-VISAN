@@ -1,0 +1,145 @@
+﻿@model PROY.ViewModels.TecnicoVM;
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
+<head>
+</head>
+
+@{
+
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Mensaje"]
+    </div>
+}
+
+<h2 class="float-start">Administración de Técnicos</h2> <a class="btn btn-primary btn-sm float-end" onclick="abrirModalYActualizarUrl(0)"><i class="fas fa-plus-square"></i> Técnico</a>
+<p><br /></p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>NOMBRE</th>
+            <th>TELÉFONO</th>            
+            <th>OPCIONES</th>
+        </tr>
+    </thead>
+    <tbody>
+        @try
+        {
+            foreach (var item in Model.listaTecnicos)
+            {
+                <tr>
+                    <td>@item.Nombre</td>
+                    <td>@item.Telefono</td>                    
+                    <td class="text-center">
+                        <a class="btn btn-info btn-sm" onclick="abrirModalYActualizarUrl(@item.IdTecnico)"><i class="fas fa-edit"></i> Editar</a>
+                        <a class="btn btn-danger btn-sm" asp-controller="Tecnico" asp-action="Eliminar" asp-route-id="@item.IdTecnico" onclick="confirmar(event)"><i class="fas fa-trash"></i> Eliminar</a>
+                    </td>
+
+                </tr>
+            }
+        }
+        catch
+        {
+
+        }
+
+    </tbody>
+</table>
+
+<!-- Modal -->
+<div class="modal fade" id="wNewTecnico" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="height:400px;">
+            <form asp-action="GuardarTecnico" asp-controller="Tecnico" method="post">
+                <div class="modal-header bg-secondary">
+                    <h5 class="modal-title text-white" id="lblModalTitle">@ViewBag.ModalTitle</h5>
+                    <button type="button" id="btnClose" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <input type="hidden" id="tecnicoId" asp-for="@Model.Tecnico.IdTecnico" />
+                    <div>                        
+                        <div class="col">
+                            <label for="txtNombre" class="control-label">Nombre</label>
+                            <input type="text" class="form-control" id="txtNombre" asp-for="@Model.Tecnico.Nombre" required></input>
+                            <span asp-validation-for="@Model.Tecnico.Nombre" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label for="txtTelefono" class="control-label">Teléfono</label>
+                            <input type="number" class="form-control" id="txtTelefono" asp-for="@Model.Tecnico.Telefono" required />
+                            <span asp-validation-for="@Model.Tecnico.Telefono" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <input type="submit" value="Guardar" class="btn btn-primary" />
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        function abrirModalYActualizarUrl(id) {
+            //const nuevaUrl = `/Catalogo/Index/${idCatalogo}`;
+            //history.pushState(null, '', nuevaUrl);
+
+            if (id == 0) {
+                var ventanaTitle = document.getElementById("lblModalTitle");
+                ventanaTitle.textContent = "REGISTRO TECNICO";
+
+                $('#tecnicoId').val(0);
+                $('#txtNombre').val('');
+                $('#txtTelefono').val();                
+            }
+            else {
+                var ventanaTitle = document.getElementById("lblModalTitle");
+                ventanaTitle.textContent = "MODIFICAR TECNICO";
+            }
+
+            var modal = new bootstrap.Modal(document.getElementById('wNewTecnico'));
+            modal.show();
+
+            $.ajax({
+                url: `@ViewData["rutaApp"]/Tecnico/ObtenerTecnico/${id}`, // URL para obtener los datos
+                type: 'GET',
+                success: function (data) {
+
+                    //console.log('data' + JSON.stringify(data));
+                    // Llenar el formulario del modal con los datos de la solicitud                    
+                    $('#tecnicoId').val(id);                    
+                    $('#txtNombre').val(data.nombre);
+                    $('#txtTelefono').val(data.telefono);
+                    //alert(id);
+
+                    var ventanaTitle = document.getElementById("lblModalTitle");
+                    ventanaTitle.textContent = "MODIFICAR TECNICO ";
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error al obtener los datos del técnico:', error);
+                }
+            });
+        }
+
+        function confirmar(e){
+            var res=confirm("Esta seguro de eliminar el usuario");
+            if (res) return true;
+            if (res==false) e.preventDefault();
+
+            //return false;
+        }
+    </script>
+}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+

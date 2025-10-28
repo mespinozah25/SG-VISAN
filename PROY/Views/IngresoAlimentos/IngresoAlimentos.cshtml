@@ -1,0 +1,430 @@
+﻿@inject IHttpContextAccessor HttpContextAccessor
+<head>
+    <!-- CSS -->
+    @* <link rel="stylesheet" href="https://cdn.datatables.net/2.2.1/css/dataTables.dataTables.min.css"> *@
+    @* <link rel="stylesheet" href="https://cdn.datatables.net/buttons/3.2.0/css/buttons.dataTables.min.css"> *@
+</head>
+
+<style>
+    table thead th {
+        pointer-events: none; /* Desactiva la interacción con los títulos */
+    }
+</style>
+
+@model PROY.ViewModels.IngresoAlimentosVM
+
+@{
+    ViewData["Title"] = "Registrarse";
+}
+
+<h1>Creación de Ingreso de Alimentos a Bodega</h1>
+
+<br />
+
+<div>
+    <form id="frmIngresoAlimentos">
+
+        <input type="hidden" id="idIngresoAlimentos" asp-for="@Model.IngresoAlimentos.IdIngresoAlimentos" />
+
+        <div class="row">
+            <div class="col">
+                <label for="cbIdPrograma" class="control-label">Programa</label>
+                <select class="form-select" id="cbIdPrograma" asp-for="@Model.IngresoAlimentos.IdPrograma" asp-items="ViewBag.Programas" required></select>
+                <span asp-validation-for="@Model.IngresoAlimentos.IdPrograma" class="text-danger"></span>
+            </div>
+            <div class="col">
+                <label for="cbIdConvenio" class="control-label">Convenio</label>
+                <select class="form-select" id="cbIdConvenio" asp-for="@Model.IngresoAlimentos.IdConvenio" asp-items="ViewBag.Convenios" required></select>
+                <span asp-validation-for="@Model.IngresoAlimentos.IdConvenio" class="text-danger"></span>
+            </div>
+            <div class="col">
+                <label for="cbIdBodega" class="control-label">Bodega que recibe</label>
+                <select class="form-select" id="cbIdBodega" asp-for="@Model.IngresoAlimentos.IdBodegaRecibe" asp-items="ViewBag.Bodegas" required></select>
+                <span asp-validation-for="@Model.IngresoAlimentos.IdBodegaRecibe" class="text-danger"></span>
+            </div>
+            <div class="col">
+                <label for="cbIdJuntaReceptora" class="control-label">Junta de Recepción</label>
+                <select class="form-select" id="cbIdJuntaReceptora" asp-for="@Model.IngresoAlimentos.IdJuntaReceptora" asp-items="ViewBag.JuntaReceptora" required></select>
+                <span asp-validation-for="@Model.IngresoAlimentos.IdJuntaReceptora" class="text-danger"></span>
+            </div>
+        </div>
+
+        <br />
+        <br />
+
+        <h5>Producto Alimenticio a Recibir</h5>
+
+        <br />
+
+        <div class="row camposAlmacenamiento">
+            <div class="col">
+                <label for="cbIdProductoAlimenticio" class="control-label">Producto Alimenticio</label>
+                <select class="form-select" id="cbIdProductoAlimenticio" asp-items="ViewBag.ProductoAlimenticio"></select>
+            </div>
+            <div class="col">
+                <label for="cbIdPresentacionPA" class="control-label">Presentación</label>
+                <select class="form-select" id="cbIdPresentacionPA" asp-items="ViewBag.PresentacionPA"></select>
+            </div>
+            <div class="col">
+                <label for="txtCantidadUnidad" class="control-label">Cantidad Unidad</label>
+                <input type="number" class="form-control" min="0" id="txtCantidadUnidad">
+            </div>
+            <div class="col">
+                <label for="cbIdUnidadMedida" class="control-label">Unidad de Medida</label>
+                <select class="form-select" id="cbIdUnidadMedida" asp-items="ViewBag.UnidadMedida"></select>
+            </div>
+            <div class="col">
+                <label for="txtCantidadARecibir" class="control-label">Cantidad a recibir</label>
+                <input type="number" class="form-control" min="0" id="txtCantidadARecibir">
+            </div>
+        </div>
+
+        <br class="camposAlmacenamiento" />
+
+        <div class="float-end camposAlmacenamiento">
+            <a type="button" href="#" class="btn btn-secondary" onclick="return LimpiarDetalles();">Limpiar</a>
+            <a type="button" href="#" class="btn btn-primary" onclick="return AgregarDetalle();">Añadir Detalle</a>
+        </div>
+
+        <br />
+        <br />
+        <br />
+
+        <div class="row col-12">
+            <div class="">
+                <table id="tableDetalle" class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>No.</th>
+                            <th>PRODUCTO</th>
+                            <th>PRESENTACIÓN</th>
+                            <th>CANT. UNIDAD</th>
+                            <th>UNIDAD MEDIDA</th>
+                            <th>CANT. A RECIBIR</th>
+                            <th>ACCIONES</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+
+        <br />
+        <br />
+
+        <div class="row float-end">
+            <div class="col">
+                <a type="button" class="btn btn-secondary" asp-action="Index">Regresar</a>
+            </div>
+            <div class="col">
+                <input type="button" value="Guardar" class="btn btn-primary camposAlmacenamiento" onclick="return ConfirmSave();" />
+            </div>
+        </div>
+
+    </form>
+</div>
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        $( document ).ready(function() {
+
+            $("#tableDetalle tbody").empty();
+            $('#tableDetalle_paginate').hide();
+            $('#tableDetalle_info').hide();
+            $('#tableDetalle_filter').hide();
+
+            var urlObj = new URL(window.location.href);
+            var type = urlObj.searchParams.get("type");
+            var id = window.location.pathname.split('/').pop();
+
+            // Inicializa la tabla (si no está inicializada)
+            var table = $('#tableDetalle').DataTable();
+
+            // Oculta las flechas de ordenamiento
+            $('table.dataTable thead th').removeClass('sorting sorting_asc sorting_desc');
+
+            if (parseInt(id) != 0){
+                abrirYActualizarUrl(id, type);
+            }
+
+            // console.log( "ready!" );
+        });
+
+        function abrirYActualizarUrl(id, tipoApertura) {
+
+            // Se inicia reiniciando la tabla
+             $("#tableDetalle tbody").empty();
+
+            // El tipo de apertura 1 indica que se var almacenar o editar un registro
+            // El tipo de apertura 2 indica solo de observación
+            if(tipoApertura == 1){
+                $('.camposAlmacenamiento').show();
+                $("#frmIngresoAlimentos input").attr("readonly", false);  // Hace los inputs solo lectura
+                $("#frmIngresoAlimentos select").prop("disabled", false); // Deshabilita los selects
+            }else{
+                $('.camposAlmacenamiento').hide();
+                $("#frmIngresoAlimentos input").attr("readonly", true);  // Hace los inputs solo lectura
+                $("#frmIngresoAlimentos select").prop("disabled", true); // Deshabilita los selects
+            }
+
+            if (id == 0) {
+
+                $('#idIngresoAlimentos').val(0);
+                $('#cbIdPrograma').val();
+                $('#cbIdConvenio').val();
+                $('#cbIdDepartamento').val();
+                $('#cbIdMunicipio').val();
+                $('#cbIdBodega').val();
+
+            }
+            else {
+
+                $.ajax({
+                    url: `@ViewData["rutaApp"]/IngresoAlimentos/ObtenerIngresoAlimentos/${id}`, // URL para obtener los datos
+                    type: 'GET',
+                    success: function (data) {
+
+                        console.log('data' + JSON.stringify(data));
+
+                        var ia = data.ingresoAlimentos;
+
+                        // Llenar el formulario con los datos de Ingreso de Alimentos
+                        $('#idIngresoAlimentos').val(ia.idIngresoAlimentos);
+                        $('#cbIdPrograma').val(ia.idPrograma);
+                        $('#cbIdConvenio').val(ia.idConvenio);
+                        $('#cbIdDepartamento').val(ia.idDepartamento);
+                        $('#cbIdMunicipio').val(ia.idMunicipio);
+                        $('#cbIdBodega').val(ia.idBodegaRecibe);
+                        $('#cbIdJuntaReceptora').val(ia.idJuntaReceptora);
+
+                        // Agregar Detalle
+                        if (data.productosIngreso.length > 0){
+
+                            let tabla = document.getElementById("tableDetalle");
+                            let tbody = tabla.getElementsByTagName("tbody")[0];
+
+                            data.productosIngreso.forEach((detalle, index) => {
+
+                                let fila = document.createElement("tr");
+
+                                let txtProducto = $("#cbIdProductoAlimenticio option[value='" + detalle.idProductoAlimenticio + "']").text(); // Nombre del producto
+                                let txtpresentacion = $("#cbIdPresentacionPA option[value='" + detalle.idPresentacion + "']").text(); // Nombre de la presentación
+                                let cantidadUnidad = detalle.cantidadUnidad;
+                                let txtUnidad = $("#cbIdUnidadMedida option[value='" + detalle.idUnidadMedida + "']").text(); // Nombre de la unidad de medida
+                                let cantidadRecibir = detalle.cantidadRecibir;
+
+                                var botonEliminar = tipoApertura == 1
+                                    ? `<button type="button" class="btn btn-danger btn-sm camposAlmacenamiento" onclick="EliminarFila(this, ${detalle.idProductosIngreso})">Eliminar</button>`
+                                    : '';
+
+                                fila.innerHTML = `
+                                    <td>${index + 1}</td>
+                                    <td>${txtProducto}</td>
+                                    <td>${txtpresentacion}</td>
+                                    <td>${cantidadUnidad}</td>
+                                    <td>${txtUnidad}</td>
+                                    <td>${cantidadRecibir}</td>
+                                    <td>
+                                        ${botonEliminar}
+                                        <input type="hidden" name="IdProductosIngreso" value="${detalle.idProductosIngreso}">
+                                        <input type="hidden" name="IdProductoAlimenticio" value="${detalle.idProductoAlimenticio}">
+                                        <input type="hidden" name="IdPresentacion" value="${detalle.idPresentacion}">
+                                        <input type="hidden" name="CantidadUnidad" value="${cantidadUnidad}">
+                                        <input type="hidden" name="IdUnidadMedida" value="${detalle.idUnidadMedida}">
+                                        <input type="hidden" name="CantidadRecibir" value="${cantidadRecibir}">
+                                    </td>
+                                `;
+
+                                tbody.appendChild(fila);
+                            });
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error al obtener los datos de ingreso de alimentos: ', error);
+                    }
+                });
+            }
+        }
+
+        function ActualizarContador() {
+            let filas = document.querySelectorAll("#tableDetalle tbody tr");
+            filas.forEach((fila, index) => {
+                fila.cells[0].innerHTML = `${index + 1}`;
+            });
+        }
+
+        function AgregarDetalle() {
+            let productoAlimenticio = $("#cbIdProductoAlimenticio").val();
+            let txtProductoAlimenticio = $("#cbIdProductoAlimenticio option:selected").text();
+            let presentacion = $("#cbIdPresentacionPA").val();
+            let txtpresentacion = $("#cbIdPresentacionPA option:selected").text();
+            let cantidadUnidad = $("#txtCantidadUnidad").val();
+            let unidadMedida = $("#cbIdUnidadMedida").val();
+            let txtUnidad = $("#cbIdUnidadMedida option:selected").text();
+            let cantidadRecibir = $("#txtCantidadARecibir").val();
+
+            if (!productoAlimenticio || !cantidadUnidad || !presentacion || !cantidadRecibir || !unidadMedida) {
+                alert("Todos los campos son obligatorios.");
+                return false;
+            }
+
+            let tabla = document.getElementById("tableDetalle");
+            let tbody = tabla.getElementsByTagName("tbody")[0];
+
+            if (!tbody) {
+                tbody = document.createElement("tbody");
+                tabla.appendChild(tbody);
+            }
+
+            let fila = document.createElement("tr");
+
+            fila.innerHTML = `
+                <td></td>
+                <td>${txtProductoAlimenticio}</td>
+                <td>${txtpresentacion}</td>
+                <td>${cantidadUnidad}</td>
+                <td>${txtUnidad}</td>
+                <td>${cantidadRecibir}</td>
+                <td>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="EliminarFila(this, 0)">Eliminar</button>
+
+                    <input type="hidden" name="IdProductosIngreso" value="0">
+                    <input type="hidden" name="IdProductoAlimenticio" value="${productoAlimenticio}">
+                    <input type="hidden" name="IdPresentacion" value="${presentacion}">
+                    <input type="hidden" name="CantidadUnidad" value="${cantidadUnidad}">
+                    <input type="hidden" name="IdUnidadMedida" value="${unidadMedida}">
+                    <input type="hidden" name="CantidadRecibir" value="${cantidadRecibir}">
+                </td>
+            `;
+
+            tbody.appendChild(fila);
+            ActualizarContador();
+
+            LimpiarDetalles();
+            return false;
+        }
+
+        function EliminarFila(boton, idDetalle) {
+
+            // En el escenario en donde el ID de es diferente de cero, se elimina en la BD
+            if (idDetalle != 0){
+
+                if (!confirm("¿Estás seguro de que deseas eliminar este Producto Alimenticio?")) {
+                    return;
+                }
+
+                $.ajax({
+                url: `@ViewData["rutaApp"]/IngresoAlimentos/EliminarProductoIngreso?id=${idDetalle}`,
+                type: "POST",
+                success: function (respuesta) {
+                    alert("Producto eliminado correctamente.");
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error al eliminar:", error);
+                    alert("Ocurrió un error al eliminar el producto.");
+                }
+            });
+            }
+
+            let fila = boton.closest("tr");
+            fila.remove();
+
+            ActualizarContador();
+        }
+
+        function LimpiarDetalles(){
+            $('#cbIdProductoAlimenticio').val();
+            $('#cbIdPresentacionPA').val();
+            $('#cbIdUnidadMedida').val();
+            $('#txtCantidadUnidad').val('');
+            $('#txtCantidadARecibir').val('');
+        }
+
+        function ConfirmSave(){
+            Swal.fire({
+              title: "Está seguro de almacenar el Ingreso de Alimentos?",
+              showCancelButton: true,
+              confirmButtonText: "Guardar",
+              icon: "question"
+            }).then((result) => {
+              if (result.isConfirmed) {
+                  GuardarIngresoAlimentos();
+              } 
+            });
+        }
+
+        function GuardarIngresoAlimentos() {
+            let ingresoAlimentos = {
+                IdIngresoAlimentos: $("#idIngresoAlimentos").val(),
+                IdPrograma: $("#cbIdPrograma").val(),
+                IdConvenio: $("#cbIdConvenio").val(),
+                IdBodegaRecibe: $("#cbIdBodega").val(),
+                IdJuntaReceptora: $("#cbIdJuntaReceptora").val(),
+            };
+
+            let tabla = document.getElementById("tableDetalle");
+            let tbody = tabla.getElementsByTagName("tbody")[0];
+
+            let detalles = [];
+
+            $("#tableDetalle tbody tr").each(function () {
+                let fila = $(this);
+
+                let detalle = {
+                    IdProductosIngreso: fila.find("input[name='IdProductosIngreso']").val(),
+                    IdProductoAlimenticio: fila.find("input[name='IdProductoAlimenticio']").val(),
+                    IdPresentacion: fila.find("input[name='IdPresentacion']").val(),
+                    CantidadUnidad: fila.find("input[name='CantidadUnidad']").val(),
+                    IdUnidadMedida: fila.find("input[name='IdUnidadMedida']").val(),
+                    CantidadRecibir: fila.find("input[name='CantidadRecibir']").val()
+                };
+
+                    detalles.push(detalle);
+            });
+
+            if (detalles.length === 0) {
+                alert("Debe agregar al menos un detalle antes de guardar.");
+                return;
+            }
+
+            let datosEnvio = {
+                IngresoAlimentos: ingresoAlimentos,
+                listaProductosIngreso: detalles
+            };
+
+            $.ajax({
+                url: `@ViewData["rutaApp"]/IngresoAlimentos/GuardarIngresoAlimentos`,
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify(datosEnvio),
+                success: function (respuesta) {
+
+                    Swal.fire("Almacenado!", "", "success");
+
+                    // Redireccionar o limpiar formulario si es necesario
+                    window.location.href = `@ViewData["rutaApp"]/IngresoAlimentos/Index`;
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error al guardar:", error);
+                    alert("Ocurrió un error al guardar el ingreso de alimentos.");
+                }
+            });
+        }
+
+        function confirmar(e){
+            var res=confirm("Esta seguro de eliminar el Ingreso de Alimentos");
+            if (res) return true;
+            if (res==false) e.preventDefault();
+
+            //return false;
+        }
+    </script>
+}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- JS -->
+@* <script src="https://cdn.datatables.net/2.2.1/js/dataTables.min.js"></script> *@
+@* <script src="https://cdn.datatables.net/buttons/3.2.0/js/dataTables.buttons.min.js"></script> *@
+

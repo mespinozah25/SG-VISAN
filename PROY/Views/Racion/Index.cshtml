@@ -1,0 +1,699 @@
+﻿@model PROY.ViewModels.RacionVM;
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
+<head>
+</head>
+<style>
+    #tableDetalle thead th {
+        pointer-events: none; /* Desactiva la interacción con los títulos */
+    }
+</style>
+@{
+
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@{
+    ViewData["Title"] = "Raciones";
+}
+
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Mensaje"]
+    </div>
+}
+
+
+<h2 class="float-start">Administración de Raciones</h2> <a class="btn btn-primary btn-sm float-end" onclick="return abrirModalYActualizarUrl(0, 1);"><i class="fas fa-plus-square"></i> Racion</a>
+<p><br /></p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>No.</th>
+            <th>PROGRAMA</th>
+            <th>CONVENIO</th>
+            <th>DETALLE</th>
+            <th>KILOCALORIAS</th>
+            <th>CARBOHIDRATOS</th>
+            <th>PROTEINAS</th>
+            <th>GRASAS</th>
+            <th>OPCIONES</th>
+        </tr>
+    </thead>
+    <tbody>
+        @try
+        {
+            int indexCount = 0;
+
+            foreach (var item in Model.listaRacion)
+            {
+                <tr>
+                    <td>
+                        @{
+                            indexCount++;
+                        }
+                        @indexCount
+                    </td>
+                    <td>
+                        @{
+                            // Obtener la descripción usando el diccionario
+                            string descripcionPrograma = Model.ProgramaDict.TryGetValue(item.IdPrograma ?? 0, out var descPrograma)
+                            ? descPrograma
+                            : "Programa no encontrado";
+                        }
+                        @descripcionPrograma
+                    </td>
+                    <td>
+                        @{
+                            // Obtener la descripción usando el diccionario
+                            string descripcionConvenio = Model.ConvenioDict.TryGetValue(item.IdConvenio ?? 0, out var descConvenio)
+                            ? descConvenio
+                            : "Convenio no encontrado";
+                        }
+                        @descripcionConvenio
+                    </td>
+                    <td>
+                        <ul>
+                            @{
+                                foreach (RacionDetalle detalle in item.RacionDetalle){
+                                    <li>
+                                    @{
+                                        // Obtener la descripción usando el diccionario
+                                        string descripcionProductoAlimenticioDetalle = Model.ProductoAlimenticioDict.TryGetValue(detalle.IdProductoAlimenticio ?? 0, out var descProductoAlimenticioDetalle)
+                                        ? descProductoAlimenticioDetalle
+                                        : "Producto no encontrado";
+                                    }
+                                    <strong>@descripcionProductoAlimenticioDetalle</strong>: @detalle.CantidadMedida</li>
+                                }
+                            }
+                        </ul>
+                    </td>
+                    <td>@item.TotalKilocalorias</td>
+                    <td>@item.TotalCarbohidratos</td>
+                    <td>@item.TotalProteinas</td>
+                    <td>@item.TotalGrasas</td>
+                    <td class="text-center">
+                        <a class="btn btn-success btn-sm" onclick="abrirModalYActualizarUrl(@item.IdRacionMaestro, 2)"><i class="fas fa-eye"></i> Observar</a>
+                        <a class="btn btn-info btn-sm" onclick="abrirModalYActualizarUrl(@item.IdRacionMaestro, 1)"><i class="fas fa-edit"></i> Editar</a>
+                        <a class="btn btn-danger btn-sm" asp-controller="Racion" asp-action="Eliminar" asp-route-id="@item.IdRacionMaestro" onclick="confirmar(event)"><i class="fas fa-trash"></i> Eliminar</a>
+                    </td>
+
+                </tr>
+            }
+        }
+        catch
+        {
+
+        }
+
+    </tbody>
+</table>
+
+<!-- Modal -->
+<div class="modal fade" id="wNewRacion" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content" style="height:100%; width:100%">
+            <form id="frmRacion">
+                <div class="modal-header bg-secondary">
+                    <h5 class="modal-title text-white" id="lblModalTitle">@ViewBag.ModalTitle</h5>
+                    <button type="button" id="btnClose" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <input type="hidden" id="idRacionMaestro" asp-for="@Model.Racion.IdRacionMaestro" />
+                    <div>
+                        <div class="row">
+                            <div class="col">
+                                <label for="cbIdPrograma" class="control-label">Programa</label>
+                                <select class="form-select" id="cbIdPrograma" asp-for="@Model.Racion.IdPrograma" asp-items="ViewBag.Programa" required></select>
+                                <span asp-validation-for="@Model.Racion.IdPrograma" class="text-danger"></span>
+                            </div>
+                            <div class="col">
+                                <label for="cbIdConvenio" class="control-label">Convenio</label>
+                                <select class="form-select" id="cbIdConvenio" asp-for="@Model.Racion.IdConvenio" asp-items="ViewBag.Convenio" required></select>
+                                <span asp-validation-for="@Model.Racion.IdConvenio" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <br />
+                        <div class="row">
+                            <div class="col">
+                                <label for="txtTotalKilocalorias" class="control-label">Total Kilocalorias</label>
+                                <input type="number" class="form-control" id="txtTotalKilocalorias" asp-for="@Model.Racion.TotalKilocalorias" required value="0">
+                                <span asp-validation-for="@Model.Racion.TotalKilocalorias" class="text-danger"></span>
+                            </div>
+                            <div class="col">
+                                <label for="txtTotalCarbohidratos" class="control-label">Total Carbohidratos</label>
+                                <input type="number" class="form-control" id="txtTotalCarbohidratos" asp-for="@Model.Racion.TotalCarbohidratos" required value="0">
+                                <span asp-validation-for="@Model.Racion.TotalCarbohidratos" class="text-danger"></span>
+                            </div>
+                            <div class="col">
+                                <label for="txtTotalProteinas" class="control-label">Total Proteinas</label>
+                                <input type="number" class="form-control" id="txtTotalProteinas" asp-for="@Model.Racion.TotalProteinas" required value="0">
+                                <span asp-validation-for="@Model.Racion.TotalProteinas" class="text-danger"></span>
+                            </div>
+                            <div class="col">
+                                <label for="txtTotalGrasas" class="control-label">Total Grasas</label>
+                                <input type="number" class="form-control" id="txtTotalGrasas" asp-for="@Model.Racion.TotalGrasas" required value="0">
+                                <span asp-validation-for="@Model.Racion.TotalGrasas" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <br />
+                        <div class="row">
+                            <div class="col">
+                                <label for="txtPorcentajeKilocalorias" class="control-label">% Kilocalorias</label>
+                                <input type="number" class="form-control" id="txtPorcentajeKilocalorias" asp-for="@Model.Racion.PorcentajeKilocalorias" required value="0">
+                                <span asp-validation-for="@Model.Racion.PorcentajeKilocalorias" class="text-danger"></span>
+                            </div>
+                            <div class="col">
+                                <label for="txtPorcentajeCarbohidratos" class="control-label">% Carbohidratos</label>
+                                <input type="number" class="form-control" id="txtPorcentajeCarbohidratos" asp-for="@Model.Racion.PorcentajeCarbohidratos" required value="0">
+                                <span asp-validation-for="@Model.Racion.PorcentajeCarbohidratos" class="text-danger"></span>
+                            </div>
+                            <div class="col">
+                                <label for="txtPorcentajeProteinas" class="control-label">% Proteinas</label>
+                                <input type="number" class="form-control" id="txtPorcentajeProteinas" asp-for="@Model.Racion.PorcentajeProteinas" required value="0">
+                                <span asp-validation-for="@Model.Racion.PorcentajeProteinas" class="text-danger"></span>
+                            </div>
+                            <div class="col">
+                                <label for="txtPorcentajeGrasas" class="control-label">% Grasas</label>
+                                <input type="number" class="form-control" id="txtPorcentajeGrasas" asp-for="@Model.Racion.PorcentajeGrasas" required value="0">
+                                <span asp-validation-for="@Model.Racion.PorcentajeGrasas" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <br />
+                        <h5>Asignación de Productos Alimenticios</h5>
+                        <br />
+                        <div class="row camposAlmacenamiento">
+                            <div class="col">
+                                <label for="cbIdProductoAlimenticio" class="control-label">Producto Alimenticio</label>
+                                <select class="form-select" id="cbIdProductoAlimenticio" asp-items="ViewBag.ProductoAlimenticio"></select>
+                            </div>
+                            <div class="col">
+                                <label for="txtCantidad" class="control-label">Cantidad Medida</label>
+                                <input type="number" class="form-control" min="0" id="txtCantidadMedida">
+                            </div>
+                            <div class="col">
+                                <label for="cbIdUnidadMedida" class="control-label">Unidad de Medida</label>
+                                <select class="form-select" id="cbIdUnidadMedida" asp-items="ViewBag.UnidadMedida"></select>
+                            </div>
+                        </div>
+                        <br />
+                        <div class="row camposAlmacenamiento">
+                            <div class="col">
+                                <label for="txtKilocalorias" class="control-label">Kilocalorias</label>
+                                <input type="number" class="form-control" min="0" id="txtKilocalorias">
+                            </div>
+                            <div class="col">
+                                <label for="txtCarbohidratos" class="control-label">Carbohidratos</label>
+                                <input type="number" class="form-control" min="0" id="txtCarbohidratos">
+                            </div>
+                            <div class="col">
+                                <label for="txtProteinas" class="control-label">Proteinas</label>
+                                <input type="number" class="form-control" min="0" id="txtProteinas">
+                            </div>
+                            <div class="col">
+                                <label for="txtGrasas" class="control-label">Grasas</label>
+                                <input type="number" class="form-control" min="0" id="txtGrasas">
+                            </div>
+                        </div>
+                        <br class="camposAlmacenamiento" />
+                        <div class="float-end camposAlmacenamiento">
+                            <a type="button" href="#" class="btn btn-secondary" onclick="return LimpiarDetalles();">Limpiar</a>
+                            <a type="button" href="#" class="btn btn-primary" onclick="return AgregarDetalle();">Añadir Detalle</a>
+                        </div>
+                        <br class="camposAlmacenamiento" /><br class="camposAlmacenamiento" />
+                        <div class="table-responsive">
+                            <div class="row">
+                                <div class="col-12">
+                                    <table id="tableDetalle" class="table" width="100%">
+                                        <thead>
+                                            <tr>
+                                                <th>No.</th>
+                                                <th>PRODUCTO</th>
+                                                <th>CANT</th>
+                                                <th>MEDIDA</th>
+                                                <th>KILOCAL</th>
+                                                <th>CARBOS</th>
+                                                <th>PROTEINAS</th>
+                                                <th>GRASAS</th>
+                                                <th>ACCIONES</th>
+                                            </tr>
+                                        </thead>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <input type="button" value="Guardar" class="btn btn-primary camposAlmacenamiento" onclick="return GuardarRacion();" />
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        $( document ).ready(function() {
+
+            $("#tableDetalle tbody").empty();
+            $('#tableDetalle_paginate').hide();
+            $('#tableDetalle_info').hide();
+            $('#tableDetalle_filter').hide();
+
+            // Inicializa la tabla (si no está inicializada)
+            var table = $('#tableDetalle').DataTable();
+
+            // Oculta las flechas de ordenamiento
+            $('#tableDetalle thead th').removeClass('sorting sorting_asc sorting_desc');
+
+        });
+
+        function abrirModalYActualizarUrl(id, tipoApertura) {
+
+            // Se inicia reiniciando la tabla
+             $("#tableDetalle tbody").empty();
+
+            // El tipo de apertura 1 indica que se var almacenar o editar un registro
+            // El tipo de apertura 2 indica solo de observación
+            if(tipoApertura == 1){
+                $('.camposAlmacenamiento').show();
+                $("#frmRacion input").attr("readonly", false);  // Hace los inputs solo lectura
+                $("#frmRacion select").prop("disabled", false); // Deshabilita los selects
+            }else{
+                $('.camposAlmacenamiento').hide();
+                $("#frmRacion input").attr("readonly", true);  // Hace los inputs solo lectura
+                $("#frmRacion select").prop("disabled", true); // Deshabilita los selects
+            }
+
+            if (id == 0) {
+                var ventanaTitle = $("#lblModalTitle");
+                ventanaTitle.textContent = "REGISTRO RACIÓN";
+
+                $('#idRacionMaestro').val(0);
+                $('#cbIdPrograma').val();
+                $('#cbIdConvenio').val();
+                $('#txtTotalKilocalorias').val();
+                $('#txtTotalCarbohidratos').val();
+                $('#txtTotalProteinas').val();
+                $('#txtTotalGrasas').val();
+                $('#txtPorcentajeKilocalorias').val();
+                $('#txtPorcentajeCarbohidratos').val();
+                $('#txtPorcentajeProteinas').val();
+                $('#txtPorcentajeGrasas').val();
+                
+            }
+            else {
+
+                $.ajax({
+                    url: `@ViewData["rutaApp"]/Racion/ObtenerRacion/${id}`, // URL para obtener los datos
+                    type: 'GET',
+                    success: function (data) {
+
+                        console.log('data' + JSON.stringify(data));
+                        // Llenar el formulario del modal con los datos de la solicitud
+                        $('#idRacionMaestro').val(id);
+                        $('#cbIdPrograma').val(data.idPrograma);
+                        $('#cbIdConvenio').val(data.idConvenio);
+                        $('#txtTotalKilocalorias').val(data.totalKilocalorias);
+                        $('#txtTotalCarbohidratos').val(data.totalCarbohidratos);
+                        $('#txtTotalProteinas').val(data.totalProteinas);
+                        $('#txtTotalGrasas').val(data.totalGrasas);
+                        $('#txtPorcentajeKilocalorias').val(data.porcentajeKilocalorias);
+                        $('#txtPorcentajeCarbohidratos').val(data.porcentajeCarbohidratos);
+                        $('#txtPorcentajeProteinas').val(data.porcentajeProteinas);
+                        $('#txtPorcentajeGrasas').val(data.porcentajeGrasas);
+                        
+                        // Agregar Detalle
+                        if (data.racionDetalle.length > 0){
+
+                            let tabla = document.getElementById("tableDetalle");
+                            let tbody = tabla.getElementsByTagName("tbody")[0];
+
+                            data.racionDetalle.forEach((detalle, index) => {
+                                let fila = document.createElement("tr");
+
+                                let txtProducto = $("#cbIdProductoAlimenticio option[value='" + detalle.idProductoAlimenticio + "']").text(); // Nombre del producto 
+                                let cantidadMedida = detalle.cantidadMedida;
+                                let txtUnidad = $("#cbIdUnidadMedida option[value='" + detalle.idUnidadMedida + "']").text(); // Nombre de la unidad de medida
+                                let kilocalorias = detalle.kilocalorias;
+                                let carbohidratos = detalle.carbohidratos;
+                                let proteinas = detalle.proteinas;
+                                let grasas = detalle.grasas;
+
+                                var botonEliminar = tipoApertura == 1 
+                                    ? `<button type="button" class="btn btn-danger btn-sm camposAlmacenamiento" onclick="EliminarFila(this, ${detalle.idRacionDetalle})">Eliminar</button>` 
+                                    : '';
+
+                                fila.innerHTML = `
+                                    <td>${index + 1}</td>
+                                    <td>${txtProducto}</td>
+                                    <td>${cantidadMedida}</td>
+                                    <td>${txtUnidad}</td>
+                                    <td>${kilocalorias}</td>
+                                    <td>${carbohidratos}</td>
+                                    <td>${proteinas}</td>
+                                    <td>${grasas}</td>
+                                    <td>
+                                        ${botonEliminar}
+                                        <input type="hidden" name="IdRacionDetalle" value="${detalle.idRacionDetalle}">
+                                        <input type="hidden" name="IdProductoAlimenticio" value="${detalle.idProductoAlimenticio}">
+                                        <input type="hidden" name="CantidadMedida" value="${cantidadMedida}">
+                                        <input type="hidden" name="UnidadMedida" value="${detalle.idUnidadMedida}">
+                                        <input type="hidden" name="Kilocalorias" value="${detalle.kilocalorias}">
+                                        <input type="hidden" name="Carbohidratos" value="${detalle.carbohidratos}">
+                                        <input type="hidden" name="Proteinas" value="${detalle.proteinas}">
+                                        <input type="hidden" name="Grasas" value="${detalle.grasas}">
+                                    </td>
+                                `;
+
+                                tbody.appendChild(fila);
+                            });
+                        }
+
+                        var ventanaTitle = document.getElementById("lblModalTitle");
+
+                        if (tipoApertura == 1)
+                            ventanaTitle.textContent = "MODIFICAR RACIÓN ";
+                        else
+                            ventanaTitle.textContent = "OBSERVAR RACIÓN ";
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error al obtener los datos de la ración:', error);
+                    }
+                });
+            }
+
+            var modal = new bootstrap.Modal(document.getElementById('wNewRacion'));
+            modal.show();            
+        }
+
+        function ActualizarContador() {
+            let filas = document.querySelectorAll("#tableDetalle tbody tr");
+            filas.forEach((fila, index) => {
+                fila.cells[0].innerHTML = `${index + 1}`;
+            });
+        }
+
+        function AgregarDetalle() {
+            let producto = $("#cbIdProductoAlimenticio").val();
+            let txtProducto = $("#cbIdProductoAlimenticio option:selected").text();
+            let cantidadMedida = $("#txtCantidadMedida").val();
+            let unidadMedida = $("#cbIdUnidadMedida").val();
+            let txtUnidad = $("#cbIdUnidadMedida option:selected").text();
+
+            let kilocalorias = $("#txtKilocalorias").val();
+            let carbohidratos = $("#txtCarbohidratos").val();
+            let proteinas = $("#txtProteinas").val();
+            let grasas = $("#txtGrasas").val();
+
+            let totKilocalorias = $("#txtTotalKilocalorias").val();
+            let totCarbohidratos = $("#txtTotalCarbohidratos").val();
+            let totProteinas = $("#txtTotalProteinas").val();
+            let totGrasas = $("#txtTotalGrasas").val();
+
+            let percKilocalorias = $("#txtPorcentajeKilocalorias").val();
+            let percCarbohidratos = $("#txtPorcentajeCarbohidratos").val();
+            let percProteinas = $("#txtPorcentajeProteinas").val();
+            let percGrasas = $("#txtPorcentajeGrasas").val();
+
+            if (!producto || !cantidadMedida || !unidadMedida || !kilocalorias || !carbohidratos || !proteinas || !grasas) {
+                alert("Todos los campos son obligatorios.");
+                return false;
+            }
+
+            let tabla = document.getElementById("tableDetalle");
+            let tbody = tabla.getElementsByTagName("tbody")[0];
+
+            if (!tbody) {
+                tbody = document.createElement("tbody");
+                tabla.appendChild(tbody);
+            }
+
+            let fila = document.createElement("tr");
+
+            fila.innerHTML = `
+                <td>
+                </td>
+                <td>${txtProducto}</td>
+                <td>${cantidadMedida}</td>
+                <td>${txtUnidad}</td>
+                <td>${kilocalorias}</td>
+                <td>${carbohidratos}</td>
+                <td>${proteinas}</td>
+                <td>${grasas}</td>
+                <td>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="EliminarFila(this, 0)">Eliminar</button>
+
+                    <input type="hidden" name="IdRacionDetalle" value="0">
+                    <input type="hidden" name="IdProductoAlimenticio" value="${producto}">
+                    <input type="hidden" name="CantidadMedida" value="${cantidadMedida}">
+                    <input type="hidden" name="UnidadMedida" value="${unidadMedida}">
+                    <input type="hidden" name="Kilocalorias" value="${kilocalorias}">
+                    <input type="hidden" name="Carbohidratos" value="${carbohidratos}">
+                    <input type="hidden" name="Proteinas" value="${proteinas}">
+                    <input type="hidden" name="Grasas" value="${grasas}">
+                </td>
+            `;
+
+            tbody.appendChild(fila);
+
+            totKilocalorias = parseFloat(totKilocalorias) + parseFloat(kilocalorias);
+            totCarbohidratos = parseFloat(totCarbohidratos) + parseFloat(carbohidratos);
+            totProteinas = parseFloat(totProteinas) + parseFloat(proteinas);
+            totGrasas = parseFloat(totGrasas) + parseFloat(grasas);
+
+            percKilocalorias = ( parseFloat(totKilocalorias) * 100) / 2100;
+            percCarbohidratos = ( parseFloat(totCarbohidratos) * 100) / 2100;
+            percProteinas = ( parseFloat(totProteinas) * 100) /2100;
+            percGrasas = ( parseFloat(totGrasas) * 100) / 2100;
+
+            $('#txtTotalKilocalorias').val('');
+            $('#txtTotalCarbohidratos').val('');
+            $('#txtTotalProteinas').val('');
+            $('#txtTotalGrasas').val('');
+            $('#txtPorcentajeKilocalorias').val('');
+            $('#txtPorcentajeCarbohidratos').val('');
+            $('#txtPorcentajeProteinas').val('');
+            $('#txtPorcentajeGrasas').val('');
+
+            $('#txtTotalKilocalorias').val( parseFloat(totKilocalorias).toFixed(2) );
+            $('#txtTotalCarbohidratos').val( parseFloat(totCarbohidratos).toFixed(2) );
+            $('#txtTotalProteinas').val( parseFloat(totProteinas).toFixed(2) );
+            $('#txtTotalGrasas').val( parseFloat(totGrasas).toFixed(2) );
+
+            $('#txtPorcentajeKilocalorias').val( parseFloat(percKilocalorias).toFixed(2) );
+            $('#txtPorcentajeCarbohidratos').val( parseFloat(percCarbohidratos).toFixed(2) );
+            $('#txtPorcentajeProteinas').val( parseFloat(percProteinas).toFixed(2) );
+            $('#txtPorcentajeGrasas').val( parseFloat(percGrasas).toFixed(2) );
+
+            ActualizarContador();
+            LimpiarDetalles();
+            return false;
+        }
+
+        function LimpiarDetallesTest() {
+            document.getElementById("cbIdProductoAlimenticio").selectedIndex = 0;
+            document.getElementById("txtCantidadMedida").value = "";
+            document.getElementById("cbIdUnidadMedida").selectedIndex = 0;
+            document.getElementById("txtKilocalorias").value = "";
+            document.getElementById("txtCarbohidratos").value = "";
+            document.getElementById("txtProteinas").value = "";
+            document.getElementById("txtGrasas").value = "";
+            return false;
+        }
+
+        function EliminarFila(boton, idDetalle) {
+
+            let fila = boton.closest("tr");
+
+            let totKilocalorias = $("#txtTotalKilocalorias").val();
+            let totCarbohidratos = $("#txtTotalCarbohidratos").val();
+            let totProteinas = $("#txtTotalProteinas").val();
+            let totGrasas = $("#txtTotalGrasas").val();
+
+            let percKilocalorias = $("#txtPorcentajeKilocalorias").val();
+            let percCarbohidratos = $("#txtPorcentajeCarbohidratos").val();
+            let percProteinas = $("#txtPorcentajeProteinas").val();
+            let percGrasas = $("#txtPorcentajeGrasas").val();
+
+            let kilocalorias = fila.cells[4].childNodes[0].nodeValue;
+            let carbohidratos = fila.cells[5].childNodes[0].nodeValue;
+            let proteinas = fila.cells[6].childNodes[0].nodeValue;
+            let grasas = fila.cells[7].childNodes[0].nodeValue;
+
+            totKilocalorias = parseFloat(totKilocalorias) - parseFloat(kilocalorias);
+            totCarbohidratos = parseFloat(totCarbohidratos) - parseFloat(carbohidratos);
+            totProteinas = parseFloat(totProteinas) - parseFloat(proteinas);
+            totGrasas = parseFloat(totGrasas) - parseFloat(grasas);
+
+            percKilocalorias = ( parseFloat(totKilocalorias) * 100) / 2100;
+            percCarbohidratos = ( parseFloat(totCarbohidratos) * 100) / 2100;
+            percProteinas = ( parseFloat(totProteinas) * 100) /2100;
+            percGrasas = ( parseFloat(totGrasas) * 100) / 2100;
+
+            $('#txtTotalKilocalorias').val('');
+            $('#txtTotalCarbohidratos').val('');
+            $('#txtTotalProteinas').val('');
+            $('#txtTotalGrasas').val('');
+
+            $('#txtPorcentajeKilocalorias').val('');
+            $('#txtPorcentajeCarbohidratos').val('');
+            $('#txtPorcentajeProteinas').val('');
+            $('#txtPorcentajeGrasas').val('');
+
+            $('#txtTotalKilocalorias').val( parseFloat(totKilocalorias).toFixed(2) );
+            $('#txtTotalCarbohidratos').val( parseFloat(totCarbohidratos).toFixed(2) );
+            $('#txtTotalProteinas').val( parseFloat(totProteinas).toFixed(2) );
+            $('#txtTotalGrasas').val( parseFloat(totGrasas).toFixed(2) );
+
+            $('#txtPorcentajeKilocalorias').val( parseFloat(percKilocalorias).toFixed(2) );
+            $('#txtPorcentajeCarbohidratos').val( parseFloat(percCarbohidratos).toFixed(2) );
+            $('#txtPorcentajeProteinas').val( parseFloat(percProteinas).toFixed(2) );
+            $('#txtPorcentajeGrasas').val( parseFloat(percGrasas).toFixed(2) );
+
+            // En el escenario en donde el ID de ración detalle es diferente de cero, se elimina en la BD
+            if (idDetalle != 0){
+
+                if (!confirm("¿Estás seguro de que deseas eliminar este detalle?")) {
+                    return;
+                }
+
+                $.ajax({
+                url: `@ViewData["rutaApp"]/Racion/EliminarDetalle?id=${idDetalle}`,
+                type: "POST",
+                success: function (respuesta) {
+                    alert("Detalle eliminado correctamente.");
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error al eliminar:", error);
+                    alert("Ocurrió un error al eliminar la ración.");
+                }
+            });
+            }
+
+            
+            fila.remove();
+
+
+            ActualizarContador();
+        }
+
+        function LimpiarDetalles(){
+            $('#cbIdProductoAlimenticio').val();
+            $('#cbIdUnidadMedida').val();
+            $('#txtCantidadMedida').val('');
+            $('#txtKilocalorias').val('');
+            $('#txtCarbohidratos').val('');
+            $('#txtProteinas').val('');
+            $('#txtGrasas').val('');
+        }
+
+        function GuardarRacion() {
+            let racionMaestra = {
+                IdRacionMaestro: $("#idRacionMaestro").val(),  
+                IdPrograma: $("#cbIdPrograma").val(),
+                IdConvenio: $("#cbIdConvenio").val(), 
+                TotalKilocalorias: $("#txtTotalKilocalorias").val(),
+                TotalCarbohidratos: $("#txtTotalCarbohidratos").val(),
+                TotalProteinas: $("#txtTotalProteinas").val(),
+                TotalGrasas: $("#txtTotalGrasas").val(),
+                PorcentajeKilocalorias: $("#txtPorcentajeKilocalorias").val(),
+                PorcentajeCarbohidratos: $("#txtPorcentajeCarbohidratos").val(),
+                PorcentajeProteinas: $("#txtPorcentajeProteinas").val(),
+                PorcentajeGrasas: $("#txtPorcentajeGrasas").val()
+            };
+
+            let tabla = document.getElementById("tableDetalle");
+            let tbody = tabla.getElementsByTagName("tbody")[0];
+
+            let detalles = [];
+
+            $("#tableDetalle tbody tr").each(function () {
+                let fila = $(this);
+
+                let detalle = {
+                    IdRacionDetalle: fila.find("input[name='IdRacionDetalle']").val(),
+                    IdProductoAlimenticio: fila.find("input[name='IdProductoAlimenticio']").val(),
+                    CantidadMedida: fila.find("input[name='CantidadMedida']").val(),
+                    IdUnidadMedida: fila.find("input[name='UnidadMedida']").val(),
+                    Kilocalorias: fila.find("input[name='Kilocalorias']").val(),
+                    Carbohidratos: fila.find("input[name='Carbohidratos']").val(),
+                    Proteinas: fila.find("input[name='Proteinas']").val(),
+                    Grasas: fila.find("input[name='Grasas']").val()
+                };
+
+                    detalles.push(detalle);
+            });
+
+            if (detalles.length === 0) {
+                alert("Debe agregar al menos un detalle antes de guardar.");
+                return;
+            }
+
+            let datosEnvio = {
+                Racion: racionMaestra,
+                listaRacionDetalle: detalles
+            };
+
+            $.ajax({
+                url: `@ViewData["rutaApp"]/Racion/GuardarRacion`,
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify(datosEnvio),
+                success: function (respuesta) {
+                    alert("Ración almacenada correctamente.");
+                    // Redireccionar o limpiar formulario si es necesario
+                    window.location.reload();
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error al guardar:", error);
+                    alert("Ocurrió un error al guardar la ración.");
+                }
+            });
+        }
+
+
+
+        function confirmar(e){
+
+            e.preventDefault();
+
+            Swal.fire({
+                title: "Desea eliminar el Ración?",
+                text: "Este proceso eliminará la Ración.",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#3085d6",
+                cancelButtonColor: "#d33",
+                confirmButtonText: "Eliminar!"
+            }).then((result) => {
+                if (result.isConfirmed) {
+
+                    Swal.fire({
+                        title: "Eliminado!",
+                        text: "Ración eliminada con éxito.",
+                        icon: "success"
+                    });
+
+                    window.location.href = e.target.href;
+
+                    return true;
+                } else{
+                    e.preventDefault();
+                }
+            });
+
+        }
+
+    </script>
+}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>

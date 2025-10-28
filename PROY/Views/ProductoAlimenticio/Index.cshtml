@@ -1,0 +1,139 @@
+﻿@model PROY.ViewModels.ProductoAlimenticioVM;
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
+<head>
+</head>
+@{
+
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@{
+    ViewData["Title"] = "PA";
+}
+
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Mensaje"]
+    </div>
+}
+
+@* <div class="=row">
+        <div class="col-sm-8"> *@
+<h2 class="float-start">Administración de Producto Alimenticio</h2> <a class="btn btn-primary btn-sm float-end" onclick="abrirModalYActualizarUrl(0)"><i class="fas fa-plus-square"></i> Producto Alimenticio</a>
+<p><br /></p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>PRODUCTO ALIMENTICIO</th>
+            <th>OPCIONES</th>
+        </tr>
+    </thead>
+    <tbody>
+        @try
+        {
+            foreach (var item in Model.listaProductoAlimenticio)
+            {
+                <tr>
+                    <td>@item.IdProductoAlimenticio</td>
+                    <td>@item.NombrePA</td>
+                    <td class="text-center">
+                        <a class="btn btn-info btn-sm" onclick="abrirModalYActualizarUrl(@item.IdProductoAlimenticio)"><i class="fas fa-edit"></i> Editar</a>
+                        <a class="btn btn-danger btn-sm" asp-controller="ProductoAlimenticio" asp-action="Eliminar" asp-route-id="@item.IdProductoAlimenticio" onclick="confirmar(event)"><i class="fas fa-trash"></i> Eliminar</a>
+                    </td>
+
+                </tr>
+            }
+        }
+        catch
+        {
+
+        }
+
+    </tbody>
+</table>
+
+<!-- Modal -->
+<div class="modal fade" id="wNewProductoAlimenticio" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="height:280px;">
+            <form asp-action="GuardarProductoAlimenticio" asp-controller="ProductoAlimenticio" method="post">
+                <div class="modal-header bg-secondary">
+                    <h5 class="modal-title text-white" id="lblModalTitle">@ViewBag.ModalTitle</h5>
+                    <button type="button" id="btnClose" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <input type="hidden" id="idProductoAlimenticio" asp-for="@Model.ProductoAlimenticio.IdProductoAlimenticio" />
+                    <div>
+                        <div class="col">
+                            <label for="txtNombrePA" class="control-label">Producto Alimenticio</label>
+                            <input type="text" class="form-control" id="txtNombrePA" asp-for="@Model.ProductoAlimenticio.NombrePA" required></input>
+                            <span asp-validation-for="@Model.ProductoAlimenticio.NombrePA" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <input type="submit" value="Guardar" class="btn btn-primary" />
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        function abrirModalYActualizarUrl(id) {
+            if (id == 0) {
+                var ventanaTitle = document.getElementById("lblModalTitle");
+                ventanaTitle.textContent = "REGISTRO PRODUCTO ALIMENTICIO";
+
+                $('#idProductoAlimenticio').val(0);
+                $('#txtNombrePA').val('');
+            }
+            else {
+                var ventanaTitle = document.getElementById("lblModalTitle");
+                ventanaTitle.textContent = "MODIFICAR PRODUCTO ALIMENTICIO";
+            }
+
+            var modal = new bootstrap.Modal(document.getElementById('wNewProductoAlimenticio'));
+            modal.show();
+
+            $.ajax({
+                url: `@ViewData["rutaApp"]/ProductoAlimenticio/ObtenerProductoAlimenticio/${id}`, // URL para obtener los datos
+                type: 'GET',
+                success: function (data) {
+
+                    console.log('data' + JSON.stringify(data));
+                    // Llenar el formulario del modal con los datos de la solicitud
+                    $('#idProductoAlimenticio').val(id);
+                    $('#txtNombrePA').val(data.nombre);
+                    //alert(id);
+
+                    var ventanaTitle = document.getElementById("lblModalTitle");
+                    ventanaTitle.textContent = "MODIFICAR PRODUCTO ALIMENTICIO ";
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error al obtener los datos de la producto alimenticio:', error);
+                }
+            });
+        }
+
+        function confirmar(e){
+            var res=confirm("Esta seguro de eliminar el producto alimenticio");
+            if (res) return true;
+            if (res==false) e.preventDefault();
+
+            //return false;
+        }
+    </script>
+}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>

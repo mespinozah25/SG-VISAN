@@ -1,0 +1,112 @@
+﻿@model PROY.ViewModels.PersonalBodegaVM;
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
+<head>
+</head>
+@{
+
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@{
+    ViewData["Title"] = "Reporte Listado de Personal";
+}
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Mensaje"]
+    </div>
+}
+
+
+<h2 class="float-start">Reporte Listado de Personal</h2> 
+<p><br /></p>
+
+<br />
+
+@await Html.PartialAsync("_CriteriosDeBusqueda")
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>BODEGA</th>
+            <th>DPI</th>
+            <th>NIT</th>
+            <th>NOMBRE</th>
+            <th>PUESTO</th>
+            <th>RENGLÓN</th>
+            <th>EMAIL</th>
+            <th>TELÉFONO</th>
+        </tr>
+    </thead>
+    <tbody>
+        @try
+        {
+            foreach (var item in Model.listaPersonalBodegas)
+            {
+                <tr>
+                    <td>
+                        @{
+                            // Obtener la descripción usando el diccionario
+                            string descripcionBodega = Model.BodegaDict.TryGetValue(item.IdBodega ?? 0, out var descBodega)
+                            ? descBodega
+                            : "Bodega no encontrado";
+                        }
+                        @descripcionBodega
+                    </td>
+                    <td>@item.Dpi</td>
+                    <td>@item.Nit</td>
+                    <td>@item.Nombres @item.Apellidos</td>
+                    <td>
+                        @{
+                            // Obtener el puesto usando el diccionario
+                            string descripcionPuestos = Model.PuestoDict.TryGetValue(item.IdPuesto ?? 0, out var descPuesto)
+                            ? descPuesto
+                            : "Puesto no encontrado";
+                        }
+                        @descripcionPuestos
+                    </td>
+                    <td>
+                        @{
+                            // Obtener el renglón usando el diccionario
+                            string descripcionRenglon = Model.RenglonPreDict.TryGetValue(item.IdRenglonPresupuestario ?? 0, out var descRenglon)
+                            ? descRenglon
+                            : "Renglón Presupuestario no encontrado";
+                        }
+                        @descripcionRenglon
+                    </td>
+                    <td>@item.Email</td>
+                    <td>@item.Telefono</td>
+
+                </tr>
+            }
+        }
+        catch
+        {
+
+        }
+
+    </tbody>
+</table>
+
+
+
+@section Scripts {
+
+    <script>
+
+        var tipoReporte = 3;
+        var nombreReporte = "Reporte Listado de Personal";
+
+    </script>
+}
+
+<script src="~/js/reportes.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+ @* CDN para la creación del archivo xlsx *@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+@* CDN para la creación del archivo PDF *@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+

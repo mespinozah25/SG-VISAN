@@ -1,0 +1,41 @@
+﻿@model List<PROY.ViewModels.PermisoRolVM>;
+
+<form asp-action="GuardarPermisos" method="post">
+    <h2 class="float-start">Administración de Permisos</h2>
+    <p><br /></p>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Permiso</th>
+                @foreach (var rol in Model.First().RolesPermisos)
+                {
+                    <th>@rol.NombreRol</th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var permiso in Model)
+            {
+                <tr>
+                    <td>@permiso.NombrePermiso</td>
+                    @foreach (var rolPermiso in permiso.RolesPermisos)
+                    {
+                        <td>
+                            <input type="checkbox" name="Model[@Model.IndexOf(permiso)].RolesPermisos[@permiso.RolesPermisos.IndexOf(rolPermiso)].TienePermiso" value="true" @(rolPermiso.TienePermiso ? "checked" : "") />
+                            <input type="hidden" name="Model[@Model.IndexOf(permiso)].RolesPermisos[@permiso.RolesPermisos.IndexOf(rolPermiso)].IdRol" value="@rolPermiso.IdRol" />
+                            <input type="hidden" name="Model[@Model.IndexOf(permiso)].IdPermiso" value="@permiso.IdPermiso" />
+                        </td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+    
+    <button type="submit" class="btn btn-primary">Guardar</button>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+
+<script src="~/js/customjs.js"></script>

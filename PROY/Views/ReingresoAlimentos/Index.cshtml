@@ -1,0 +1,247 @@
+﻿@using PROY.Enum
+@model PROY.ViewModels.ReingresoAlimentosVM;
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
+<head>
+</head>
+@{
+
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Mensaje"]
+    </div>
+}
+
+@{
+    ViewData["Title"] = "Reingreso de Alimentos";
+}
+
+
+<h2 class="float-start">Reingreso de Alimentos</h2> 
+@if (Model.Rol == "Operador de Logística" || Model.Rol == "Admin")
+{
+    <a class="btn btn-primary btn-sm float-end" asp-controller="ReingresoAlimentos" asp-action="ReingresoAlimentos" asp-route-id="0" asp-route-type="1"><i class="fas fa-plus-square"></i> Crear Reingreso de Alimentos</a>
+}
+<p><br /></p>
+<br />
+<table class="table">
+    <thead>
+        <tr>
+            <th>No.</th>
+            <th>FECHA SOLICITUD</th>
+            <th>DEPARTAMENTO SOLICITANTE</th>
+            <th>NO. OFICIO</th>
+            <th>ESTADO</th>
+            <th>OPCIONES</th>
+        </tr>
+    </thead>
+    <tbody>
+        @try
+        {
+            int indexCount = 0;
+
+            foreach (var item in Model.listaReingresoAlimentos)
+            {
+                <tr>
+                    <td>
+                        @{
+                            indexCount++;
+                        }
+                        @indexCount
+                    </td>
+                    <td>@(item.FechaSolicitud?.ToString("dd/MM/yyyy") ?? "")</td>
+                    <td>
+                        @{
+                            // Obtener la descripción usando el diccionario
+                            string descripcionPrograma = Model.ProgramaDict.TryGetValue(item.IdPrograma ?? 0, out var descPrograma)
+                            ? descPrograma
+                            : "Programa no encontrado";
+                        }
+                        @descripcionPrograma
+                    </td>
+                    <td>@item.NoOficioReingreso</td>
+                    <td>
+                        @{
+                            // Obtener el Estado usando el diccionario
+                            string descripcionEstado = Model.EstadoReingresoDict.TryGetValue(item.IdEstadoReingreso ?? 0, out var descEstado)
+                            ? descEstado
+                            : "Estado no encontrado";
+                        }
+                        @descripcionEstado
+                    </td>
+                    <td class="text-center">
+
+                        @if (item.IdEstadoReingreso == (int)@EstadosReingresoEnum.Inicio) // 1: Iniciada && Rol Jefe de Bodegas
+                        {
+                            @if (Model.Rol == "Operador de Logística" || Model.Rol == "Admin")
+                            {
+                                <a class="btn btn-info btn-sm" asp-controller="ReingresoAlimentos" asp-action="ReingresoAlimentos" asp-route-id="@item.IdReingresoAlimentos" asp-route-type="1"> Editar </a>
+                                <a class="btn btn-info btn-sm" asp-controller="ReingresoAlimentos" asp-action="ReingresoAlimentos" asp-route-id="@item.IdReingresoAlimentos" asp-route-type="2"> Ver </a>
+                                <a class="btn btn-info btn-sm" onclick="CambioEstado(@item.IdReingresoAlimentos, 2)"> Enviar a Bodega </a>
+                            }
+                            else
+                            {
+                                @* <a class="btn btn-info btn-sm" asp-controller="ReingresoAlimentos" asp-action="ReingresoAlimentos" asp-route-id="@item.IdReingresoAlimentos" asp-route-type="2"> Ver </a> *@
+                                <a class="btn btn-info btn-sm" asp-controller="ReingresoAlimentos" asp-action="ReingresoFinalizado" asp-route-id="@item.IdReingresoAlimentos" asp-route-type="2" asp-route-estado="@item.IdEstadoReingreso"> Ver </a>
+                            }
+                        }
+                        @if (item.IdEstadoReingreso == (int)@EstadosReingresoEnum.EnBodega) // 2: Bodega && Rol Encargado de Bodega
+                        {
+                            @if (Model.IdUsuario == item.IdUsuarioEncargado || Model.Rol == "Admin")
+                            {
+                                <a class="btn btn-info btn-sm" asp-controller="ReingresoAlimentos" asp-action="RegistrarReingreso" asp-route-id="@item.IdReingresoAlimentos" asp-route-type="1"> Registrar Reingreso </a>
+                                <a class="btn btn-info btn-sm" asp-controller="ReingresoAlimentos" asp-action="CambioEstado" asp-route-id="@item.IdReingresoAlimentos" asp-route-estado="3" onclick="confirmarFinalizacion(event)"> Finalizar Reingreso </a>
+                            }
+                            else
+                            {
+                                @* <a class="btn btn-info btn-sm" asp-controller="ReingresoAlimentos" asp-action="RegistrarReingreso" asp-route-id="@item.IdReingresoAlimentos" asp-route-type="2"> Ver Registro Reingreso </a> *@
+                                <a class="btn btn-info btn-sm" asp-controller="ReingresoAlimentos" asp-action="ReingresoFinalizado" asp-route-id="@item.IdReingresoAlimentos" asp-route-type="2" asp-route-estado="@item.IdEstadoReingreso"> Ver Reingreso </a>
+                            }
+                            
+                        }
+                        @if (item.IdEstadoReingreso == (int)@EstadosReingresoEnum.ReingresoFinalizado) // 2: Bodega && Rol Encargado de Bodega
+                        {
+                            <a class="btn btn-info btn-sm" asp-controller="ReingresoAlimentos" asp-action="ReingresoFinalizado" asp-route-id="@item.IdReingresoAlimentos" asp-route-type="2" asp-route-estado="@item.IdEstadoReingreso"> Ver </a>
+                        }
+
+                    </td>
+
+                </tr>
+            }
+        }
+        catch
+        {
+
+        }
+
+    </tbody>
+</table>
+
+
+<!-- Modal -->
+<div class="modal fade" id="wCambioEstado" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="height:100%;">
+
+            <form id="frmCambioEstado">
+                <input type="hidden" id="idReingresoAlimentos" value="0" />
+                <div class="modal-header bg-secondary">
+                    <h5 class="modal-title text-white" id="lblModalTitle">Traslado de Reingreso</h5>
+                    <button type="button" id="btnClose" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div>
+                        <div class="col">
+                            <label for="cbIdUsuario" class="control-label">Usuario: *</label>
+                            <select class="form-select" id="cbIdUsuario" required></select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <a id="btnEnviar" class="btn btn-info btn" onclick="confirmar()"> Enviar </a>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+
+    <script>
+
+        function confirmarFinalizacion(e){
+
+            e.preventDefault();
+
+            Swal.fire({
+              title: "Está seguro de finalizar el Reingreso de Alimentos?",
+              showCancelButton: true,
+              confirmButtonText: "Enviar",
+              icon: "question"
+            }).then((result) => {
+              if (result.isConfirmed) {
+
+                  window.location.href = e.target.href;
+
+                  return true;
+              } else{
+                  e.preventDefault();
+              }
+            });
+        }
+
+        function CambioEstado(id, estado){
+
+            $.ajax({
+                url: `@ViewData["rutaApp"]/ReingresoAlimentos/ObtenerUsuariosEncargado`, // URL para obtener los datos
+                type: 'GET',
+                success: function (data) {
+
+                    var usuarios = data.usuarios;
+
+                    let selectUsuario = $('#cbIdUsuario');
+                    selectUsuario.empty(); // Limpiar opciones previas
+                    let optionsUsuarios = "";
+
+                    usuarios.forEach(uss => {
+                            optionsUsuarios += `<option value="${uss.idUsuario}">${uss.nombre} ${uss.apellidos}</option>`;
+                    });
+
+                    selectUsuario.append(optionsUsuarios);
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error al obtener los datos de usuarios: ', error);
+                }
+            });
+
+            $("#idReingresoAlimentos").val(parseInt(id));
+
+            var modal = new bootstrap.Modal(document.getElementById('wCambioEstado'));
+            modal.show();
+        }
+
+        function confirmar(){
+
+            Swal.fire({
+              title: "Está seguro de enviar el Reingreso de Alimentos al Encargado de Bodega?",
+              showCancelButton: true,
+              confirmButtonText: "Enviar",
+              icon: "question"
+            }).then((result) => {
+              if (result.isConfirmed) {
+
+                  var id = parseInt($("#idReingresoAlimentos").val());
+                  var estado = 2;
+                  var idUsuario = parseInt($('#cbIdUsuario').val());
+
+                $.ajax({
+                    url: `@ViewData["rutaApp"]/ReingresoAlimentos/CambioEstado`, // Ruta del método
+                    type: 'POST',
+                    data: { 'id': id, 'estado': estado, 'idUsuario': idUsuario },
+                    success: function (response) {
+
+                        location.reload(); // Recargar la página
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("❌ Error al cambiar estado:", xhr.responseText);
+                        alert("Hubo un error al cambiar el estado. Verifica la consola.");
+                    }
+                });
+
+                  return true;
+              } else{
+                  // e.preventDefault();
+              }
+            });
+        }
+
+    </script>
+}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>

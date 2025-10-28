@@ -1,0 +1,14 @@
+
+.DS_Store
+
+.vscode/
+
+PROY/.config/
+
+PROY/.vs/
+
+PROY/bin/
+
+PROY/obj/
+
+PROY/Properties/

@@ -1,0 +1,601 @@
+﻿@using System.Security.Claims;
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+<style>
+    .form-check-input:checked {
+        background-color: green !important;
+        border-color: green !important;
+    }
+
+    .form-check-input:not(:checked) {
+        background-color: red !important;
+        border-color: red;
+    }
+
+</style>
+
+<div class="text-center" style="margin-bottom:400px;">    
+        @* <h1 class="display-4">Bienvenido @ViewData["nombreUsuario"]</h1>     *@
+    <h1 class="display-4" style="font-size:32px"><b>SOLICITUDES ASISTENCIA ALIMENTARIA</b></h1>
+    <div>
+        <a class="btn btn-primary float-end">Nueva solicitud</a><br />
+        <div class="table-responsive" style="width:100%;">
+            <table class="table table-bordered">
+                <thead>
+                <tr>
+                    <th>CORRELATIVO</th>
+                    <th>FECHA INGRESO DESPACHO</th>
+                    <th>FECHA INGRESO UNIDAD</th>
+                    <th>ESTADO</th>
+                    <th>OPCIONES</th>
+                </tr>
+                </thead>
+                <tr>
+                    <td>AZ-2024-1</td>
+                    <td>10/01/2024</td>
+                    <td>12/01/2024</td>
+                    <td>CREADO</td>
+                    <td><a class="btn btn-info btn-sm">Editar</a> <a class="btn btn-danger btn-sm">Eliminar</a> <a class="btn btn-dark btn-sm">Detalle</a></td>
+                </tr>
+                <tr>
+                    <td>AZ-2024-2</td>
+                    <td>10/01/2024</td>
+                    <td>12/01/2024</td>
+                    <td>CREADO</td>
+                    <td><a class="btn btn-info btn-sm">Editar</a> <a class="btn btn-danger btn-sm">Eliminar</a> <a class="btn btn-dark btn-sm">Detalle</a></td>
+                </tr>
+                <tr>
+                    <td>AZ-2024-3</td>
+                    <td>10/01/2024</td>
+                    <td>12/01/2024</td>
+                    <td>CREADO</td>
+                    <td><a class="btn btn-info btn-sm">Editar</a> <a class="btn btn-danger btn-sm">Eliminar</a> <a class="btn btn-dark btn-sm">Detalle</a></td>
+                </tr>
+                <tr>
+                    <td>AZ-2024-4</td>
+                    <td>11/01/2024</td>
+                    <td>12/01/2024</td>
+                    <td>CREADO</td>
+                    <td><a class="btn btn-info btn-sm">Editar</a> <a class="btn btn-danger btn-sm">Eliminar</a> <a class="btn btn-dark btn-sm">Detalle</a></td>
+                </tr>
+                <tr>
+                    <td>AZ-2024-5</td>
+                    <td>11/01/2024</td>
+                    <td>12/01/2024</td>
+                    <td>CREADO</td>
+                    <td><a class="btn btn-info btn-sm">Editar</a> <a class="btn btn-danger btn-sm">Eliminar</a> <a class="btn btn-dark btn-sm">Detalle</a></td>
+                </tr>
+                <tr>
+                    <td>AZ-2024-6</td>
+                    <td>12/01/2024</td>
+                    <td>14/01/2024</td>
+                    <td>CREADO</td>
+                    <td><a class="btn btn-info btn-sm">Editar</a> <a class="btn btn-danger btn-sm">Eliminar</a> <a class="btn btn-dark btn-sm">Detalle</a></td>
+                </tr>
+                <tr>
+                    <td>AZ-2024-7</td>
+                    <td>12/01/2024</td>
+                    <td>14/01/2024</td>
+                    <td>CREADO</td>
+                    <td><a class="btn btn-info btn-sm">Editar</a> <a class="btn btn-danger btn-sm">Eliminar</a> <a class="btn btn-dark btn-sm">Detalle</a></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    @* <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p> *@
+</div>
+
+<div class="text-center" style="margin-bottom:400px;">
+    @* <h1 class="display-4">Bienvenido @ViewData["nombreUsuario"]</h1>     *@
+    <h1 class="display-4" style="font-size:32px"><b>DETALLE SOLICITUDES ASISTENCIA ALIMENTARIA</b></h1>
+    <div>
+        <a class="btn btn-primary float-end">Nueva solicitud</a><br />
+        <div class="table-responsive_" style="width:100%;">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>CORRELATIVO</th>
+                        <th>INTERVENCION</th>
+                        <th>DEPARTAMENTO</th>
+                        <th>MUNICIPIO</th>
+                        <th>COMUNIDAD</th>
+                        <th>NO. BENEFICIARIOS</th>
+                        <th>ESTADO</th>
+                        <th>OPCIONES</th>
+                    </tr>
+                </thead>
+                <tr>
+                    <td>1</td>
+                    <td>INSAN</td>
+                    <td>Jutiapa</td>
+                    <td>Santa Catarina Mita</td>
+                    <td>La Aradita</td>
+                    <td>90</td>
+                    <td>CREADO</td>
+                    <td><a class="btn btn-info btn-sm">Editar</a> <a class="btn btn-danger btn-sm">Eliminar</a></td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>INSAN</td>
+                    <td>Jutiapa</td>
+                    <td>Santa Catarina Mita</td>
+                    <td>La Barranca</td>
+                    <td>44</td>
+                    <td>CREADO</td>
+                    <td><a class="btn btn-info btn-sm">Editar</a> <a class="btn btn-danger btn-sm">Eliminar</a></td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>INSAN</td>
+                    <td>Jutiapa</td>
+                    <td>Santa Catarina Mita</td>
+                    <td>La Ermita</td>
+                    <td>88</td>
+                    <td>CREADO</td>
+                    <td><a class="btn btn-info btn-sm">Editar</a> <a class="btn btn-danger btn-sm">Eliminar</a></td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td>NDA</td>
+                    <td>Jutiapa</td>
+                    <td>Santa Catarina Mita</td>
+                    <td>La Javia</td>
+                    <td>101</td>
+                    <td>CREADO</td>
+                    <td><a class="btn btn-info btn-sm">Editar</a> <a class="btn btn-danger btn-sm">Eliminar</a></td>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td>NDA</td>
+                    <td>Jutiapa</td>
+                    <td>Santa Catarina Mita</td>
+                    <td>La Montañita</td>
+                    <td>202</td>
+                    <td>CREADO</td>
+                    <td><a class="btn btn-info btn-sm">Editar</a> <a class="btn btn-danger btn-sm">Eliminar</a></td>
+                </tr>
+                <tr>
+                    <td>6</td>
+                    <td>NDA</td>
+                    <td>Jutiapa</td>
+                    <td>Santa Catarina Mita</td>
+                    <td>La Tuna</td>
+                    <td>122</td>
+                    <td>CREADO</td>
+                    <td><a class="btn btn-info btn-sm">Editar</a> <a class="btn btn-danger btn-sm">Eliminar</a></td>
+                </tr>
+                <tr>
+                    <td>7</td>
+                    <td>NDA</td>
+                    <td>Jutiapa</td>
+                    <td>Santa Catarina Mita</td>
+                    <td>La Union</td>
+                    <td>75</td>
+                    <td>CREADO</td>
+                    <td><a class="btn btn-info btn-sm">Editar</a> <a class="btn btn-danger btn-sm">Eliminar</a></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    @* <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p> *@
+</div>
+
+
+<div class="text-center" style="margin-bottom:400px;">
+    <h1 class="display-4" style="font-size:32px"><b>EVALUACION DE SOLICITUDES ASISTENCIA ALIMENTARIA</b></h1>
+    <div class="bd-example">
+        <nav>
+            <div class="nav nav-tabs mb-3" id="nav-tab" role="tablist">
+                <button class="nav-link active" id="nav-home-tab" data-bs-toggle="tab" data-bs-target="#nav-home" type="button" role="tab" aria-controls="nav-home" aria-selected="true">SOLICITUDES VALIDADAS</button>
+                <button class="nav-link" id="nav-profile-tab" data-bs-toggle="tab" data-bs-target="#nav-profile" type="button" role="tab" aria-controls="nav-profile" aria-selected="false">SOLICITUDES EN EVALUACION </button>                
+            </div>
+        </nav>
+        <div class="tab-content" id="nav-tabContent">
+            <div class="tab-pane fade show active" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab">
+                <div>
+                    @* <h1 class="display-4">Bienvenido @ViewData["nombreUsuario"]</h1>     *@
+                    <h1 class="display-4" style="font-size:32px"><b>SOLICITUDES VALIDADAS</b></h1>
+                    <div>
+                        <a class="btn btn-primary float-end">Nueva solicitud</a><br />
+                        <div class="table-responsive" style="width:100%;">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>CORRELATIVO</th>
+                                        <th>FECHA INGRESO DESPACHO</th>
+                                        <th>FECHA INGRESO UNIDAD</th>
+                                        <th>ESTADO</th>
+                                        <th>OPCIONES</th>
+                                    </tr>
+                                </thead>
+                                <tr>
+                                    <td>AZ-2024-1</td>
+                                    <td>10/01/2024</td>
+                                    <td>12/01/2024</td>
+                                    <td>VALIDADA</td>
+                                    <td><a class="btn btn-info btn-sm">Editar</a> <a class="btn btn-danger btn-sm">Eliminar</a> <a class="btn btn-dark btn-sm">Detalle</a></td>
+                                </tr>
+                                <tr>
+                                    <td>AZ-2024-2</td>
+                                    <td>10/01/2024</td>
+                                    <td>12/01/2024</td>
+                                    <td>VALIDADA</td>
+                                    <td><a class="btn btn-info btn-sm">Editar</a> <a class="btn btn-danger btn-sm">Eliminar</a> <a class="btn btn-dark btn-sm">Detalle</a></td>
+                                </tr>
+                                <tr>
+                                    <td>AZ-2024-3</td>
+                                    <td>10/01/2024</td>
+                                    <td>12/01/2024</td>
+                                    <td>VALIDADA</td>
+                                    <td><a class="btn btn-info btn-sm">Editar</a> <a class="btn btn-danger btn-sm">Eliminar</a> <a class="btn btn-dark btn-sm">Detalle</a></td>
+                                </tr>
+                                <tr>
+                                    <td>AZ-2024-4</td>
+                                    <td>11/01/2024</td>
+                                    <td>12/01/2024</td>
+                                    <td>VALIDADA</td>
+                                    <td><a class="btn btn-info btn-sm">Editar</a> <a class="btn btn-danger btn-sm">Eliminar</a> <a class="btn btn-dark btn-sm">Detalle</a></td>
+                                </tr>
+                                <tr>
+                                    <td>AZ-2024-5</td>
+                                    <td>11/01/2024</td>
+                                    <td>12/01/2024</td>
+                                    <td>VALIDADA</td>
+                                    <td><a class="btn btn-info btn-sm">Editar</a> <a class="btn btn-danger btn-sm">Eliminar</a> <a class="btn btn-dark btn-sm">Detalle</a></td>
+                                </tr>
+                                <tr>
+                                    <td>AZ-2024-6</td>
+                                    <td>12/01/2024</td>
+                                    <td>14/01/2024</td>
+                                    <td>VALIDADA</td>
+                                    <td><a class="btn btn-info btn-sm">Editar</a> <a class="btn btn-danger btn-sm">Eliminar</a> <a class="btn btn-dark btn-sm">Detalle</a></td>
+                                </tr>
+                                <tr>
+                                    <td>AZ-2024-7</td>
+                                    <td>12/01/2024</td>
+                                    <td>14/01/2024</td>
+                                    <td>VALIDADA</td>
+                                    <td><a class="btn btn-info btn-sm">Editar</a> <a class="btn btn-danger btn-sm">Eliminar</a> <a class="btn btn-dark btn-sm">Detalle</a></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="nav-profile" role="tabpanel" aria-labelledby="nav-profile-tab" >
+                <div>
+                    @* <h1 class="display-4">Bienvenido @ViewData["nombreUsuario"]</h1>     *@
+                    <h1 class="display-4" style="font-size:32px"><b>SOLICITUDES EN EVALUACION</b></h1>
+                    <div>
+                        <a class="btn btn-primary float-end">Nueva solicitud</a><br />
+                        <div class="table-responsive" style="width:100%;">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>CORRELATIVO</th>
+                                        <th>FECHA INGRESO DESPACHO</th>
+                                        <th>FECHA INGRESO UNIDAD</th>
+                                        <th>ESTADO</th>
+                                        <th>OPCIONES</th>
+                                    </tr>
+                                </thead>
+                                <tr>
+                                    <td>AZ-2024-1</td>
+                                    <td>10/01/2024</td>
+                                    <td>12/01/2024</td>
+                                    <td>EVALUACION</td>
+                                    <td><a class="btn btn-info btn-sm">Editar</a> <a class="btn btn-danger btn-sm">Eliminar</a> <a class="btn btn-dark btn-sm">Detalle</a></td>
+                                </tr>
+                                <tr>
+                                    <td>AZ-2024-2</td>
+                                    <td>10/01/2024</td>
+                                    <td>12/01/2024</td>
+                                    <td>EVALUACION</td>
+                                    <td><a class="btn btn-info btn-sm">Editar</a> <a class="btn btn-danger btn-sm">Eliminar</a> <a class="btn btn-dark btn-sm">Detalle</a></td>
+                                </tr>
+                                <tr>
+                                    <td>AZ-2024-3</td>
+                                    <td>10/01/2024</td>
+                                    <td>12/01/2024</td>
+                                    <td>EVALUACION</td>
+                                    <td><a class="btn btn-info btn-sm">Editar</a> <a class="btn btn-danger btn-sm">Eliminar</a> <a class="btn btn-dark btn-sm">Detalle</a></td>
+                                </tr>
+                                <tr>
+                                    <td>AZ-2024-4</td>
+                                    <td>11/01/2024</td>
+                                    <td>12/01/2024</td>
+                                    <td>EVALUACION</td>
+                                    <td><a class="btn btn-info btn-sm">Editar</a> <a class="btn btn-danger btn-sm">Eliminar</a> <a class="btn btn-dark btn-sm">Detalle</a></td>
+                                </tr>
+                                <tr>
+                                    <td>AZ-2024-5</td>
+                                    <td>11/01/2024</td>
+                                    <td>12/01/2024</td>
+                                    <td>EVALUACION</td>
+                                    <td><a class="btn btn-info btn-sm">Editar</a> <a class="btn btn-danger btn-sm">Eliminar</a> <a class="btn btn-dark btn-sm">Detalle</a></td>
+                                </tr>
+                                <tr>
+                                    <td>AZ-2024-6</td>
+                                    <td>12/01/2024</td>
+                                    <td>14/01/2024</td>
+                                    <td>EVALUACION</td>
+                                    <td><a class="btn btn-info btn-sm">Editar</a> <a class="btn btn-danger btn-sm">Eliminar</a> <a class="btn btn-dark btn-sm">Detalle</a></td>
+                                </tr>
+                                <tr>
+                                    <td>AZ-2024-7</td>
+                                    <td>12/01/2024</td>
+                                    <td>14/01/2024</td>
+                                    <td>EVALUACION</td>
+                                    <td><a class="btn btn-info btn-sm">Editar</a> <a class="btn btn-danger btn-sm">Eliminar</a> <a class="btn btn-dark btn-sm">Detalle</a></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="nav-contact" role="tabpanel" aria-labelledby="nav-contact-tab">
+                <p><strong>This is some placeholder content the Contact tab's associated content.</strong> Clicking another tab will toggle the visibility of this one for the next. The tab JavaScript swaps classes to control the content visibility and styling. You can use it with tabs, pills, and any other <code>.nav</code>-powered navigation.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="text-center" style="margin-top:400px;">
+        @* <h1 class="display-4">Bienvenido @ViewData["nombreUsuario"]</h1>     *@
+    <h1 class="display-4" style="font-size:32px"><b>VALIDACION DETALLE ASISTENCIA ALIMENTARIA</b></h1>
+    <div>
+        <a class="btn btn-primary float-end">Nueva solicitud</a><br />
+        <div class="table-responsive_" style="width:100%;">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>CORRELATIVO</th>
+                        <th>INTERVENCION</th>
+                        <th>DEPARTAMENTO</th>
+                        <th>MUNICIPIO</th>
+                        <th>COMUNIDAD</th>
+                        <th>NO. BENEFICIARIOS</th>
+                        <th>ESTADO</th>
+                        <th>OPCIONES</th>
+                    </tr>
+                </thead>
+                <tr>
+                    <td>1</td>
+                    <td>INSAN</td>
+                    <td>Jutiapa</td>
+                    <td>Santa Catarina Mita</td>
+                    <td>La Aradita</td>
+                    <td>90</td>
+                    <td>EVALUACION</td>
+                    <td><a class="btn btn-info btn-sm">Editar</a> <a class="btn btn-danger btn-sm">Eliminar</a></td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>INSAN</td>
+                    <td>Jutiapa</td>
+                    <td>Santa Catarina Mita</td>
+                    <td>La Barranca</td>
+                    <td>44</td>
+                    <td>EVALUACION</td>
+                    <td><a class="btn btn-info btn-sm">Editar</a> <a class="btn btn-danger btn-sm">Eliminar</a></td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>INSAN</td>
+                    <td>Jutiapa</td>
+                    <td>Santa Catarina Mita</td>
+                    <td>La Ermita</td>
+                    <td>88</td>
+                    <td>EVALUACION</td>
+                    <td><a class="btn btn-info btn-sm">Editar</a> <a class="btn btn-danger btn-sm">Eliminar</a></td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td>NDA</td>
+                    <td>Jutiapa</td>
+                    <td>Santa Catarina Mita</td>
+                    <td>La Javia</td>
+                    <td>101</td>
+                    <td>EVALUACION</td>
+                    <td><a class="btn btn-info btn-sm">Editar</a> <a class="btn btn-danger btn-sm">Eliminar</a></td>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td>NDA</td>
+                    <td>Jutiapa</td>
+                    <td>Santa Catarina Mita</td>
+                    <td>La Montañita</td>
+                    <td>202</td>
+                    <td>EVALUACION</td>
+                    <td><a class="btn btn-info btn-sm">Editar</a> <a class="btn btn-danger btn-sm">Eliminar</a></td>
+                </tr>
+                <tr>
+                    <td>6</td>
+                    <td>NDA</td>
+                    <td>Jutiapa</td>
+                    <td>Santa Catarina Mita</td>
+                    <td>La Tuna</td>
+                    <td>122</td>
+                    <td>EVALUACION</td>
+                    <td><a class="btn btn-info btn-sm">Editar</a> <a class="btn btn-danger btn-sm">Eliminar</a></td>
+                </tr>
+                <tr>
+                    <td>7</td>
+                    <td>NDA</td>
+                    <td>Jutiapa</td>
+                    <td>Santa Catarina Mita</td>
+                    <td>La Union</td>
+                    <td>75</td>
+                    <td>EVALUACION</td>
+                    <td><a class="btn btn-info btn-sm">Editar</a> <a class="btn btn-danger btn-sm">Eliminar</a></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    </div>
+    @* <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p> *@
+</div>
+
+
+<div class="text-center" style="margin-top:400px;">
+    @* <h1 class="display-4">Bienvenido @ViewData["nombreUsuario"]</h1>     *@
+    <h1 class="display-4" style="font-size:32px"><b>PROGRAMACION DETALLE ASISTENCIA ALIMENTARIA</b></h1>
+    <div>
+        <a class="btn btn-primary float-end">Nueva solicitud</a><br />
+        <div class="table-responsive_" style="width:100%;">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>CORRELATIVO</th>
+                        <th>INTERVENCION</th>
+                        <th>DEPARTAMENTO</th>
+                        <th>MUNICIPIO</th>
+                        <th>COMUNIDAD</th>
+                        <th>FECHA VERIFICACION</th>
+                        <th>VALIDADO RENAP</th>
+                        <th>NO. BENEFICIARIOS</th>
+                        <th>FECHA INICIO ENTREGA</th>
+                        <th>FECHA FINAL ENTREGA</th>
+                        <th>OBSERVACIONES</th>
+                        <th>OPCIONES</th>
+                    </tr>
+                </thead>
+                <tr>
+                    <td>1</td>
+                    <td>INSAN</td>
+                    <td>Jutiapa</td>
+                    <td>Santa Catarina Mita</td>
+                    <td>La Aradita</td>
+                    <td></td>
+                    <td>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="flexSwitchCheckDefault" checked>
+                            <label class="form-check-label" for="flexSwitchCheckDefault"></label>
+                        </div>
+                    </td>
+                    <td>90</td>
+                    <td>20/01/2024</td>
+                    <td>24/01/2024</td>
+                    <td></td>
+                    <td><a class="btn btn-info btn-sm">Editar</a> <a class="btn btn-danger btn-sm">Eliminar</a></td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>INSAN</td>
+                    <td>Jutiapa</td>
+                    <td>Santa Catarina Mita</td>
+                    <td>La Barranca</td>
+                    <td></td>
+                    <td>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="flexSwitchCheckDefault" checked>
+                            <label class="form-check-label" for="flexSwitchCheckDefault"></label>
+                        </div>
+                    </td>
+                    <td>44</td>
+                    <td>20/01/2024</td>
+                    <td>24/01/2024</td>
+                    <td></td>
+                    <td><a class="btn btn-info btn-sm">Editar</a> <a class="btn btn-danger btn-sm">Eliminar</a></td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>INSAN</td>
+                    <td>Jutiapa</td>
+                    <td>Santa Catarina Mita</td>
+                    <td>La Ermita</td>
+                    <td></td>
+                    <td>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="flexSwitchCheckDefault" checked>
+                            <label class="form-check-label" for="flexSwitchCheckDefault"></label>
+                        </div>
+                    </td>
+                    <td>88</td>
+                    <td>20/01/2024</td>
+                    <td>24/01/2024</td>
+                    <td></td>
+                    <td><a class="btn btn-info btn-sm">Editar</a> <a class="btn btn-danger btn-sm">Eliminar</a></td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td>NDA</td>
+                    <td>Jutiapa</td>
+                    <td>Santa Catarina Mita</td>
+                    <td>La Javia</td>
+                    <td></td>
+                    <td>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="flexSwitchCheckDefault">
+                            <label class="form-check-label" for="flexSwitchCheckDefault"></label>
+                        </div>
+                    </td>
+                    <td>101</td>
+                    <td>20/01/2024</td>
+                    <td>24/01/2024</td>
+                    <td></td>
+                    <td><a class="btn btn-info btn-sm">Editar</a> <a class="btn btn-danger btn-sm">Eliminar</a></td>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td>NDA</td>
+                    <td>Jutiapa</td>
+                    <td>Santa Catarina Mita</td>
+                    <td>La Montañita</td>
+                    <td></td>
+                    <td>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="flexSwitchCheckDefault">
+                            <label class="form-check-label" for="flexSwitchCheckDefault"></label>
+                        </div>
+                    </td>
+                    <td>202</td>
+                    <td>20/01/2024</td>
+                    <td>24/01/2024</td>
+                    <td></td>
+                    <td><a class="btn btn-info btn-sm">Editar</a> <a class="btn btn-danger btn-sm">Eliminar</a></td>
+                </tr>
+                <tr>
+                    <td>6</td>
+                    <td>NDA</td>
+                    <td>Jutiapa</td>
+                    <td>Santa Catarina Mita</td>
+                    <td>La Tuna</td>
+                    <td></td>
+                    <td>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="flexSwitchCheckDefault" checked>
+                            <label class="form-check-label" for="flexSwitchCheckDefault"></label>
+                        </div>
+                    </td>
+                    <td>122</td>
+                    <td>20/01/2024</td>
+                    <td>24/01/2024</td>
+                    <td></td>
+                    <td><a class="btn btn-info btn-sm">Editar</a> <a class="btn btn-danger btn-sm">Eliminar</a></td>
+                </tr>
+                <tr>
+                    <td>7</td>
+                    <td>NDA</td>
+                    <td>Jutiapa</td>
+                    <td>Santa Catarina Mita</td>
+                    <td>La Union</td>
+                    <td></td>
+                    <td>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="flexSwitchCheckDefault">
+                            <label class="form-check-label" for="flexSwitchCheckDefault"></label>
+                        </div>
+                    </td>
+                    <td>75</td>
+                    <td>20/01/2024</td>
+                    <td>24/01/2024</td>
+                    <td></td>
+                    <td><a class="btn btn-info btn-sm">Editar</a> <a class="btn btn-danger btn-sm">Eliminar</a></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    @* <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p> *@
+</div>

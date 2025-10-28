@@ -1,0 +1,227 @@
+﻿@model PROY.ViewModels.MovimientoProductosVM;
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
+<head>
+</head>
+
+<style>
+    table thead th {
+        pointer-events: none; /* Desactiva la interacción con los títulos */
+    }
+</style>
+
+@{
+
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@{
+    ViewData["Title"] = "Reporte de Existencias y Fechas de Vencimiento";
+}
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Mensaje"]
+    </div>
+}
+
+
+<h2 class="float-start">Reporte de Existencias y Fechas de Vencimiento</h2> 
+<p><br /></p>
+
+<br />
+
+@await Html.PartialAsync("_CriteriosDeBusqueda")
+
+<table class="table" id="tableDetalle">
+    <thead>
+        <tr>
+            <th>No.</th>
+            <th>BODEGA</th>
+            <th>PRODUCTO ALIMENTICIO</th>
+            <th>PRESENTACIÓN</th>
+            <th>UNIDAD DE MEDIDA</th>
+            <th>EXISTENCIAS</th>
+            <th>FECHA VENCIMIENTO</th>
+        </tr>
+    </thead>
+    <tbody>
+        @try
+        {
+            int indexCount = 0;
+
+            foreach (var item in Model.listaMovimientosProductos)
+            {
+                <tr>
+                    <td>
+                        @{
+                            indexCount++;
+                        }
+                        @indexCount
+                    </td>
+                    <td>
+                        @{
+                            // Obtener la descripción usando el diccionario
+                            string descripcionBodega = Model.BodegaDict.TryGetValue(item.IdBodega ?? 0, out var descBod)
+                            ? descBod
+                            : "Bodega no encontrado";
+                        }
+                        @descripcionBodega
+                    </td>
+                    <td>
+                        @{
+                            // Obtener la descripción usando el diccionario
+                            string descripcioProducto = Model.ProductoAlimenticioDict.TryGetValue(item.IdProductoAlimenticio ?? 0, out var descPro)
+                            ? descPro
+                            : "Producto no encontrada";
+                        }
+                        @descripcioProducto
+                    </td>
+                    <td>
+                        @{
+                            // Obtener la descripción usando el diccionario
+                            string descripcionPresentacion = Model.PresentacionDict.TryGetValue(item.IdPresentacion ?? 0, out var descPre)
+                            ? descPre
+                            : "Presentación no encontrada";
+                        }
+                        @descripcionPresentacion
+                    </td>
+                    <td>
+                        @{
+                            // Obtener la descripción usando el diccionario
+                            string descripcionUnidad = Model.UnidadMedidaDict.TryGetValue(item.IdUnidadMedida ?? 0, out var descUni)
+                            ? descUni
+                            : "Unidad de Medida no encontrado";
+                        }
+                        @descripcionUnidad
+                    </td>
+                    <td>@item.Existencias</td>
+                    <td>
+                        @{
+                            var fechaVen = item.FechaVencimiento != null ? item.FechaVencimiento.Value.ToString("dd/MM/yyyy") : " ";
+                        }
+                        @fechaVen
+                    </td>
+                </tr>
+            }
+        }
+        catch
+        {
+
+        }
+
+    </tbody>
+</table>
+
+
+
+@section Scripts {
+
+    <script>
+
+        var tipoReporte = 2;
+        var nombreReporte = "Reporte de Movimientos";
+
+        $( document ).ready(function() {
+
+            $('#tableDetalle_paginate').hide();
+            $('#tableDetalle_info').hide();
+            $('#tableDetalle_filter').hide();
+
+            // Oculta las flechas de ordenamiento
+            $('table.dataTable thead th').removeClass('sorting sorting_asc sorting_desc');
+
+            HabilitarBusquedas();
+        });
+
+        // Función que habilita los criterios de búsqueda que necesita para el reporte
+        function HabilitarBusquedas(){
+
+            $('#divCriteriosBusqueda').show(); // Habilita los criterios
+
+            // Colocar .show() los criterios que desean que se visualicen
+            $('#divIdBodega').show();
+            $('#divIdProductoAlimenticio').show();
+            $('#divIdPresentacionPA').show();
+            $('#divIdUnidadMedida').show();
+
+        }
+
+        function Buscar(){
+
+            // Se inicia reiniciando la tabla
+             $("#tableDetalle tbody").empty();
+
+             let filtros = {
+                IdBodega: parseInt($("#cbIdBodega").val()),
+                IdProductoAlimenticio: $("#cbIdProductoAlimenticio").val(),
+                IdPresentacion: $("#cbIdPresentacionPA").val(),
+                IdUnidadMedida: $("#cbIdUnidadMedida").val(),
+            };
+
+             let datosEnvio = {
+                FiltrosReportesDTO: filtros,
+            };
+
+            // Crear un objeto FormData
+            var formData = new FormData();
+
+            // Agregar los datos del formulario al objeto FormData
+            formData.append('modelo', JSON.stringify(datosEnvio)); // Enviar el modelo como JSON
+
+             $.ajax({
+                url: `@ViewData["rutaApp"]/Reportes/BusquedaMovimientoProductos`,
+                type: "POST",
+                contentType: false,
+                processData: false,
+                data: formData,
+                success: function (data) {
+
+                    console.log(data.tabla);
+
+                    let tabla = document.getElementById("tableDetalle");
+                    let tbody = tabla.getElementsByTagName("tbody")[0];
+
+                    data.tabla.forEach((detalle, index) => {
+
+                        let fila = document.createElement("tr");
+
+                        var fechaEgr = '';
+
+                        if(detalle.fechaVencimiento != null){
+                            var fecha = detalle.fechaVencimiento;  // Fecha recibida
+                            var fechaEgr = fecha.split("T")[0]; // Extrae solo la parte "YYYY-MM-DD"
+                        }
+
+                        fila.innerHTML = `
+                            <td>${index + 1}</td>
+                            <td>${detalle.nombreBodega}</td>
+                            <td>${detalle.nombrePA}</td>
+                            <td>${detalle.nombrePresentacionPA}</td>
+                            <td>${detalle.nombreUnidadMedida}</td>
+                            <td>${detalle.existencias}</td>
+                            <td>${fechaEgr}</td>
+                        `;
+
+                        tbody.appendChild(fila);
+                    });
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error al mostrar Tabla:", error);
+                    alert("Ocurrió un error al extraer los datos de la tabla.");
+                }
+            });
+        }
+
+
+    </script>
+}
+
+<script src="~/js/reportes.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+@* CDN para la creación del archivo xlsx *@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+@* CDN para la creación del archivo PDF *@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>

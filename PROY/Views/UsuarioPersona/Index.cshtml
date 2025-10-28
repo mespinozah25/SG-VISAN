@@ -1,0 +1,159 @@
+﻿
+@model PROY.ViewModels.UsuarioPersonaVM;
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
+<head>
+</head>
+@{
+
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Mensaje"]
+    </div>
+}
+
+@* <div class="=row">
+        <div class="col-sm-8"> *@
+<h2 class="float-start">Relación de Usuario con Personal de Bodega</h2> <a class="btn btn-primary btn-sm float-end" onclick="abrirModalYActualizarUrl(0)"><i class="fas fa-plus-square"></i> Crear Relación</a>
+<p><br /></p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>USUARIO</th>
+            <th>PERSONA</th>
+            <th>OPCIONES</th>
+        </tr>
+    </thead>
+    <tbody>
+        @try
+        {
+            foreach (var item in Model.listaUsuarioPersona)
+            {
+                <tr>
+                    <td>
+                        @{
+                            // Obtener la descripción usando el diccionario
+                            string correoUsuario = Model.UsuarioDict.TryGetValue(item.IdUsuario ?? 0, out var correo)
+                            ? correo
+                            : "Usuario no encontrado";
+                        }
+                        @correoUsuario
+                    </td>
+                    <td>
+                        @{
+                            // Obtener la descripción usando el diccionario
+                            string descripcionPersona = Model.PersonalBodegaDict.TryGetValue(item.IdPersona ?? 0, out var descPersona)
+                            ? descPersona
+                            : "Persona no encontrado";
+                        }
+                        @descripcionPersona
+                    </td>
+                    <td class="text-center">
+                        <a class="btn btn-info btn-sm" onclick="abrirModalYActualizarUrl(@item.IdUsuarioPersona)"><i class="fas fa-edit"></i> Editar</a>
+                        <a class="btn btn-danger btn-sm" asp-controller="SubBodega" asp-action="Eliminar" asp-route-id="@item.IdUsuarioPersona" onclick="confirmar(event)"><i class="fas fa-trash"></i> Eliminar</a>
+                    </td>
+
+                </tr>
+            }
+        }
+        catch
+        {
+
+        }
+
+    </tbody>
+</table>
+
+<!-- Modal -->
+<div class="modal fade" id="wNewUsuarioPersona" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="height:300px;">
+            <form asp-action="GuardarUsuarioPersona" asp-controller="UsuarioPersona" method="post">
+                <div class="modal-header bg-secondary">
+                    <h5 class="modal-title text-white" id="lblModalTitle">@ViewBag.ModalTitle</h5>
+                    <button type="button" id="btnClose" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <input type="hidden" id="idUsuarioPersona" asp-for="@Model.UsuarioPersona.IdUsuarioPersona" />
+                    <div>
+                        <div class="col">
+                            <label for="cbIdPersona" class="control-label">Persona</label>
+                            <select class="form-select" id="cbIdPersona" asp-for="@Model.UsuarioPersona.IdPersona" asp-items="ViewBag.PersonalBodega" required></select>
+                            <span asp-validation-for="@Model.UsuarioPersona.IdPersona" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label for="cbIdUsuario" class="control-label">Usuario</label>
+                            <select class="form-select" id="cbIdUsuario" asp-for="@Model.UsuarioPersona.IdUsuario" asp-items="ViewBag.Usuarios" required></select>
+                            <span asp-validation-for="@Model.UsuarioPersona.IdUsuario" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <input type="submit" value="Guardar" class="btn btn-primary" />
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        function abrirModalYActualizarUrl(id) {
+            if (id == 0) {
+                var ventanaTitle = document.getElementById("lblModalTitle");
+                ventanaTitle.textContent = "REGISTRO RELACIÓN DE USUARIO Y PERSONA";
+
+                $('#idUsuarioPersona').val(0);
+                $('#cbIdPersona').val();
+                $('#cbIdUsuario').val();
+            }
+            else {
+
+                $.ajax({
+                    url: `@ViewData["rutaApp"]/UsuarioPersona/ObtenerUsuarioPersona/${id}`, // URL para obtener los datos
+                    type: 'GET',
+                    success: function (data) {
+
+                        console.log('data' + JSON.stringify(data));
+                        // Llenar el formulario del modal con los datos de la Sub Bodega
+                        $('#idUsuarioPersona').val(id);
+                        $('#cbIdPersona').val(data.idPersona);
+                        $('#cbIdUsuario').val(data.idUsuario);
+                        //alert(id);
+
+                        var ventanaTitle = document.getElementById("lblModalTitle");
+                        ventanaTitle.textContent = "MODIFICAR RELACIÓN ENTRE USUARIO Y BODEGA ";
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error al obtener los datos de la relación entre usuario y persona:', error);
+                    }
+                });
+            }
+
+            var modal = new bootstrap.Modal(document.getElementById('wNewUsuarioPersona'));
+            modal.show();
+
+        }
+
+        function confirmar(e){
+            var res=confirm("Esta seguro de eliminar la relación entre usuario y persona");
+            if (res) return true;
+            if (res==false) e.preventDefault();
+
+            //return false;
+        }
+    </script>
+}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+

@@ -1,0 +1,211 @@
+﻿<head>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
+</head>
+
+@model PROY.ViewModels.IngresoAlimentosVM
+
+@{
+    ViewData["Title"] = "Registrarse";
+}
+
+<h1>Carga de Archivos con firmas y sellos </h1>
+
+<br />
+
+<div>
+    <form id="frmCopiasFirmadas">
+
+        <input type="hidden" id="idIngresoAlimentos" asp-for="@Model.IngresoAlimentos.IdIngresoAlimentos" />
+
+        <br />
+        <br />
+
+        <h5><u> Agregar archivo WAYBILL, firmado y sellado por Financiero </u></h5>
+        <br />
+        <div class="row">
+            <div class="col-6">
+                @* <label for="archivoWaibilFinanciero" class="control-label">Archivo WAIBIL</label> *@
+                <input type="file" name="file" id="archivoWaibilFinanciero" class="form-control" />
+            </div>
+            <div class="col-2 text-center" id="divBtnDescargaArchivoWaibil" >
+                @* <label for="btnDescarga" class="control-label text-center"> Descargar Docto </label> *@
+                <input type="hidden" id="txtArchivoWaibil" value="@Model.IngresoAlimentos.ArchivoWaybillFinanciero" />
+                <a type="button" id="btnDescarga" class="btn btn-primary btn text-center" href="@Url.Action("DownloadFile", new { fileName = Model.IngresoAlimentos.ArchivoWaybillFinanciero ?? "", carpeta = "archivoWaibil-Firmado" })">
+                    <i class="fas fa-download"></i>
+                </a>
+            </div>
+        </div>
+
+        <br />
+        <br />
+
+        <h5><u> Agregar Acta de Recepción, firmado y sellado por Financiero </u></h5>
+        <br />
+        <div class="row">
+            <div class="col-6">
+                @* <label for="archivoWaibilFinanciero" class="control-label">Archivo Acta</label> *@
+                <input type="file" name="file" id="archivoActaFinanciero" class="form-control" />
+            </div>
+            <div class="col-2 text-center" id="divBtnDescargaArchivoActa">
+                @* <label for="btnDescarga" class="control-label text-center"> Descargar Docto </label> *@
+                <input type="hidden" id="txtArchivoActa" value="@Model.IngresoAlimentos.ArchivoActaFinanciero" />
+                <a type="button" id="btnDescarga" class="btn btn-primary btn text-center" href="@Url.Action("DownloadFile", new { fileName = Model.IngresoAlimentos.ArchivoActaFinanciero ?? "", carpeta = "actaRecepcion-Firmado" })">
+                    <i class="fas fa-download"></i>
+                </a>
+            </div>
+        </div>
+
+        <br />
+        <br />
+
+        <h5><u> Agregar forma 1-H, firmado y sellado por Financiero </u></h5>
+        <br />
+        <div class="row">
+            <div class="col-6">
+                @* <label for="archivoWaibilFinanciero" class="control-label">Archivo 1-H</label> *@
+                <input type="file" name="file" id="archivoForma1HFinanciero" class="form-control" />
+            </div>
+            <div class="col-2" id="divBtnDescargaForma1H">
+                @* <label for="btnDescarga" class="control-label text-center"> Descargar Docto </label> *@
+                <input type="hidden" id="txtArchivoForma1H" value="@Model.IngresoAlimentos.ArchivoForma1hFinanciero" />
+                <a type="button" id="btnDescarga" class="btn btn-primary btn text-center" href="@Url.Action("DownloadFile", new { fileName = Model.IngresoAlimentos.ArchivoForma1hFinanciero ?? "", carpeta = "Forma1H-Firmado" })">
+                    <i class="fas fa-download"></i>
+                </a>
+            </div>
+        </div>
+
+        <br />
+        <br />
+
+        <h5><u> Agregar Archivo con Boleta de Análisis </u></h5>
+        <br />
+        <div class="row">
+            <div class="col-6">
+                @* <label for="archivoWaibilFinanciero" class="control-label">Archivo Boleta</label> *@
+                <input type="file" name="file" id="archivoBoleta" class="form-control" />
+            </div>
+            <div class="col-2" id="divBtnDescargaBoleta">
+                @* <label for="btnDescarga" class="control-label text-center"> Descargar Docto </label> *@
+                <input type="hidden" id="txtArchivoBoleta" value="@Model.IngresoAlimentos.ArchivoBoletaAnalisis" />
+                <a type="button" id="btnDescarga" class="btn btn-primary btn text-center" href="@Url.Action("DownloadFile", new { fileName = Model.IngresoAlimentos.ArchivoBoletaAnalisis ?? "", carpeta = "boletaAnalisis" })">
+                    <i class="fas fa-download"></i>
+                </a>
+            </div>
+        </div>
+
+        <br />
+        <br />
+
+        <div class="row float-end">
+            <div class="col">
+                <a type="button" class="btn btn-secondary btn" asp-action="Index">Regresar</a>
+            </div>
+            <div class="col camposAlmacenamiento">
+                <input type="button" value="Finalizar Proceso" class="btn btn-primary" onclick="return ConfirmSave();" />
+            </div>
+        </div>
+
+    </form>
+</div>
+
+
+@section Scripts {
+
+    <script>
+        $( document ).ready(function() {
+
+            var urlObj = new URL(window.location.href);
+            var type = urlObj.searchParams.get("type");
+            var id = window.location.pathname.split('/').pop();
+
+            if (parseInt(type) == 2){
+                $('.camposAlmacenamiento').show();
+                $("#frmCopiasFirmadas input:not([disabled])").attr("disabled", true);  // Hace los inputs solo lectura
+            }
+
+            // Se ocultan los botones de descarga en caso de que no cuenten con archivo
+                if ($('#txtArchivoWaibil').val() == "")
+                    $('#divBtnDescargaArchivoWaibil').hide();
+
+                if ($('#txtArchivoActa').val() == "")
+                    $('#divBtnDescargaArchivoActa').hide();
+
+                if ($('#txtArchivoForma1H').val() == "")
+                    $('#divBtnDescargaForma1H').hide();
+
+                if ($('#txtArchivoBoleta').val() == "")
+                    $('#divBtnDescargaBoleta').hide();
+        });
+
+        function ConfirmSave(){
+            Swal.fire({
+              title: "Está seguro de Finalizar el proceso?",
+              showCancelButton: true,
+              confirmButtonText: "Guardar",
+              icon: "question"
+            }).then((result) => {
+              if (result.isConfirmed) {
+                  GuardarAlimentosBodega();
+              }
+            });
+        }
+
+        function GuardarAlimentosBodega() {
+            let ingresoAlimentos = {
+                IdIngresoAlimentos: $("#idIngresoAlimentos").val()
+            };
+
+            // Validación de carga de los 3 documentos
+            if (($('#archivoWaibilFinanciero')[0].files[0] == undefined && $('#txtArchivoWaibil').val() == "" ) ||
+                ($('#archivoActaFinanciero')[0].files[0] == undefined && $('#txtArchivoActa').val() == "" ) ||
+                ($('#archivoForma1HFinanciero')[0].files[0] == undefined && $('#txtArchivoForma1H').val() == "" ) ||
+                ($('#archivoBoleta')[0].files[0] == undefined && $('#txtArchivoBoleta').val() == "" )){
+                Swal.fire({
+                    title: "Error!",
+                    text: "Debe de Cargar todos los documentos.",
+                    icon: "warning"
+                });
+
+                return;
+            }
+
+            let datosEnvio = {
+                IngresoAlimentos: ingresoAlimentos
+            };
+
+            // Crear un objeto FormData
+            var formData = new FormData();
+
+            // Agregar los datos del formulario al objeto FormData
+            formData.append('modelo', JSON.stringify(datosEnvio)); // Enviar el modelo como JSON
+            formData.append('fileWaibil', $('#archivoWaibilFinanciero')[0].files[0]); // Agregar el archivo Waibil
+            formData.append('fileActa', $('#archivoActaFinanciero')[0].files[0]); // Agregar el archivo Acta Recepcion
+            formData.append('fileForma1H', $('#archivoForma1HFinanciero')[0].files[0]); // Agregar el archivo Acta Recepcion
+            formData.append('fileBoleta', $('#archivoBoleta')[0].files[0]); // Agregar el archivo Boleta
+
+            $.ajax({
+                url: `@ViewData["rutaApp"]/IngresoAlimentos/GuardarCopiasFirmadas`,
+                type: "POST",
+                contentType: false,
+                processData: false,
+                data: formData,
+                success: function (respuesta) {
+
+                    Swal.fire("Almacenado!", "", "success");
+
+                    // Redireccionar o limpiar formulario si es necesario
+                    window.location.href = `@ViewData["rutaApp"]/IngresoAlimentos/Index`;
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error al guardar:", error);
+                    alert("Ocurrió un error al guardar la recepción de alimentos.");
+                }
+            });
+        }
+
+    </script>
+}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+

@@ -1,0 +1,239 @@
+﻿@model PROY.ViewModels.BodegaVM;
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
+<head>
+</head>
+@{
+
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@{
+    ViewData["Title"] = "Bodegas";
+}
+
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Mensaje"]
+    </div>
+}
+
+@* <div class="=row">
+        <div class="col-sm-8"> *@
+<h2 class="float-start">Administración de Bodegas</h2> <a class="btn btn-primary btn-sm float-end" onclick="abrirModalYActualizarUrl(0)"><i class="fas fa-plus-square"></i> Bodega</a>
+<p><br /></p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>NOMBRE</th>
+            <th>TIPO BODEGA</th>
+            <th>DEPARTAMENTO</th>
+            <th>MUNICIPIO</th>
+            <th>OPCIONES</th>
+        </tr>
+    </thead>
+    <tbody>
+        @try
+        {
+            foreach (var item in Model.listaBodegas)
+            {
+                <tr>
+                    <td>@item.NombreBodega</td>
+                    <td>
+                        @{
+                            // Obtener la descripción usando el diccionario
+                            string descripcionTipoBodega = Model.TipoBodegaDict.TryGetValue(item.IdTipoBodega ?? 0, out var descTipo)
+                            ? descTipo
+                            : "Departamento no encontrado";
+                        }
+                        @descripcionTipoBodega
+                    </td>
+                    <td>
+                        @{
+                            // Obtener la descripción usando el diccionario
+                            string descripcionDepartamento = Model.DepartamentoDict.TryGetValue(item.IdDepartamento ?? 0, out var descDepto)
+                            ? descDepto
+                            : "Departamento no encontrado";
+                        }
+                        @descripcionDepartamento
+                    </td>
+                    <td>
+                        @{
+                            // Obtener la descripción usando el diccionario
+                            string descripcionMunicipio = Model.MunicipioDict.TryGetValue(item.IdMunicipio ?? 0, out var descMuni)
+                            ? descMuni
+                            : "Municipio no encontrado";
+                        }
+                        @descripcionMunicipio
+                    </td>
+                    <td class="text-center">
+                        <a class="btn btn-info btn-sm" onclick="abrirModalYActualizarUrl(@item.IdBodega)"><i class="fas fa-edit"></i> Editar</a>
+                        <a class="btn btn-danger btn-sm" asp-controller="Bodega" asp-action="Eliminar" asp-route-id="@item.IdBodega" onclick="confirmar(event)"><i class="fas fa-trash"></i> Eliminar</a>
+                        <a class="btn btn-secondary btn-sm" asp-controller="SubBodega" asp-action="Index" asp-route-idBodega="@item.IdBodega"><i class="fas fa-warehouse"></i>&nbsp;Sub Bodegas</a>
+                    </td>
+
+                </tr>
+            }
+        }
+        catch
+        {
+
+        }
+
+    </tbody>
+</table>
+
+<!-- Modal -->
+<div class="modal fade" id="wNewBodega" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="height:500px;">
+            <form asp-action="GuardarBodega" asp-controller="Bodega" method="post">
+                <div class="modal-header bg-secondary">
+                    <h5 class="modal-title text-white" id="lblModalTitle">@ViewBag.ModalTitle</h5>
+                    <button type="button" id="btnClose" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <input type="hidden" id="idBodega" asp-for="@Model.Bodega.IdBodega" />
+                    <div>
+                        <div class="col">
+                            <label for="txtNombreBodega" class="control-label">Nombre</label>
+                            <input type="text" class="form-control" id="txtNombreBodega" asp-for="@Model.Bodega.NombreBodega" required></input>
+                            <span asp-validation-for="@Model.Bodega.NombreBodega" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label for="txtDireccion" class="control-label">Dirección</label>
+                            <input type="text" class="form-control" id="txtDireccion" asp-for="@Model.Bodega.DireccionBodega" required></input>
+                            <span asp-validation-for="@Model.Bodega.DireccionBodega" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label for="cbIdTipoBodega" class="control-label">Tipo de Bodega</label>
+                            <select class="form-select" id="cbIdTipoBodega" asp-for="@Model.Bodega.IdTipoBodega" asp-items="ViewBag.tipoBodegas" required></select>
+                            <span asp-validation-for="@Model.Bodega.IdTipoBodega" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label for="cbIdDepartamento" class="control-label">Departamento</label>
+                            <select class="form-select" id="cbIdDepartamento" asp-for="@Model.Bodega.IdDepartamento" asp-items="ViewBag.Departamentos" required></select>
+                            <span asp-validation-for="@Model.Bodega.IdDepartamento" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label for="cbIdMunicipio" class="control-label">Municipio</label>
+                            <select class="form-select" id="cbIdMunicipio" asp-for="@Model.Bodega.IdMunicipio" asp-items="ViewBag.Municipios" required></select>
+                            <span asp-validation-for="@Model.Bodega.IdMunicipio" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <input type="submit" value="Guardar" class="btn btn-primary" />
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        function abrirModalYActualizarUrl(id) {
+            if (id == 0) {
+                var ventanaTitle = document.getElementById("lblModalTitle");
+                ventanaTitle.textContent = "REGISTRO BODEGA";
+
+                $('#idBodega').val(0);
+                $('#txtNombreBodega').val('');
+                $('#txtDireccion').val('');
+                $('#cbIdTipoBodega').val();
+                $('#cbIdDepartamento').val();
+                $('#cbIdMunicipio').val();
+            }
+            else {
+                
+                $.ajax({
+                    url: `@ViewData["rutaApp"]/Bodega/ObtenerBodega/${id}`, // URL para obtener los datos
+                    type: 'GET',
+                    success: function (data) {
+
+                        console.log('data' + JSON.stringify(data));
+                        // Llenar el formulario del modal con los datos de la solicitud
+                        $('#idBodega').val(id);
+                        $('#txtNombreBodega').val(data.nombre);
+                        $('#txtDireccion').val(data.direccion);
+                        $('#cbIdTipoBodega').val(data.idTipoBodega);
+                        $('#cbIdDepartamento').val(data.idDepartamento);
+                        $('#cbIdMunicipio').val(data.idMunicipio);
+                        //alert(id);
+
+                        var ventanaTitle = document.getElementById("lblModalTitle");
+                        ventanaTitle.textContent = "MODIFICAR BODEGA ";
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error al obtener los datos de la bodega:', error);
+                    }
+                });
+            }
+
+            var modal = new bootstrap.Modal(document.getElementById('wNewBodega'));
+            modal.show();
+
+        }
+        
+        function abrirSubBodegas(id) {
+            if (id == 0) {
+                var ventanaTitle = document.getElementById("lblModalTitle");
+                ventanaTitle.textContent = "REGISTRO BODEGA";
+
+                $('#idBodega').val(0);
+                $('#txtNombreBodega').val('');
+                $('#txtDireccion').val('');
+                $('#cbIdTipoBodega').val();
+                $('#cbIdDepartamento').val();
+                $('#cbIdMunicipio').val();
+            }
+            else {
+                
+                $.ajax({
+                    url: `@ViewData["rutaApp"]/Bodega/ObtenerBodega/${id}`, // URL para obtener los datos
+                    type: 'GET',
+                    success: function (data) {
+
+                        console.log('data' + JSON.stringify(data));
+                        // Llenar el formulario del modal con los datos de la solicitud
+                        $('#idBodega').val(id);
+                        $('#txtNombreBodega').val(data.nombre);
+                        $('#txtDireccion').val(data.direccion);
+                        $('#cbIdTipoBodega').val(data.idTipoBodega);
+                        $('#cbIdDepartamento').val(data.idDepartamento);
+                        $('#cbIdMunicipio').val(data.idMunicipio);
+                        //alert(id);
+
+                        var ventanaTitle = document.getElementById("lblModalTitle");
+                        ventanaTitle.textContent = "MODIFICAR BODEGA ";
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error al obtener los datos de la bodega:', error);
+                    }
+                });
+            }
+
+            var modal = new bootstrap.Modal(document.getElementById('wNewBodega'));
+            modal.show();
+
+        }
+
+        function confirmar(e){
+            var res=confirm("Esta seguro de eliminar la bodega");
+            if (res) return true;
+            if (res==false) e.preventDefault();
+
+            //return false;
+        }
+    </script>
+}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+

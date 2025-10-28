@@ -1,0 +1,2787 @@
+﻿@inject IHttpContextAccessor HttpContextAccessor
+<head>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">    
+    @* <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" /> *@
+    <!-- CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.2.1/css/dataTables.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/3.2.0/css/buttons.dataTables.min.css">
+    
+
+    <style>
+        .modal-header .btn-close {
+            color: white !important; /* Asegura que el ícono de la "X" sea blanco */
+            opacity: 1;
+            -webkit-filter: invert(1);
+        }
+
+        .modal-body {
+            overflow-x: auto; /* Habilitar scroll horizontal dentro del modal */
+        }
+
+        /* .dataTables_wrapper {
+            width: 100%;
+        } */
+
+        .modal-dialog {
+            max-width: 90%; /* Ajustar el ancho máximo del modal */
+        }
+
+        /* .modal-body {
+            max-height: 500px; /* Limitar la altura del modal 
+            overflow-y: auto; /* Permitir scroll vertical 
+            overflow-x: auto; /* Permitir scroll horizontal 
+        } */
+
+
+    </style>
+
+</head>
+
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Mensaje"]
+    </div>
+}
+
+@model PROY.ViewModels.SolicitudesVM;
+@{
+    ViewData["rutaApp"] = @Model.rutaApp;
+    //var claimDepto = User.FindFirst("Depto");
+    var depto = "";
+
+    try
+    {
+        depto = User.FindFirst("depto")?.Value;
+    }
+    catch
+    {
+
+    }
+
+    var rol = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+
+    // Usamos el HttpContext inyectado para acceder al QueryString
+    var valorK = HttpContextAccessor.HttpContext?.Request.Query["k"].ToString();
+    bool tieneValorK = !string.IsNullOrEmpty(valorK);
+    var condicion = "";
+
+    if ((depto == "DAAN" && rol != "Admin") || (tieneValorK && valorK == "1" && rol == "Admin"))
+        condicion = "1";
+    else if ((depto == "DAPA" && rol != "Admin") || (tieneValorK && valorK == "2" && rol == "Admin"))
+        condicion = "2";
+}
+
+
+@if (condicion=="1")
+{
+
+    <input type="hidden" name="idSOL" value="@Model.Solicitud.IdSolicitud" />
+    <h2 class="float-start">BENEFICIARIOS DE SOLICITUD @Model.Solicitud.Codigo</h2>
+    <a class="btn btn-warning btn-sm btn-fixed-end" style="margin-right:300px; position:absolute; z-index:1;" asp-controller="Solicitud" asp-action="Index" asp-route-k="1"><i class="fas fa-undo"></i> Regresar</a>
+    <a class="btn btn-success btn-sm btn-fixed-end" style="margin-right:160px; position:absolute; z-index:1;" data-bs-toggle="modal" data-bs-target="#wCargaExcel" onclick="limpiarINFO()"><i class="fas fa-plus-square"></i> Cargar Excel</a>
+    <a class="btn btn-primary btn-sm btn-fixed-end" style="margin-right:23px; position:absolute; z-index:1;" asp-action="ExportarExcelDAAN" asp-controller="Solicitud" asp-route-idSolicitud="@Model.Solicitud.IdSolicitud"><i class="fas fa-file-download"></i> Bajar Excel</a>
+    // <a class="btn btn-primary btn-sm btn-fixed-end" style="margin-right:60px;" onclick="abrirModalYActualizarUrl(@Model.Solicitud.IdSolicitud,0)"><i class="fas fa-plus-square"></i> Nuevo</a>
+    <p><br /></p>
+    
+    <div>
+        <p>INTERVENCIÓN: @ViewBag.NombreIntervencion.ToString().ToUpper()</p>
+        <table class="table" style="width:100%; position:relative; z-index:2;">
+            <thead>
+                <tr>
+
+                    @switch ((int)ViewBag.IdIntervencion)
+                    {
+                        //ENCABEZADOS
+                        //INSAN
+                        case 21:
+                            <td colspan="4"></td>
+                            <td colspan="7" style="border:solid 2px gray; text-align:center;">DATOS COMPLETOS DEL ESPOSO</td>
+                            <td colspan="9" style="border:solid 2px gray; text-align:center;">DATOS COMPLETOS DE LA ESPOSA</td>
+                            <td colspan="3" style="border:solid 2px gray; text-align:center;">DATOS DEMOGRÁFICOS</td>
+                            <td colspan="7" style="border:solid 2px gray; text-align:center;">EDADES Y TIPO DE PERSONA</td>
+                            <td colspan="5" style="border:solid 2px gray; text-align:center;">SIEMBRA DE GRANOS BÁSICOS</td>
+                            <td style="border:solid 2px gray; text-align:center;"></td>
+                            <td colspan="2" style="border:solid 2px gray; text-align:center;">PERSONAL ENCARGADO DE INFORMACIÓN</td>
+                            break;
+                        //INSAN EMERGENCIA
+                        case 3:
+                            <td colspan="4"></td>
+                            <td style="border:solid 2px gray; text-align:center;">UBICACIÓN DEL ALBERGUE</td>
+                            <td colspan="7" style="border:solid 2px gray; text-align:center;">DATOS DEL ESPOSO</td>
+                            <td colspan="9" style="border:solid 2px gray; text-align:center;">DATOS DE LA ESPOSA</td>
+                            <td colspan="5" style="border:solid 2px gray; text-align:center;">DATOS FAMILIARES</td>
+                            <td colspan="3" style="border:solid 2px gray; text-align:center;">TIPO DE DAÑOS</td>
+                            <td colspan="2" style="border:solid 2px gray; text-align:center;">PERSONAL ENCARGADO DE INFORMACIÓN</td>
+                            break;
+                        //NIÑOS DESNUTRICION AGUDA
+                        case 22:
+                            <td colspan="4"></td>
+                            <td style="border:solid 2px gray; text-align:center;">CÓDIGO COMUNIDAD</td>
+                            <td colspan="8" style="border:solid 2px gray; text-align:center;">DATOS PADRE/MADRE</td>
+                            <td colspan="9" style="border:solid 2px gray; text-align:center;">DATOS JEFE DE HOGAR</td>
+                            <td colspan="14" style="border:solid 2px gray; text-align:center;">DATOS NIÑO O NIÑA CON DA</td>
+                            break;
+                        //Medidas transitorias
+                        case 6:
+                            <td colspan="4"></td>
+                            <td colspan="7" style="border:solid 2px gray; text-align:center;">DATOS ESPOSO</td>
+                            <td colspan="8" style="border:solid 2px gray; text-align:center;">DATOS ESPOSA</td>
+                            <td colspan="7" style="border:solid 2px gray; text-align:center;">DATOS HIJO(S)</td>
+                            <td colspan="2" style="border:solid 2px gray; text-align:center;"></td>
+                            <td colspan="4" style="border:solid 2px gray; text-align:center;">OTROS INTEGRANTES</td>
+                            <td colspan="2" style="border:solid 2px gray; text-align:center;">PERSONAL ENCARGADO DE INFORMACIÓN</td>
+                            break;
+                        //Política pública de Chixoy
+                        case 8:
+                            <td colspan="1"></td>
+                            <td colspan="3" style="border:solid 2px gray; text-align:center;">UBICACIÓN</td>
+                            <td colspan="8" style="border:solid 2px gray; text-align:center;">DATOS DE 2 PERSONAS</td>
+                            break;
+                        //Medidas judiciales
+                        case 4:
+                            <td colspan="7"></td>
+                            <td colspan="3" style="border:solid 2px gray; text-align:center;">Hijo 1</td>
+                            <td colspan="3" style="border:solid 2px gray; text-align:center;">Hijo 2</td>
+                            <td colspan="3" style="border:solid 2px gray; text-align:center;">Hijo 3</td>
+                            <td colspan="3" style="border:solid 2px gray; text-align:center;">Hijo 4</td>
+                            <td colspan="3" style="border:solid 2px gray; text-align:center;">Hijo 5</td>
+                            <td colspan="3" style="border:solid 2px gray; text-align:center;">Hijo 6</td>
+                            <td colspan="3" style="border:solid 2px gray; text-align:center;">Hijo 7</td>
+                            <td colspan="3" style="border:solid 2px gray; text-align:center;">Hijo 8</td>
+                            <td colspan="3" style="border:solid 2px gray; text-align:center;">Hijo 9</td>
+                            <td colspan="3" style="border:solid 2px gray; text-align:center;">Hijo 10</td>
+                            break;
+                        //Medidas cautelares
+                        case 5:
+                            <td colspan="4"></td>
+                            <td colspan="7" style="border:solid 2px gray; text-align:center;">DATOS COMPLETOS DEL ESPOSO</td>
+                            <td colspan="8" style="border:solid 2px gray; text-align:center;">DATOS COMPLETOS DE LA ESPOSA</td>
+                            <td colspan="70" style="border:solid 2px gray; text-align:center;">DATOS COMPLETOS DE LOS HIJOS</td>
+                            <td colspan="1" style="border:solid 2px gray; text-align:center;">GRUPO ÉTNICO</td>
+                            <td colspan="1" style="border:solid 2px gray; text-align:center;">ESTADO FAMILIA</td>
+                            <td colspan="4" style="border:solid 2px gray; text-align:center;">OTROS INTEGRANTES DE FAMILIA</td>
+                            <td colspan="2" style="border:solid 2px gray; text-align:center;">PERSONAL ENCARGADO DE INFORMACIÓN</td>
+                            <td colspan="1"></td>
+                            break;
+                    }
+                </tr>
+
+                <tr>
+                    @switch ((int)ViewBag.IdIntervencion)
+                    {
+                        //COLUMNAS
+                        //INSAN EMERGENCIA
+                        case 3:
+                            <th>CORRELATIVO</th>
+                            <th>DEPARTAMENTO</th>
+                            <th>MUNICIPIO</th>
+                            <th>COMUNIDAD</th>
+                            <th>UBICACIÓN ALBERGUE</th>
+                            <th>1er NOMBRE ESPOSO</th>
+                            <th>2do NOMBRE ESPOSO</th>
+                            <th>3er NOMBRE ESPOSO</th>
+                            <th>1er APELLIDO ESPOSO</th>
+                            <th>2do APELLIDO ESPOSO</th>
+                            <th>CUI ESPOSO</th>
+                            <th>FECHA NAC. ESPOSO</th>
+                            <th>1er NOMBRE ESPOSA</th>
+                            <th>2do NOMBRE ESPOSA</th>
+                            <th>3er NOMBRE ESPOSA</th>
+                            <th>1er APELLIDO ESPOSA</th>
+                            <th>2do APELLIDO ESPOSA</th>
+                            <th>APELLIDO CASADA</th>
+                            <th>CUI ESPOSA</th>
+                            <th>FECHA NAC. ESPOSA</th>
+                            <th>GRUPO ÉTNICO</th>
+                            <th>ESTADO FAMILIA</th>
+                            <th>PERSONAS HOGAR</th>
+                            <th>HOMBRES</th>
+                            <th>MUJERES</th>
+                            <th>DAÑO FAMILIAR</th>
+                            <th>DAÑO VIVIENDA</th>
+                            <th>PERDIDA CULTIVO</th>
+                            <th>PERDIDA ANIMALES CRIANZA</th>
+                            <th>NOMBRE DEL PERSONAL</th>
+                            <th>INSTITUCIÓN</th>
+                            <th>OPCIONES</th>
+                            break;
+                        // INSAN
+                        case 21:
+                            <th>CORRELATIVO</th>
+                            <th>DEPARTAMENTO</th>
+                            <th>MUNICIPIO</th>
+                            <th>COMUNIDAD</th>
+
+                            <th>1er NOMBRE ESPOSO</th>
+                            <th>2do NOMBRE ESPOSO</th>
+                            <th>3er NOMBRE ESPOSO</th>
+                            <th>1er APELLIDO ESPOSO</th>
+                            <th>2do APELLIDO ESPOSO</th>
+                            <th>CUI ESPOSO</th>
+                            <th>FECHA NAC. ESPOSO</th>
+
+                            <th>1er NOMBRE ESPOSA</th>
+                            <th>2do NOMBRE ESPOSA</th>
+                            <th>3er NOMBRE ESPOSA</th>
+                            <th>1er APELLIDO ESPOSA</th>
+                            <th>2do APELLIDO ESPOSA</th>
+                            <th>APELLIDO CASADA</th>
+                            <th>CUI ESPOSA</th>
+                            <th>FECHA NAC. ESPOSA</th>
+
+                            <th>ESTADO CIVIL</th>
+                            <th>EMBARAZADA</th>
+                            <th>NIÑO CON DA</th>
+                            <th>GRUPO ÉTNICO</th>
+
+                            <th>HOMBRE 0-2 AÑOS</th>
+                            <th>MUJER 0-2 AÑOS</th>
+                            <th>HOMBRE 2-5 AÑOS</th>
+                            <th>MUJER 2-5 AÑOS</th>
+                            <th>HOMBRE 6-17 AÑOS</th>
+                            <th>MUJER 6-17 AÑOS</th>
+                            <th>TIPO PERSONA</th>
+
+                            <th>ÁREA DE MAÍZ (M²)</th>
+                            <th>QUINTALES MAÍZ</th>
+                            <th>ÁREA DE FRIJOL (M²)</th>
+                            <th>QUINTALES FRIJOL</th>
+                            <th>TIPO DE AGRICULTURA</th>
+
+                            <th>COCODE</th>
+                            <th>NOMBRE DEL PERSONAL</th>
+                            <th>INSTITUCIÓN</th>
+                            <th>OPCIONES</th>
+                            break;
+
+                        //NIÑOS DESNUTRICION AGUDA
+                        case 22:
+                            <th>CORRELATIVO</th>
+                            <th>DEPARTAMENTO</th>
+                            <th>MUNICIPIO</th>
+                            <th>COMUNIDAD</th>
+                            <th>CÓDIGO COMUNIDAD</th>
+                            <th>1er NOMBRE MADRE/PADRE</th>
+                            <th>2do NOMBRE</th>
+                            <th>3er NOMBRE</th>
+                            <th>1er APELLIDO</th>
+                            <th>2do APELLIDO</th>
+                            <th>APELLIDO DE CASADA</th>
+                            <th>CUI MADRE/PADRE</th>
+                            <th>F. NAC</th>
+                            <th>PARENTESCO</th>
+                            <th>1er NOMBRE JEFE</th>
+                            <th>2do NOMBRE</th>
+                            <th>3er NOMBRE</th>
+                            <th>1er APELLIDO</th>
+                            <th>2do APELLIDO</th>
+                            <th>APELLIDO DE CASADA</th>
+                            <th>CUI JEFE</th>
+                            <th>F. NAC</th>
+                            <th>CODIGO NIÑO</th>
+                            <th>1er NOMBRE NIÑO</th>
+                            <th>2do NOMBRE</th>
+                            <th>3er NOMBRE</th>
+                            <th>1er APELLIDO</th>
+                            <th>2do APELLIDO</th>
+                            <th>CUI NIÑO</th>
+                            <th>SEXO</th>
+                            <th>F. NACIMIENTO</th>
+                            <th>EDAD</th>
+                            <th>GRUPO ÉTNICO</th>
+                            <th>DIAGNÓSTICO</th>
+                            <th>PESO</th>
+                            <th>TALLA</th>
+                            <th>OPCIONES</th>
+                            break;
+                        //Medidas transitorias
+                        case 6:
+                            <th>CORRELATIVO</th>
+                            <th>DEPARTAMENTO</th>
+                            <th>MUNICIPIO</th>
+                            <th>COMUNIDAD</th>
+                            <th>1er NOMBRE ESPOSO</th>
+                            <th>2do NOMBRE</th>
+                            <th>3er NOMBRE</th>
+                            <th>1er APELLIDO</th>
+                            <th>2do APELLIDO</th>
+                            <th>CUI</th>
+                            <th>F. NAC</th>
+                            <th>1er NOMBRE ESPOSA</th>
+                            <th>2do NOMBRE</th>
+                            <th>3er NOMBRE</th>
+                            <th>1er APELLIDO</th>
+                            <th>2do APELLIDO</th>
+                            <th>CASADA</th>
+                            <th>CUI</th>
+                            <th>F. NAC</th>
+                            <th>1er NOMBRE HIJO</th>
+                            <th>2do NOMBRE</th>
+                            <th>3er NOMBRE</th>
+                            <th>1er APELLIDO</th>
+                            <th>2do APELLIDO</th>
+                            <th>CUI</th>
+                            <th>F. NACIMIENTO</th>
+                            <th>GRUPO ÉTNICO</th>
+                            <th>ESTADO FAMILIA</th>
+                            <th>HOMBRE ADULTO</th>
+                            <th>MUJER ADULTA</th>
+                            <th>NIÑO(S)</th>
+                            <th>NIÑA(S)</th>
+                            <th>NOMBRE DEL PERSONAL</th>
+                            <th>INSTITUCIÓN</th>
+                            <th>OPCIONES</th>
+                            break;
+                        //Política pública de Chixoy
+                        case 8:
+                            <th>CORRELATIVO</th>
+                            <th>DEPARTAMENTO</th>
+                            <th>MUNICIPIO</th>
+                            <th>COMUNIDAD</th>
+                            <th>NOMBRE 1</th>
+                            <th>CUI 1</th>
+                            <th>EDAD 1</th>
+                            <th>GÉNERO 1</th>
+                            <th>NOMBRE 2</th>
+                            <th>CUI 2</th>
+                            <th>EDAD 2</th>
+                            <th>GÉNERO 2</th>
+                            <th>OPCIONES</th>
+                            break;
+
+                        case 4:
+                            <th>CORRELATIVO</th>
+                            <th>DEPARTAMENTO</th>
+                            <th>MUNICIPIO</th>
+                            <th>COMUNIDAD</th>
+                            <th>NOMBRE RESPONSABLE</th> 
+                            <th>CUI - RESPONSABLE</th>
+                            <th>EDAD RESPONSABLE</th>
+                                @for (int i = 1; i <= 10; i++)
+                                {
+                                <th>Nombre Completo Hijo @i</th>
+                                <th>CUI Hijo @i</th>
+                                <th>Edad Hijo @i</th>
+                                }
+                            <th>OPCIONES</th>
+                            break;
+                        //Medidas cautelares
+                        case 5:
+                            <th>CORRELATIVO</th>
+                            <th>DEPARTAMENTO</th>
+                            <th>MUNICIPIO</th>
+                            <th>COMUNIDAD</th>
+
+                            <th>1er NOMBRE ESPOSO</th>
+                            <th>2do NOMBRE ESPOSO</th>
+                            <th>3er NOMBRE ESPOSO</th>
+                            <th>1er APELLIDO ESPOSO</th>
+                            <th>2do APELLIDO ESPOSO</th>
+                            <th>CUI ESPOSO</th>
+                            <th>FECHA NAC. ESPOSO</th>
+
+                            <th>1er NOMBRE ESPOSA</th>
+                            <th>2do NOMBRE ESPOSA</th>
+                            <th>3er NOMBRE ESPOSA</th>
+                            <th>1er APELLIDO ESPOSA</th>
+                            <th>2do APELLIDO ESPOSA</th>
+                            <th>APELLIDO DE CASADA</th>
+                            <th>CUI ESPOSA</th>
+                            <th>FECHA NAC. ESPOSA</th>
+
+                            @for (int i = 1; i <= 10; i++)
+                            {
+                                <th>1er NOMBRE HIJO @i</th>
+                                <th>2do NOMBRE HIJO @i</th>
+                                <th>3er NOMBRE HIJO @i</th>
+                                <th>1er APELLIDO HIJO @i</th>
+                                <th>2do APELLIDO HIJO @i</th>
+                                <th>CUI HIJO @i</th>
+                                <th>EDAD HIJO @i</th>
+                            }
+
+                            <th>GRUPO ÉTNICO</th>
+                            <th>ESTADO FAMILIA</th>
+                            <th>HOMBRE ADULTO</th>
+                            <th>MUJER ADULTA</th>
+                            <th>NIÑO(S)</th>
+                            <th>NIÑA(S)</th>
+                            <th>NOMBRE DEL PERSONAL</th>
+                            <th>INSTITUCIÓN QUE REPRESENTA</th>
+                            <th>OPCIONES</th>
+                            break;
+
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in Model.listaDetallesSolicitud)
+                {
+                    <tr>
+                        @switch ((int)ViewBag.IdIntervencion)
+                        {
+                            //COLUMNAS
+                            //INSAN EMERGENCIA
+                            case 3:
+                                <td>@row.IdDetalleSolicitud</td>
+                                <td>
+                                    @{
+                                        string descripcionDepartamento = Model.DepartamentoDict.TryGetValue(row.IdDepartamento, out var descDepto) ? descDepto : "Departamento no encontrada";
+                                    }
+                                    @descripcionDepartamento
+                                </td>
+                                <td>
+                                    @{
+                                        string descripcionMunicipio = Model.MunicipioDict.TryGetValue(row.IdMunicipio, out var descMuni) ? descMuni : "Municipio no encontrada";
+                                    }
+                                    @descripcionMunicipio
+                                </td>
+                                <td>@row.Comunidad</td>
+                                <td>@row.UbicacionAlbergue</td>
+                                <td>@row.Nombre1Esposo</td>
+                                <td>@row.Nombre2Esposo</td>
+                                <td>@row.Nombre3Esposo</td>
+                                <td>@row.Apellido1Esposo</td>
+                                <td>@row.Apellido2Esposo</td>
+                                <td>@row.CuiEsposo</td>
+                                <td>@row.FNacimientoEsposo</td>
+                                <td>@row.Nombre1Esposa</td>
+                                <td>@row.Nombre2Esposa</td>
+                                <td>@row.Nombre3Esposa</td>
+                                <td>@row.Apellido1Esposa</td>
+                                <td>@row.Apellido2Esposa</td>
+                                <td>@row.ApellidoCasada</td>
+                                <td>@row.CuiEsposa</td>
+                                <td>@row.FNacimientoEsposa</td>
+                                 <td>
+                                    @{
+                                        string descripcionGrupoEtnico = Model.GrupoEtnicoDict.TryGetValue(row.GrupoEtnico, out var descGrupoEtnico) ? descGrupoEtnico : "Grupo Etnico no encontrado";
+                                    }
+                                    @descripcionGrupoEtnico
+                                </td>
+                                <td>@row.EstadoFamilia</td>
+                                <td>@row.CantPersonasHogar</td>
+                                <td>@row.CantHombres</td>
+                                <td>@row.CantMujeres</td>
+                                <td>@row.DañoFamiliar</td>
+                                <td>@row.DañoVivienda</td>
+                                <td>@row.PerdidaCultivo</td>
+                                <td>@row.PerdidaAnimalesCrianza</td>
+                                <td>@row.NombrePersonaRegistro</td>
+                                <td>@row.InstitucionRepresenta</td>
+                                <td>
+                                    @if (Model.Solicitud.Estado != "EVALUACION")
+                                    {
+                                        <a class="btn btn-danger btn-sm" asp-action="EliminarDetalleSolicitud" asp-route-idSolicitud="@row.IdSolicitud" asp-route-idDetalle="@row.IdDetalleSolicitud" onclick="confirmarDetalle(event)"><i class="fas fa-trash"></i> Eliminar</a>
+                                    }
+                                    else
+                                    {
+                                        <a class="btn btn-secondary btn-sm disabled" href="javascript:void(0);"><i class="fas fa-trash"></i> Eliminar</a>
+                                    }
+                                </td>
+                                break;
+                            // INSAN
+                            case 21:
+                                <td>@row.IdDetalleSolicitud</td>
+                                <td>
+                                    @{
+                                        string descripcionDepartamento2 = Model.DepartamentoDict.TryGetValue(row.IdDepartamento, out var descDepto2) ? descDepto2 : "Departamento no encontrada";
+                                    }
+                                    @descripcionDepartamento2
+                                </td>
+                                <td>
+                                    @{
+                                        string descripcionMunicipio2 = Model.MunicipioDict.TryGetValue(row.IdMunicipio, out var descMuni2) ? descMuni2 : "Municipio no encontrada";
+                                    }
+                                    @descripcionMunicipio2
+                                </td>
+                                <td>@row.Comunidad</td>
+                                <td>@row.Nombre1Esposo</td>
+                                <td>@row.Nombre2Esposo</td>
+                                <td>@row.Nombre3Esposo</td>
+                                <td>@row.Apellido1Esposo</td>
+                                <td>@row.Apellido2Esposo</td>
+                                <td>@row.CuiEsposo</td>
+                                <td>@row.FNacimientoEsposo</td>
+                                <td>@row.Nombre1Esposa</td>
+                                <td>@row.Nombre2Esposa</td>
+                                <td>@row.Nombre3Esposa</td>
+                                <td>@row.Apellido1Esposa</td>
+                                <td>@row.Apellido2Esposa</td>
+                                <td>@row.ApellidoCasada</td>
+                                <td>@row.CuiEsposa</td>
+                                <td>@row.FNacimientoEsposa</td>
+                                <td>
+                                    @{
+                                        string descripcionEstadoCivil = Model.EstadoCivilDict.TryGetValue(row.EstadoCivil, out var descEstadoCivil) ? descEstadoCivil : "Estado civil no encontrada";
+                                    }
+                                    @descripcionEstadoCivil
+                                </td>
+                                <td>@row.Embarazada</td>
+                                <td>@row.NiñoDA</td>
+                                <td>
+                                    @{
+                                        string descripcionGrupoEtnico2 = Model.GrupoEtnicoDict.TryGetValue(row.GrupoEtnico, out var descGrupoEtnico2) ? descGrupoEtnico2 : "Grupo Etnico no encontrado";
+                                    }
+                                    @descripcionGrupoEtnico2
+                                </td>
+                                <td>@row.Hombre0a2Años</td>
+                                <td>@row.Mujer0a2Años</td>
+                                <td>@row.Hombre2a5Años</td>
+                                <td>@row.Mujer2a5Años</td>
+                                <td>@row.Hombre6a17Años</td>
+                                <td>@row.Mujer6a17Años</td>
+                                <td>@row.TipoPersona</td>
+                                <td>@row.AreaMaiz</td>
+                                <td>@row.QuintalesMaiz</td>
+                                <td>@row.AreaFrijol</td>
+                                <td>@row.QuintalesFrijol</td>
+                                <td>@row.TipoAgriculturaPractica</td>
+                                <td>@row.NombreCOCODE</td>
+                                <td>@row.NombrePersonaRegistro</td>
+                                <td>@row.InstitucionRepresenta</td>
+                                <td>
+                                    @if (Model.Solicitud.Estado != "EVALUACION")
+                                    {
+                                        <a class="btn btn-danger btn-sm" asp-action="EliminarDetalleSolicitud" asp-route-idSolicitud="@row.IdSolicitud" asp-route-idDetalle="@row.IdDetalleSolicitud" onclick="confirmarDetalle(event)"><i class="fas fa-trash"></i> Eliminar</a>
+                                    }
+                                    else
+                                    {
+                                        <a class="btn btn-secondary btn-sm disabled" href="javascript:void(0);"><i class="fas fa-trash"></i> Eliminar</a>
+                                    }
+                                </td>
+                                break;
+                            //NIÑOS DESNUTRICION AGUDA
+                            case 22:
+                                <td>@row.IdDetalleSolicitud</td>
+                                <td>
+                                    @{
+                                        string descripcionDepartamento3 = Model.DepartamentoDict.TryGetValue(row.IdDepartamento, out var descDepto3) ? descDepto3 : "Departamento no encontrada";
+                                    }
+                                    @descripcionDepartamento3
+                                </td>
+                                <td>
+                                    @{
+                                        string descripcionMunicipio3 = Model.MunicipioDict.TryGetValue(row.IdMunicipio, out var descMuni3) ? descMuni3 : "Municipio no encontrada";
+                                    }
+                                    @descripcionMunicipio3
+                                </td>
+                                <td>@row.Comunidad</td>
+                                <td>@row.CodComunidad</td>
+                                <td>@row.Nombre1Persona1</td>
+                                <td>@row.Nombre2Persona1</td>
+                                <td>@row.Nombre3Persona1</td>
+                                <td>@row.Apellido1Persona1</td>
+                                <td>@row.Apellido2Persona1</td>
+                                <td>@row.ApellidoCasadaPersona1</td>
+                                <td>@row.CuiPersona1</td>
+                                <td>@row.FNacimientoPersona1</td>
+                                <td>@row.Parentesco</td>
+                                <td>@row.Nombre1Persona2</td>
+                                <td>@row.Nombre2Persona2</td>
+                                <td>@row.Nombre3Persona2</td>
+                                <td>@row.Apellido1Persona2</td>
+                                <td>@row.Apellido2Persona2</td>
+                                <td>@row.ApellidoCasadaPersona2</td>
+                                <td>@row.CuiPersona2</td>
+                                <td>@row.FNacimientoPersona2</td>
+                                <td>@row.CodigoNiño</td>
+                                <td>@row.Nombre1Niño</td>
+                                <td>@row.Nombre2Niño</td>
+                                <td>@row.Nombre3Niño</td>
+                                <td>@row.Apellido1Niño</td>
+                                <td>@row.Apellido2Niño</td>
+                                <td>@row.CuiNiño</td>
+                                <td>@row.Sexo</td>
+                                <td>@row.FNacimientoNiño</td>
+                                <td>@row.EdadNiño</td>
+                                <td>
+                                    @{
+                                        string descripcionGrupoEtnico3 = Model.GrupoEtnicoDict.TryGetValue(row.GrupoEtnico, out var descGrupoEtnico3) ? descGrupoEtnico3 : "Grupo Etnico no encontrado";
+                                    }
+                                    @descripcionGrupoEtnico3
+                                </td>
+                                <td>@row.Diagnostico</td>
+                                <td>@row.Peso</td>
+                                <td>@row.Talla</td>
+                                <td>
+                                    @if (Model.Solicitud.Estado != "EVALUACION")
+                                    {
+                                        <a class="btn btn-danger btn-sm" asp-action="EliminarDetalleSolicitud" asp-route-idSolicitud="@row.IdSolicitud" asp-route-idDetalle="@row.IdDetalleSolicitud" onclick="confirmarDetalle(event)"><i class="fas fa-trash"></i> Eliminar</a>
+                                    }
+                                    else
+                                    {
+                                        <a class="btn btn-secondary btn-sm disabled" href="javascript:void(0);"><i class="fas fa-trash"></i> Eliminar</a>
+                                    }
+                                </td>
+                                break;
+                            //Medidas transitorias
+                            case 6:
+                                <td>@row.IdDetalleSolicitud</td>
+                                <td>
+                                    @{
+                                        string descripcionDepartamento4 = Model.DepartamentoDict.TryGetValue(row.IdDepartamento, out var descDepto4) ? descDepto4 : "Departamento no encontrada";
+                                    }
+                                    @descripcionDepartamento4
+                                </td>
+                                <td>
+                                    @{
+                                        string descripcionMunicipio4 = Model.MunicipioDict.TryGetValue(row.IdMunicipio, out var descMuni4) ? descMuni4 : "Municipio no encontrada";
+                                    }
+                                    @descripcionMunicipio4
+                                </td>
+                                <td>@row.Comunidad</td>
+                                <td>@row.Nombre1Esposo</td>
+                                <td>@row.Nombre2Esposo</td>
+                                <td>@row.Nombre3Esposo</td>
+                                <td>@row.Apellido1Esposo</td>
+                                <td>@row.Apellido2Esposo</td>
+                                <td>@row.CuiEsposo</td>
+                                <td>@row.FNacimientoEsposo</td>
+                                <td>@row.Nombre1Esposa</td>
+                                <td>@row.Nombre2Esposa</td>
+                                <td>@row.Nombre3Esposa</td>
+                                <td>@row.Apellido1Esposa</td>
+                                <td>@row.Apellido2Esposa</td>
+                                <td>@row.ApellidoCasada</td>
+                                <td>@row.CuiEsposa</td>
+                                <td>@row.FNacimientoEsposa</td>
+                                <td>@row.Nombre1Niño</td>
+                                <td>@row.Nombre2Niño</td>
+                                <td>@row.Nombre3Niño</td>
+                                <td>@row.Apellido1Niño</td>
+                                <td>@row.Apellido2Niño</td>
+                                <td>@row.CuiNiño</td>
+                                <td>@row.FNacimientoNiño</td>
+                                <td>
+                                    @{
+                                        string descripcionGrupoEtnico4 = Model.GrupoEtnicoDict.TryGetValue(row.GrupoEtnico, out var descGrupoEtnico4) ? descGrupoEtnico4 : "Grupo Etnico no encontrado";
+                                    }
+                                    @descripcionGrupoEtnico4
+                                </td>
+                                <td>@row.EstadoFamilia</td>
+                                <td>@row.CantHombres</td>
+                                <td>@row.CantMujeres</td>
+                                <td>@row.CantNiños</td>
+                                <td>@row.CantNiñas</td>
+                                <td>@row.NombrePersonaRegistro</td>
+                                <td>@row.InstitucionRepresenta</td>
+                                <td>
+                                    @if (Model.Solicitud.Estado != "EVALUACION")
+                                    {
+                                        <a class="btn btn-danger btn-sm" asp-action="EliminarDetalleSolicitud" asp-route-idSolicitud="@row.IdSolicitud" asp-route-idDetalle="@row.IdDetalleSolicitud" onclick="confirmarDetalle(event)"><i class="fas fa-trash"></i> Eliminar</a>
+                                    }
+                                    else
+                                    {
+                                        <a class="btn btn-secondary btn-sm disabled" href="javascript:void(0);"><i class="fas fa-trash"></i> Eliminar</a>
+                                    }
+                                </td>
+                                break;
+                            //Política pública de Chixoy
+                            case 8:
+                                <td>@row.IdDetalleSolicitud</td>
+                                 <td>
+                                    @{
+                                        string descripcionDepartamento5 = Model.DepartamentoDict.TryGetValue(row.IdDepartamento, out var descDepto5) ? descDepto5 : "Departamento no encontrada";
+                                    }
+                                    @descripcionDepartamento5
+                                </td>
+                                <td>
+                                    @{
+                                        string descripcionMunicipio5 = Model.MunicipioDict.TryGetValue(row.IdMunicipio, out var descMuni5) ? descMuni5 : "Municipio no encontrada";
+                                    }
+                                    @descripcionMunicipio5
+                                </td>
+                                <td>@row.Comunidad</td>
+                                <td>@row.NombreCompletoPersona1</td>
+                                <td>@row.CuiPersona1</td>
+                                <td>@row.EdadPersona1</td>
+                                <td>@row.GeneroPersona1</td>
+                                <td>@row.NombreCompletoPersona2</td>
+                                <td>@row.CuiPersona2</td>
+                                <td>@row.EdadPersona2</td>
+                                <td>@row.GeneroPersona2</td>
+                                <td>
+                                    @if (Model.Solicitud.Estado != "EVALUACION")
+                                    {
+                                        <a class="btn btn-danger btn-sm" asp-action="EliminarDetalleSolicitud" asp-route-idSolicitud="@row.IdSolicitud" asp-route-idDetalle="@row.IdDetalleSolicitud" onclick="confirmarDetalle(event)"><i class="fas fa-trash"></i> Eliminar</a>
+                                    }
+                                    else
+                                    {
+                                        <a class="btn btn-secondary btn-sm disabled" href="javascript:void(0);"><i class="fas fa-trash"></i> Eliminar</a>
+                                    }
+                                </td>
+                                break;
+
+
+                            //Medidas judiciales
+                            case 4:
+                                <td>@row.IdDetalleSolicitud</td>
+                                 <td>
+                                    @{
+                                        string descripcionDepartamento6 = Model.DepartamentoDict.TryGetValue(row.IdDepartamento, out var descDepto6) ? descDepto6 : "Departamento no encontrada";
+                                    }
+                                    @descripcionDepartamento6
+                                </td>
+                                <td>
+                                    @{
+                                        string descripcionMunicipio6 = Model.MunicipioDict.TryGetValue(row.IdMunicipio, out var descMuni6) ? descMuni6 : "Municipio no encontrada";
+                                    }
+                                    @descripcionMunicipio6
+                                </td>
+                                <td>@row.Comunidad</td>
+                                <td>@row.NombreCompletoPersona1</td>
+                                <td>@row.CuiPersona1</td>
+                                <td>@row.EdadPersona1</td>
+                                @for (int i = 0; i <= 9; i++) // ajusta el número según máximo hijos
+                                {
+                                    var n = row.Ninos.ElementAtOrDefault(i);
+                                    <td>@n?.NombreCompleto</td>
+                                    <td>@n?.CUI</td>
+                                    <td>@n?.Edad</td>
+                                }
+                                <td>
+                                    @if (Model.Solicitud.Estado != "EVALUACION")
+                                    {
+                                        <a class="btn btn-danger btn-sm" asp-action="EliminarDetalleSolicitud" asp-route-idSolicitud="@row.IdSolicitud" asp-route-idDetalle="@row.IdDetalleSolicitud" onclick="confirmarDetalle(event)"><i class="fas fa-trash"></i> Eliminar</a>
+                                    }
+                                    else
+                                    {
+                                        <a class="btn btn-secondary btn-sm disabled" href="javascript:void(0);"><i class="fas fa-trash"></i> Eliminar</a>
+                                    }
+                                </td>
+
+                                break;
+
+                                //Medidas cautelares
+                            case 5:
+                                <td>@row.IdDetalleSolicitud</td>
+
+                                <td>
+                                    @{
+                                        string descripcionDepartamento7 = Model.DepartamentoDict.TryGetValue(row.IdDepartamento, out var descDepto7) ? descDepto7 : "Departamento no encontrada";
+                                    }
+                                    @descripcionDepartamento7
+                                </td>
+                                <td>
+                                    @{
+                                        string descripcionMunicipio7 = Model.MunicipioDict.TryGetValue(row.IdMunicipio, out var descMuni7) ? descMuni7 : "Municipio no encontrada";
+                                    }
+                                    @descripcionMunicipio7
+                                </td>
+                                <td>@row.Comunidad</td>
+
+                                <!-- Datos del Esposo -->
+                                <td>@row.Nombre1Esposo</td>
+                                <td>@row.Nombre2Esposo</td>
+                                <td>@row.Nombre3Esposo</td>
+                                <td>@row.Apellido1Esposo</td>
+                                <td>@row.Apellido2Esposo</td>
+                                <td>@row.CuiEsposo</td>
+                                <td>@row.FNacimientoEsposo</td>
+
+                                <!-- Datos de la Esposa -->
+                                <td>@row.Nombre1Esposa</td>
+                                <td>@row.Nombre2Esposa</td>
+                                <td>@row.Nombre3Esposa</td>
+                                <td>@row.Apellido1Esposa</td>
+                                <td>@row.Apellido2Esposa</td>
+                                <td>@row.ApellidoCasada</td>
+                                <td>@row.CuiEsposa</td>
+                                <td>@row.FNacimientoEsposa</td>
+
+                                <!-- Datos de los 10 Hijos -->
+                                @for (int i = 0; i <= 9; i++)
+                                {
+                                    var n = row.Ninos?.ElementAtOrDefault(i);
+                                    <td>@n?.Nombre1</td>
+                                    <td>@n?.Nombre2</td>
+                                    <td>@n?.Nombre3</td>
+                                    <td>@n?.Apellido1</td>
+                                    <td>@n?.Apellido2</td>
+                                    <td>@n?.CUI</td>
+                                    <td>@n?.FechaNacimiento</td>
+                                }
+
+                                <!-- Campos adicionales -->
+                                <td>
+                                    @{
+                                        string descripcionGrupoEtnico5 = Model.GrupoEtnicoDict.TryGetValue(row.GrupoEtnico, out var descGrupoEtnico5) ? descGrupoEtnico5 : "Grupo Etnico no encontrado";
+                                    }
+                                    @descripcionGrupoEtnico5
+                                </td>
+                                <td>@row.EstadoFamilia</td>
+                                <td>@row.CantHombres</td>
+                                <td>@row.CantMujeres</td>
+                                <td>@row.CantNiños</td> <!-- Cantidad de niños como número -->
+                                <td>@row.CantNiñas</td> <!-- Cantidad de niñas como número -->
+                                <td>@row.NombrePersonaRegistro</td>
+                                <td>@row.InstitucionRepresenta</td>
+
+                                <!-- Acciones -->
+                                <td>
+                                    @if (Model.Solicitud.Estado != "EVALUACION")
+                                    {
+                                        <a class="btn btn-danger btn-sm" asp-action="EliminarDetalleSolicitud"
+                                           asp-route-idSolicitud="@row.IdSolicitud" asp-route-idDetalle="@row.IdDetalleSolicitud"
+                                           onclick="confirmarDetalle(event)">
+                                            <i class="fas fa-trash"></i> Eliminar
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <a class="btn btn-secondary btn-sm disabled" href="javascript:void(0);">
+                                            <i class="fas fa-trash"></i> Eliminar
+                                        </a>
+                                    }
+                                </td>
+                                break;
+
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    
+}
+else if (condicion=="2")
+{
+    <input type="hidden" name="idSOL" value="@Model.Solicitud.IdSolicitud" />
+    <h2 class="float-start">BENEFICIARIOS DE SOLICITUD @Model.Solicitud.Codigo</h2>                                                                                                            
+    <a class="btn btn-warning btn-sm btn-fixed-end" style="margin-right:300px; position:absolute; z-index:1;" asp-controller="Solicitud" asp-action="Index" asp-route-k="2"><i class="fas fa-undo"></i> Regresar</a>
+    <a class="btn btn-success btn-sm btn-fixed-end" style="margin-right:160px; position:absolute; z-index:1;" data-bs-toggle="modal" data-bs-target="#wCargaExcelAPA" onclick="limpiarINFO_APA()"><i class="fas fa-plus-square"></i> Cargar Excel</a>
+    <a class="btn btn-primary btn-sm btn-fixed-end" style="margin-right:23px; position:absolute; z-index:1;" asp-action="ExportarExcelDAPA" asp-controller="Solicitud" asp-route-idSolicitud="@Model.Solicitud.IdSolicitud">Exportar datos</a>
+    @*<a class="btn btn-primary btn-sm btn-fixed-end" style="margin-right:60px;" onclick="abrirModalYActualizarUrlAPA(@Model.Solicitud.IdSolicitud,0)"><i class="fas fa-plus-square"></i> Nuevo</a> *@
+    
+    <p><br /></p>
+    <table class="table">
+        <thead>            
+            <tr>
+                <th>
+                    ID
+                </th>
+                <th>
+                    NOMBRE1
+                </th>
+                <th>
+                    NOMBRE2
+                </th>
+                <th>
+                    NOMBRE3
+                </th>
+                <th>
+                    APELLIDO1
+                </th>
+                <th>
+                    APELLIDO2
+                </th>
+                <th>
+                    APELLIDO CASADA
+                </th>
+                <th>
+                    CUI
+                </th>
+                <th>
+                    GENERO
+                </th>
+                <th>
+                    GRUPO ETNICO
+                </th>                
+                <th>OPCIONES</th>
+            </tr>
+        </thead>
+        <tbody>
+            @try
+            {
+
+
+                foreach (var item in Model.listaDetallesSolicitudAPA)
+                {
+                    <tr>
+                        <td>
+                            @item.IdDetalleSolicitud
+                        </td>                        
+                        <td>
+                            @item.Nombre1Esposa
+                        </td>
+                        <td>
+                            @item.Nombre2Esposa
+                        </td>
+                        <td>
+                            @item.Nombre3Esposa
+                        </td>
+                        <td>
+                            @item.Apellido1Esposa
+                        </td>
+                        <td>
+                            @item.Apellido2Esposa
+                        </td>
+                        <td>
+                            @item.ApellidoCasada
+                        </td>
+                        <td>
+                            @item.CuiEsposa
+                        </td>
+                        <td>
+                            @item.Genero
+                        </td>
+                        <td>
+                            @{
+                                // Obtener la descripción usando el diccionario
+                                string descripcionGrupoEtnico = Model.GrupoEtnicoDict.TryGetValue(item.GrupoEtnico, out var descGrupoEtnico)
+                                ? descGrupoEtnico
+                                : "Grupo Etnico no encontrado";
+                            }
+                            @descripcionGrupoEtnico
+                        </td>                        
+                        <td>
+                            @*<a class="btn btn-info btn-sm" onclick="abrirModalYActualizarUrlAPA(@item.IdSolicitud, @item.IdDetalleSolicitud)"><i class="fas fa-edit"></i> Editar</a>*@
+                            @if (Model.Solicitud.Estado != "EVALUACION")
+                            {
+                                <a class="btn btn-danger btn-sm" asp-action="EliminarDetalleSolicitud" asp-route-idSolicitud="@item.IdSolicitud" asp-route-idDetalle="@item.IdDetalleSolicitud" onclick="confirmarDetalle(event)"><i class="fas fa-trash"></i> Eliminar</a>
+                            }
+                            else
+                            {
+                                <a class="btn btn-secondary btn-sm disabled" href="javascript:void(0);"><i class="fas fa-trash"></i> Eliminar</a>
+                            }
+                        </td>
+                    </tr>
+                }
+            }
+            catch (Exception erro)
+            {
+
+            }
+        </tbody>
+    </table>
+
+}
+
+<!-- Modal -->
+@if (condicion=="1")
+{
+    <div class="modal fade" id="wAddEditDetalleSolicitud" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content" style="height:750px;">
+                <form asp-action="GuardarDetalleSolicitud" asp-controller="Solicitud" asp-route-idDetalle="@Model.DetalleSolicitud.IdDetalleSolicitud" asp-route-k="1" method="post">
+                    <div class="modal-header bg-secondary">
+                        <h5 class="modal-title text-white" id="lblModalTitle">@ViewBag.ModalTitle</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <input type="hidden" id="hiddenSolicitudId" name="idSolicitud" asp-for="@Model.Solicitud.IdSolicitud" />
+                        <input type="hidden" id="hiddenDetSolicitudId" name="idDetalle" asp-for="@Model.DetalleSolicitud.IdDetalleSolicitud" />
+                        @* <div class="form-group">
+                    <label>Correlativo</label>
+                    <input asp-for="@Model.Solicitud.Correlativo" class="form-control" required/>
+                    <span asp-validation-for="@Model.Solicitud.Correlativo" class="text-danger"></span>
+                    </div> *@
+                    <div class="row">
+                        <div class="col-4">
+                            <label class="control-label">Departamento</label>
+                            <select class="form-select" id="cbDepartamento" asp-for="@Model.DetalleSolicitud.IdDepartamento" asp-items="ViewBag.Departamentos" required></select>
+                            <span asp-validation-for="@Model.DetalleSolicitud.IdDepartamento" class="text-danger"></span>
+                        </div>
+                            <div class="col-4">
+                            <label class="control-label">Municipio</label>
+                            <select class="form-select" id="cbMunicipio" asp-for="@Model.DetalleSolicitud.IdMunicipio" asp-items="ViewBag.Municipios" required></select>
+                            <span asp-validation-for="@Model.DetalleSolicitud.IdMunicipio" class="text-danger"></span>
+                        </div>
+                            <div class="col-4">
+                            <label class="control-label">Comunidad</label>
+                            <input class="form-control" id="txtComunidad" asp-for="@Model.DetalleSolicitud.Comunidad" required />
+                            <span asp-validation-for="@Model.DetalleSolicitud.Comunidad" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <label class="control-label">Nombre1</label>
+                            <input class="form-control" type="text" id="txtNombre1Esposo" asp-for="@Model.DetalleSolicitud.Nombre1Esposo"/>
+                            <span asp-validation-for="@Model.DetalleSolicitud.Nombre1Esposo" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label class="control-label">Nombre2</label>
+                            <input class="form-control" type="text" id="txtNombre2Esposo" asp-for="@Model.DetalleSolicitud.Nombre2Esposo" />
+                            <span asp-validation-for="@Model.DetalleSolicitud.Nombre2Esposo" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label class="control-label">Nombre3</label>
+                            <input class="form-control" type="text" id="txtNombre3Esposo" asp-for="@Model.DetalleSolicitud.Nombre3Esposo" />
+                            <span asp-validation-for="@Model.DetalleSolicitud.Nombre3Esposo" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label class="control-label">Apellido1</label>
+                            <input class="form-control" type="text" id="txtApellido1Esposo" asp-for="@Model.DetalleSolicitud.Apellido1Esposo" />
+                            <span asp-validation-for="@Model.DetalleSolicitud.Apellido1Esposo" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label class="control-label">Apellido2</label>
+                            <input class="form-control" type="text" id="txtApellido2Esposo" asp-for="@Model.DetalleSolicitud.Apellido2Esposo" />
+                            <span asp-validation-for="@Model.DetalleSolicitud.Apellido2Esposo" class="text-danger"></span>
+                        </div>                        
+                    </div>
+                    <div class="row">
+                        <div class="col-2">
+                            <label class="control-label">CUI</label>
+                            <input class="form-control" type="text" id="txtCUIEsposo" asp-for="@Model.DetalleSolicitud.CuiEsposo" />
+                            <span asp-validation-for="@Model.DetalleSolicitud.CuiEsposo" class="text-danger"></span>
+                        </div>
+                        <div class="col-2">
+                            <label class="control-label">Fecha Nacimiento</label>
+                            <input class="form-control" type="date" id="txtFNacimientoEsposo" asp-for="@Model.DetalleSolicitud.FNacimientoEsposo" />
+                            <span asp-validation-for="@Model.DetalleSolicitud.FNacimientoEsposo" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <label class="control-label">Nombre1</label>
+                            <input class="form-control" type="text" id="txtNombre1Esposa" asp-for="@Model.DetalleSolicitud.Nombre1Esposa" />
+                            <span asp-validation-for="@Model.DetalleSolicitud.Nombre1Esposa" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label class="control-label">Nombre2</label>
+                            <input class="form-control" type="text" id="txtNombre2Esposa" asp-for="@Model.DetalleSolicitud.Nombre2Esposa" />
+                            <span asp-validation-for="@Model.DetalleSolicitud.Nombre2Esposa" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label class="control-label">Nombre3</label>
+                                <input class="form-control" type="text" id="txtNombre3Esposa" asp-for="@Model.DetalleSolicitud.Nombre3Esposa" />
+                            <span asp-validation-for="@Model.DetalleSolicitud.Nombre3Esposa" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label class="control-label">Apellido1</label>
+                            <input class="form-control" type="text" id="txtApellido1Esposa" asp-for="@Model.DetalleSolicitud.Apellido1Esposa" />
+                            <span asp-validation-for="@Model.DetalleSolicitud.Apellido1Esposa" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label class="control-label">Apellido2</label>
+                            <input class="form-control" type="text" id="txtApellido2Esposa" asp-for="@Model.DetalleSolicitud.Apellido2Esposa" />
+                            <span asp-validation-for="@Model.DetalleSolicitud.Apellido2Esposa" class="text-danger"></span>
+                        </div>                        
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <label class="control-label">Apellido casada</label>
+                                <input class="form-control" type="text" id="txtApellidoCasada" asp-for="@Model.DetalleSolicitud.ApellidoCasada" />
+                            <span asp-validation-for="@Model.DetalleSolicitud.ApellidoCasada" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label class="control-label">CUI</label>
+                            <input class="form-control" type="text" id="txtCUIEsposa" asp-for="@Model.DetalleSolicitud.CuiEsposa" />
+                            <span asp-validation-for="@Model.DetalleSolicitud.CuiEsposa" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label class="control-label">Fecha Nacimiento</label>
+                            <input class="form-control" type="date" id="txtFNacimientoEsposa" asp-for="@Model.DetalleSolicitud.FNacimientoEsposa" />
+                            <span asp-validation-for="@Model.DetalleSolicitud.FNacimientoEsposa" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label class="control-label">Estado civil</label>
+                            <select class="form-select" id="cbEstadoCivil" asp-for="@Model.DetalleSolicitud.EstadoCivil" asp-items="ViewBag.EstadoCivil" required></select>
+                            @*<input class="form-control" type="text" id="txtEstadoCivil" asp-for="@Model.DetalleSolicitud.EstadoCivil" />*@
+                            <span asp-validation-for="@Model.DetalleSolicitud.EstadoCivil" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label class="control-label">Embarazada</label>
+                                <input class="form-control" type="text" id="txtEmbarazada" asp-for="@Model.DetalleSolicitud.Embarazada" />
+                            <span asp-validation-for="@Model.DetalleSolicitud.Embarazada" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label class="control-label">Niño desnutrición aguada</label>
+                            <input class="form-control" type="text" id="txtNiñoDA" asp-for="@Model.DetalleSolicitud.NiñoDA" />
+                            <span asp-validation-for="@Model.DetalleSolicitud.NiñoDA" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <label class="control-label">Grupo etnico</label>
+                            <input class="form-control" type="text" id="txtGrupoEtnico" asp-for="@Model.DetalleSolicitud.GrupoEtnico" />
+                            <span asp-validation-for="@Model.DetalleSolicitud.GrupoEtnico" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label class="control-label">Hombre 0-2 años</label>
+                            <input class="form-control" type="text" id="txtHombre0a2Años" asp-for="@Model.DetalleSolicitud.Hombre0a2Años" />
+                            <span asp-validation-for="@Model.DetalleSolicitud.Hombre0a2Años" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label class="control-label">Mujer 0-2 años</label>
+                            <input class="form-control" type="text" id="txtMujer0a2Años" asp-for="@Model.DetalleSolicitud.Mujer0a2Años" />
+                            <span asp-validation-for="@Model.DetalleSolicitud.Mujer0a2Años" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label class="control-label">Hombre 2-5 años</label>
+                            <input class="form-control" type="text" id="txtHombre2a5Años" asp-for="@Model.DetalleSolicitud.Hombre2a5Años" />
+                            <span asp-validation-for="@Model.DetalleSolicitud.Hombre2a5Años" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label class="control-label">Mujer 2-5 años</label>
+                            <input class="form-control" type="text" id="txtMujer2a5Años" asp-for="@Model.DetalleSolicitud.Mujer2a5Años" />
+                            <span asp-validation-for="@Model.DetalleSolicitud.Mujer2a5Años" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label class="control-label">Hombre 6-17 años</label>
+                            <input class="form-control" type="text" id="txtHombre6a17Años" asp-for="@Model.DetalleSolicitud.Hombre6a17Años" />
+                            <span asp-validation-for="@Model.DetalleSolicitud.Hombre6a17Años" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label class="control-label">Mujer 6-17 años</label>
+                            <input class="form-control" type="text" id="txtMujer6a17Años" asp-for="@Model.DetalleSolicitud.Mujer6a17Años" />
+                            <span asp-validation-for="@Model.DetalleSolicitud.Mujer6a17Años" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <label class="control-label">Tipo persona</label>
+                            <input class="form-control" type="text" id="txtTipoPersona" asp-for="@Model.DetalleSolicitud.TipoPersona" />
+                            <span asp-validation-for="@Model.DetalleSolicitud.TipoPersona" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label class="control-label">Area maiz</label>
+                            <input class="form-control" type="text" id="txtAreaMaiz" asp-for="@Model.DetalleSolicitud.AreaMaiz" />
+                            <span asp-validation-for="@Model.DetalleSolicitud.AreaMaiz" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label class="control-label">Quintales maiz</label>
+                            <input class="form-control" type="text" id="txtQuintalesMaiz" asp-for="@Model.DetalleSolicitud.QuintalesMaiz" />
+                            <span asp-validation-for="@Model.DetalleSolicitud.QuintalesMaiz" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label class="control-label">Area frijol</label>
+                            <input class="form-control" type="text" id="txtAreaFrijol" asp-for="@Model.DetalleSolicitud.AreaFrijol" />
+                            <span asp-validation-for="@Model.DetalleSolicitud.AreaFrijol" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label class="control-label">Quintales frijol</label>
+                            <input class="form-control" type="text" id="txtQuintalesFrijol" asp-for="@Model.DetalleSolicitud.QuintalesFrijol" />
+                            <span asp-validation-for="@Model.DetalleSolicitud.QuintalesFrijol" class="text-danger"></span>
+                        </div>                        
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <label class="control-label">Tipo agricultura practica</label>
+                            <input class="form-control" type="text" id="txtTipoAgriculturaPractica" asp-for="@Model.DetalleSolicitud.TipoAgriculturaPractica" />
+                            <span asp-validation-for="@Model.DetalleSolicitud.TipoAgriculturaPractica" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label class="control-label">COCODE</label>
+                            <input class="form-control" type="text" id="txtCOCODE" asp-for="@Model.DetalleSolicitud.NombreCOCODE" />
+                            <span asp-validation-for="@Model.DetalleSolicitud.NombreCOCODE" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label class="control-label">Nombre persona registro</label>
+                            <input class="form-control" type="text" id="txtNombrePersonaRegistro" asp-for="@Model.DetalleSolicitud.NombrePersonaRegistro" />
+                            <span asp-validation-for="@Model.DetalleSolicitud.NombrePersonaRegistro" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label class="control-label">Institución que representa</label>
+                            <input class="form-control" type="text" id="txtInstitucionRepresenta" asp-for="@Model.DetalleSolicitud.InstitucionRepresenta" />
+                            <span asp-validation-for="@Model.DetalleSolicitud.InstitucionRepresenta" class="text-danger"></span>
+                        </div>                        
+                    </div>
+                        @* <div class="form-group">
+                    <label class="control-label">Cantidad de beneficiarios</label>
+                    <input class="form-control" id="txtCantBenef" asp-for="@Model.DetalleSolicitud.CantidadBeneficiarios" required/>
+                    <span asp-validation-for="@Model.DetalleSolicitud.CantidadBeneficiarios" class="text-danger"></span>
+                    </div> *@
+                        @* <div>
+                    <label class="control-label">Archivo actual</label>
+                    <input asp-for="@Model.Solicitud.Archivo" type="text" id="oldfile" class="form-control" disabled />
+                    </div>
+                    <div class="form-group">
+                    <label for="file">Selecciona un archivo:</label>
+                    <input type="file" name="file" id="file" class="form-control" />
+                    </div> *@
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                        <input type="submit" value="Guardar" class="btn btn-primary" onclick="enviarHiddenField()" />
+                        @* <input type="submit" value="Guardar" class="btn btn-primary" /> *@
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Modal -->
+    <div class="modal fade" id="wCargaExcel" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content" style="min-height:750px;">
+                <form id="uploadExcelForm" enctype="multipart/form-data">
+                    <div class="modal-header bg-secondary">
+                        <h5 class="modal-title text-white" id="lblModalTitle">CARGA MASIVA BENEFICIARIOS SOLICITUD @Model.Solicitud.Codigo</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <input type="hidden" id="hiddenSolicitudId" name="idSolicitud" asp-for="@Model.Solicitud.IdSolicitud" />
+
+                        <div class="form-group">
+                            <label for="file">Selecciona archivo excel:</label>
+                            <div class="row">
+                                <div class="col-10">
+                                    <input type="file" name="fileExcel" id="fileExcel" class="form-control" />
+                                </div>
+                                <div class="col-2">
+                                    <button type="button" class="btn btn-primary" onclick="cargarINFO()">Cargar</button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                    <div>
+                    </div>
+
+                    @* <h3>Datos del Archivo Excel</h3> *@                    
+                    <div class="modal-body" style="overflow-y:auto; width:99%;">
+                        <div id="loading1" style="display:none;">
+                            <div class="loader simple-loader">
+                                <div class="text-center" style="font-size:28px !important; margin-top:270px !important;">Cargando...</div>
+                                <div class="loader-body" style="margin-top:2px !important;">
+                                    <div class="text-center">
+                                        <div class="spinner-border text-primary" style="width: 8rem; height: 8rem;" role="status">
+                                            <span class="visually-hidden">Cargando...</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <table class="table" id="excelDataTable" style="width:100%;">
+                            <thead>
+                                <tr>
+
+                                    <p>INTERVENCIÓN: @ViewBag.NombreIntervencion.ToString().ToUpper()</p>
+
+                                    @switch ((int)ViewBag.IdIntervencion)
+                                    {
+                                        //ENCABEZADOS
+                                        //INSAN 
+                                        case 21:
+                                            <td colspan="3"></td>
+                                            <td colspan="7" style="border:solid 2px gray; text-align:center;">DATOS COMPLETOS DEL ESPOSO</td>
+                                            <td colspan="9" style="border:solid 2px gray; text-align:center;">DATOS COMPLETOS DE LA ESPOSA</td>
+                                            <td colspan="3" style="border:solid 2px gray; text-align:center;">DATOS DEMOGRÁFICOS</td>
+                                            <td colspan="7" style="border:solid 2px gray; text-align:center;">EDADES Y TIPO DE PERSONA</td>
+                                            <td colspan="5" style="border:solid 2px gray; text-align:center;">SIEMBRA DE GRANOS BÁSICOS</td>
+                                            <td style="border:solid 2px gray; text-align:center;"></td>
+                                            <td colspan="2" style="border:solid 2px gray; text-align:center;">PERSONAL ENCARGADO DE INFORMACIÓN</td>
+                                            break;
+                                        //INSAN EMERGENCIA 
+                                        case 3:
+                                            <td colspan="3"></td>
+                                            <td style="border:solid 2px gray; text-align:center;">UBICACIÓN DEL ALBERGUE</td>
+                                            <td colspan="7" style="border:solid 2px gray; text-align:center;">DATOS DEL ESPOSO</td>
+                                            <td colspan="9" style="border:solid 2px gray; text-align:center;">DATOS DE LA ESPOSA</td>
+                                            <td colspan="5" style="border:solid 2px gray; text-align:center;">DATOS FAMILIARES</td>
+                                            <td colspan="3" style="border:solid 2px gray; text-align:center;">TIPO DE DAÑOS</td>
+                                            <td colspan="2"  style="border:solid 2px gray; text-align:center;">PERSONAL ENCARGADO DE INFORMACIÓN</td>
+                                            break;
+                                        //NIÑOS DESNUTRICION AGUDA
+                                        case 22:
+                                            <td colspan="3"></td>
+                                            <td style="border:solid 2px gray; text-align:center;">CÓDIGO COMUNIDAD</td>
+                                            <td colspan="8" style="border:solid 2px gray; text-align:center;">DATOS PADRE/MADRE</td>
+                                            <td colspan="9" style="border:solid 2px gray; text-align:center;">DATOS JEFE DE HOGAR</td>
+                                            <td colspan="14" style="border:solid 2px gray; text-align:center;">DATOS NIÑO O NIÑA CON DA</td>
+                                            break;
+                                        //Política pública de Chixoy
+                                        case 8:
+                                            <td colspan="8" style="border:solid 2px gray; text-align:center;">DATOS DE 2 PERSONAS</td>
+                                            <td colspan="3" style="border:solid 2px gray; text-align:center;">UBICACIÓN</td>
+                                            break;
+                                        //Medidas transitorias
+                                        case 6:
+                                            <td colspan="3"></td>
+                                            <td colspan="7" style="border:solid 2px gray; text-align:center;">DATOS ESPOSO</td>
+                                            <td colspan="9" style="border:solid 2px gray; text-align:center;">DATOS ESPOSA</td>
+                                            <td colspan="10" style="border:solid 2px gray; text-align:center;">DATOS HIJO(S)</td>
+                                            <td colspan="5" style="border:solid 2px gray; text-align:center;">OTROS INTEGRANTES</td>
+                                            break;
+                                        //Medidas judiciales
+                                        case 4:
+                                            <td colspan="3"></td>
+                                            <td colspan="3" style="border:solid 2px gray; text-align:center;">Hijo 1</td>
+                                            <td colspan="3" style="border:solid 2px gray; text-align:center;">Hijo 2</td>
+                                            <td colspan="3" style="border:solid 2px gray; text-align:center;">Hijo 3</td>
+                                            <td colspan="3" style="border:solid 2px gray; text-align:center;">Hijo 4</td>
+                                            <td colspan="3" style="border:solid 2px gray; text-align:center;">Hijo 5</td>
+                                            <td colspan="3" style="border:solid 2px gray; text-align:center;">Hijo 6</td>
+                                            <td colspan="3" style="border:solid 2px gray; text-align:center;">Hijo 7</td>
+                                            <td colspan="3" style="border:solid 2px gray; text-align:center;">Hijo 8</td>
+                                            <td colspan="3" style="border:solid 2px gray; text-align:center;">Hijo 9</td>
+                                            <td colspan="3" style="border:solid 2px gray; text-align:center;">Hijo 10</td>
+                                            <td colspan="3"></td>
+                                            break;
+                                        //Medidas cautelares
+                                        case 5:
+                                            <td colspan="3"></td>
+                                            <td colspan="7" style="border:solid 2px gray; text-align:center;">DATOS COMPLETOS DEL ESPOSO</td>
+                                            <td colspan="8" style="border:solid 2px gray; text-align:center;">DATOS COMPLETOS DE LA ESPOSA</td>
+                                            <td colspan="70" style="border:solid 2px gray; text-align:center;">DATOS COMPLETOS DE LOS HIJOS</td>
+                                            <td colspan="1" style="border:solid 2px gray; text-align:center;">GRUPO ÉTNICO</td>
+                                            <td colspan="1" style="border:solid 2px gray; text-align:center;">ESTADO FAMILIA</td>
+                                            <td colspan="4" style="border:solid 2px gray; text-align:center;">OTROS INTEGRANTES DE FAMILIA</td>
+                                            <td colspan="2" style="border:solid 2px gray; text-align:center;">PERSONAL ENCARGADO DE INFORMACIÓN</td>
+                                            break;
+                                    }
+
+                                    
+                                </tr>
+
+                                <tr>
+                                    @switch ((int)ViewBag.IdIntervencion)
+                                    {
+                                        //COLUMNAS
+                                        //INSAN 
+                                        case 21:
+                                            <th>DEPARTAMENTO</th>
+                                            <th>MUNICIPIO</th>
+                                            <th>COMUNIDAD</th>
+                                            <th>1er NOMBRE ESPOSO</th>
+                                            <th>2do NOMBRE ESPOSO</th>
+                                            <th>3er NOMBRE ESPOSO</th>
+                                            <th>1er APELLIDO ESPOSO</th>
+                                            <th>2do APELLIDO ESPOSO</th>
+                                            <th>CUI ESPOSO</th>
+                                            <th>FECHA NAC. ESPOSO</th>
+                                            <th>1er NOMBRE ESPOSA</th>
+                                            <th>2do NOMBRE ESPOSA</th>
+                                            <th>3er NOMBRE ESPOSA</th>
+                                            <th>1er APELLIDO ESPOSA</th>
+                                            <th>2do APELLIDO ESPOSA</th>
+                                            <th>APELLIDO CASADA</th>
+                                            <th>CUI ESPOSA</th>
+                                            <th>FECHA NAC. ESPOSA</th>
+                                            <th>ESTADO CIVIL</th>
+                                            <th>EMBARAZADA</th>
+                                            <th>NIÑO CON DA</th>
+                                            <th>GRUPO ÉTNICO</th>
+                                            <th>HOMBRE 0-2 AÑOS</th>
+                                            <th>MUJER 0-2 AÑOS</th>
+                                            <th>HOMBRE 2-5 AÑOS</th>
+                                            <th>MUJER 2-5 AÑOS</th>
+                                            <th>HOMBRE 6-17 AÑOS</th>
+                                            <th>MUJER 6-17 AÑOS</th>
+                                            <th>TIPO PERSONA</th>
+                                            <th>ÁREA DE MAÍZ (M²)</th>
+                                            <th>QUINTALES MAÍZ</th>
+                                            <th>ÁREA DE FRIJOL (M²)</th>
+                                            <th>QUINTALES FRIJOL</th>
+                                            <th>TIPO DE AGRICULTURA</th>
+                                            <th>COCODE</th>
+                                            <th>NOMBRE DEL PERSONAL</th>
+                                            <th>INSTITUCIÓN</th>
+                                            break;
+                                        //INSAN EMERGENCIA
+                                        case 3:
+                                            <th>DEPARTAMENTO</th>
+                                            <th>MUNICIPIO</th>
+                                            <th>COMUNIDAD</th>
+                                            <th>UBICACIÓN ALBERGUE</th>
+                                            <th>1er NOMBRE ESPOSO</th>
+                                            <th>2do NOMBRE ESPOSO</th>
+                                            <th>3er NOMBRE ESPOSO</th>
+                                            <th>1er APELLIDO ESPOSO</th>
+                                            <th>2do APELLIDO ESPOSO</th>
+                                            <th>CUI ESPOSO</th>
+                                            <th>FECHA NAC. ESPOSO</th>
+                                            <th>1er NOMBRE ESPOSA</th>
+                                            <th>2do NOMBRE ESPOSA</th>
+                                            <th>3er NOMBRE ESPOSA</th>
+                                            <th>1er APELLIDO ESPOSA</th>
+                                            <th>2do APELLIDO ESPOSA</th>
+                                            <th>APELLIDO CASADA</th>
+                                            <th>CUI ESPOSA</th>
+                                            <th>FECHA NAC. ESPOSA</th>
+                                            <th>GRUPO ÉTNICO</th>
+                                            <th>ESTADO FAMILIA</th>
+                                            <th>PERSONAS HOGAR</th>
+                                            <th>HOMBRES</th>
+                                            <th>MUJERES</th>
+                                            <th>DAÑO FAMILIAR</th>
+                                            <th>DAÑO VIVIENDA</th>
+                                            <th>PERDIDA CULTIVO</th>
+                                            <th>PERDIDA ANIMALES CRIANZA</th>
+                                            <th>NOMBRE DEL PERSONAL</th>
+                                            <th>INSTITUCIÓN</th>
+                                            break;
+                                        //NIÑOS DESNUTRICION AGUDA
+                                        case 22:
+                                            <th>DEPARTAMENTO</th>
+                                            <th>MUNICIPIO</th>
+                                            <th>COMUNIDAD</th>
+                                            <th>CÓDIGO COMUNIDAD</th>
+                                            <th>1er NOMBRE MADRE/PADRE</th>
+                                            <th>2do NOMBRE</th>
+                                            <th>3er NOMBRE</th>
+                                            <th>1er APELLIDO</th>
+                                            <th>2do APELLIDO</th>
+                                            <th>APELLIDO DE CASADA</th>
+                                            <th>CUI MADRE/PADRE</th>
+                                            <th>F. NAC</th>
+                                            <th>PARENTESCO</th>
+                                            <th>1er NOMBRE JEFE</th>
+                                            <th>2do NOMBRE</th>
+                                            <th>3er NOMBRE</th>
+                                            <th>1er APELLIDO</th>
+                                            <th>2do APELLIDO</th>
+                                            <th>APELLIDO DE CASADA</th>
+                                            <th>CUI JEFE</th>
+                                            <th>F. NAC</th>
+                                            <th>CODIGO NIÑO</th>
+                                            <th>1er NOMBRE NIÑO</th>
+                                            <th>2do NOMBRE</th>
+                                            <th>3er NOMBRE</th>
+                                            <th>1er APELLIDO</th>
+                                            <th>2do APELLIDO</th>
+                                            <th>CUI NIÑO</th>
+                                            <th>SEXO</th>
+                                            <th>F. NACIMIENTO</th>
+                                            <th>EDAD</th>
+                                            <th>GRUPO ÉTNICO</th>
+                                            <th>DIAGNÓSTICO</th>
+                                            <th>PESO</th>
+                                            <th>TALLA</th>
+                                            break;
+                                        //Medidas transitorias
+                                        case 6:
+                                            <th>DEPARTAMENTO</th>
+                                            <th>MUNICIPIO</th>
+                                            <th>COMUNIDAD</th>
+                                            <th>1er NOMBRE ESPOSO</th>
+                                            <th>2do NOMBRE</th>
+                                            <th>3er NOMBRE</th>
+                                            <th>1er APELLIDO</th>
+                                            <th>2do APELLIDO</th>
+                                            <th>CUI</th>
+                                            <th>F. NAC</th>
+                                            <th>1er NOMBRE ESPOSA</th>
+                                            <th>2do NOMBRE</th>
+                                            <th>3er NOMBRE</th>
+                                            <th>1er APELLIDO</th>
+                                            <th>2do APELLIDO</th>
+                                            <th>CASADA</th>
+                                            <th>CUI</th>
+                                            <th>F. NAC</th>
+                                            <th>1er NOMBRE HIJO</th>
+                                            <th>2do NOMBRE</th>
+                                            <th>3er NOMBRE</th>
+                                            <th>1er APELLIDO</th>
+                                            <th>2do APELLIDO</th>
+                                            <th>CUI</th>
+                                            <th>F. NACIMIENTO</th>
+                                            <th>GRUPO ÉTNICO</th>
+                                            <th>ESTADO FAMILIA</th>
+                                            <th>HOMBRE ADULTO</th>
+                                            <th>MUJER ADULTA</th>
+                                            <th>NIÑO(S)</th>
+                                            <th>NIÑA(S)</th>
+                                            <th>NOMBRE DEL PERSONAL</th>
+                                            <th>INSTITUCIÓN</th>
+                                            break;
+                                        //Política pública de Chixoy
+                                        case 8:
+                                            <th>NOMBRE 1</th>
+                                            <th>CUI 1</th>
+                                            <th>EDAD 1</th>
+                                            <th>GÉNERO 1</th>
+                                            <th>NOMBRE 2</th>
+                                            <th>CUI 2</th>
+                                            <th>EDAD 2</th>
+                                            <th>GÉNERO 2</th>
+                                            <th>DEPARTAMENTO</th>
+                                            <th>MUNICIPIO</th>
+                                            <th>COMUNIDAD</th>
+                                            break;
+                                        //Medidas judiciales
+                                        case 4:
+                                            <th>NOMBRE RESPONSABLE</th>
+                                            <th>CUI - RESPONSABLE</th>
+                                            <th>EDAD RESPONSABLE</th>
+                                            @for (int i = 1; i <= 10; i++)
+                                            {
+                                                <th>Nombre Completo Hijo @i</th>
+                                                <th>CUI Hijo @i</th>
+                                                <th>Edad Hijo @i</th>
+                                            }
+                                            <th>DEPARTAMENTO</th>
+                                            <th>MUNICIPIO</th>
+                                            <th>COMUNIDAD</th>
+
+                                            break;
+                                        //Medidas cautelares
+                                        case 5:
+                                            <th>DEPARTAMENTO</th>
+                                            <th>MUNICIPIO</th>
+                                            <th>COMUNIDAD</th>
+
+                                            <th>1er NOMBRE ESPOSO</th>
+                                            <th>2do NOMBRE ESPOSO</th>
+                                            <th>3er NOMBRE ESPOSO</th>
+                                            <th>1er APELLIDO ESPOSO</th>
+                                            <th>2do APELLIDO ESPOSO</th>
+                                            <th>CUI ESPOSO</th>
+                                            <th>FECHA NAC. ESPOSO</th>
+
+                                            <th>1er NOMBRE ESPOSA</th>
+                                            <th>2do NOMBRE ESPOSA</th>
+                                            <th>3er NOMBRE ESPOSA</th>
+                                            <th>1er APELLIDO ESPOSA</th>
+                                            <th>2do APELLIDO ESPOSA</th>
+                                            <th>APELLIDO DE CASADA</th>
+                                            <th>CUI ESPOSA</th>
+                                            <th>FECHA NAC. ESPOSA</th>
+
+                                            @for (int i = 1; i <= 10; i++)
+                                            {
+                                                <th>1er NOMBRE HIJO @i</th>
+                                                <th>2do NOMBRE HIJO @i</th>
+                                                <th>3er NOMBRE HIJO @i</th>
+                                                <th>1er APELLIDO HIJO @i</th>
+                                                <th>2do APELLIDO HIJO @i</th>
+                                                <th>CUI HIJO @i</th>
+                                                <th>EDAD HIJO @i</th>
+                                            }
+
+                                            <th>GRUPO ÉTNICO</th>
+                                            <th>ESTADO FAMILIA</th>
+                                            <th>HOMBRE ADULTO</th>
+                                            <th>MUJER ADULTA</th>
+                                            <th>NIÑO(S)</th>
+                                            <th>NIÑA(S)</th>
+                                            <th>NOMBRE DEL PERSONAL</th>
+                                            <th>INSTITUCIÓN QUE REPRESENTA</th>
+                                            break;
+
+                                    }
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var row in Model.listaDetallesSolicitud)
+                                {
+                                    <tr>
+
+                                        @switch ((int)ViewBag.IdIntervencion)
+                                        {
+                                        //FILAS
+                                        //INSAN EMERGENCIA
+                                            case 3:
+                                                <td>@row.IdDepartamento</td>
+                                                <td>@row.IdMunicipio</td>
+                                                <td>@row.Comunidad</td>
+                                                <td>@row.UbicacionAlbergue</td>
+                                                <td>@row.Nombre1Esposo</td>
+                                                <td>@row.Nombre2Esposo</td>
+                                                <td>@row.Nombre3Esposo</td>
+                                                <td>@row.Apellido1Esposo</td>
+                                                <td>@row.Apellido2Esposo</td>
+                                                <td>@row.CuiEsposo</td>
+                                                <td>@row.FNacimientoEsposo</td>
+                                                <td>@row.Nombre1Esposa</td>
+                                                <td>@row.Nombre2Esposa</td>
+                                                <td>@row.Nombre3Esposa</td>
+                                                <td>@row.Apellido1Esposa</td>
+                                                <td>@row.Apellido2Esposa</td>
+                                                <td>@row.ApellidoCasada</td>
+                                                <td>@row.CuiEsposa</td>
+                                                <td>@row.FNacimientoEsposa</td>
+                                                <td>@row.GrupoEtnico</td>
+                                                <td>@row.EstadoFamilia</td>
+                                                <td>@row.CantPersonasHogar</td>
+                                                <td>@row.CantHombres</td>
+                                                <td>@row.CantMujeres</td>
+                                                <td>@row.DañoFamiliar</td>
+                                                <td>@row.DañoVivienda</td>
+                                                <td>@row.PerdidaCultivo</td>
+                                                <td>@row.PerdidaAnimalesCrianza</td>
+                                                <td>@row.NombrePersonaRegistro</td>
+                                                <td>@row.InstitucionRepresenta</td>
+                                                break;
+                                            //INSAN 
+                                            case 21:
+                                                <td>@row.IdDepartamento</td>
+                                                <td>@row.IdMunicipio</td>
+                                                <td>@row.Comunidad</td>
+                                                <td>@row.Nombre1Esposo</td>
+                                                <td>@row.Nombre2Esposo</td>
+                                                <td>@row.Nombre3Esposo</td>
+                                                <td>@row.Apellido1Esposo</td>
+                                                <td>@row.Apellido2Esposo</td>
+                                                <td>@row.CuiEsposo</td>
+                                                <td>@row.FNacimientoEsposo</td>
+                                                <td>@row.Nombre1Esposa</td>
+                                                <td>@row.Nombre2Esposa</td>
+                                                <td>@row.Nombre3Esposa</td>
+                                                <td>@row.Apellido1Esposa</td>
+                                                <td>@row.Apellido2Esposa</td>
+                                                <td>@row.ApellidoCasada</td>
+                                                <td>@row.CuiEsposa</td>
+                                                <td>@row.FNacimientoEsposa</td>
+                                                <td>@row.GrupoEtnico</td>
+                                                <td>@row.EstadoCivil</td>
+                                                <td>@row.Embarazada</td>
+                                                <td>@row.NiñoDA</td>
+                                                <td>@row.Hombre0a2Años</td>
+                                                <td>@row.Mujer0a2Años</td>
+                                                <td>@row.Hombre2a5Años</td>
+                                                <td>@row.Mujer2a5Años</td>
+                                                <td>@row.Hombre6a17Años</td>
+                                                <td>@row.Mujer6a17Años</td>
+                                                <td>@row.TipoPersona</td>
+                                                <td>@row.AreaMaiz</td>
+                                                <td>@row.QuintalesMaiz</td>
+                                                <td>@row.AreaFrijol</td>
+                                                <td>@row.QuintalesFrijol</td>
+                                                <td>@row.TipoAgriculturaPractica</td>
+                                                <td>@row.NombreCOCODE</td>
+                                                <td>@row.NombrePersonaRegistro</td>
+                                                <td>@row.InstitucionRepresenta</td>
+                                                break;
+                                            //NIÑOS DESNUTRICION AGUDA
+                                            case 22:
+                                                <td>@row.IdDepartamento</td>
+                                                <td>@row.IdMunicipio</td>
+                                                <td>@row.Comunidad</td>
+                                                <td>@row.CodComunidad</td>
+                                                <td>@row.Nombre1Persona1</td>
+                                                <td>@row.Nombre2Persona1</td>
+                                                <td>@row.Nombre3Persona1</td>
+                                                <td>@row.Apellido1Persona1</td>
+                                                <td>@row.Apellido2Persona1</td>
+                                                <td>@row.ApellidoCasadaPersona1</td>
+                                                <td>@row.CuiPersona1</td>
+                                                <td>@row.FNacimientoPersona1</td>
+                                                <td>@row.Parentesco</td>
+                                                <td>@row.Nombre1Persona2</td>
+                                                <td>@row.Nombre2Persona2</td>
+                                                <td>@row.Nombre3Persona2</td>
+                                                <td>@row.Apellido1Persona2</td>
+                                                <td>@row.Apellido2Persona2</td>
+                                                <td>@row.ApellidoCasadaPersona2</td>
+                                                <td>@row.CuiPersona2</td>
+                                                <td>@row.FNacimientoPersona2</td>
+                                                <td>@row.CodigoNiño</td>
+                                                <td>@row.Nombre1Niño</td>
+                                                <td>@row.Nombre2Niño</td>
+                                                <td>@row.Nombre3Niño</td>
+                                                <td>@row.Apellido1Niño</td>
+                                                <td>@row.Apellido2Niño</td>
+                                                <td>@row.CuiNiño</td>
+                                                <td>@row.Sexo</td>
+                                                <td>@row.FNacimientoNiño</td>
+                                                <td>@row.EdadNiño</td>
+                                                <td>@row.GrupoEtnico</td>
+                                                <td>@row.Diagnostico</td>
+                                                <td>@row.Peso</td>
+                                                <td>@row.Talla</td>
+                                                break;
+                                            //Medidas transitorias
+                                            case 6:
+                                                <td>@row.IdDepartamento</td>
+                                                <td>@row.IdMunicipio</td>
+                                                <td>@row.Comunidad</td>
+                                                <td>@row.Nombre1Esposo</td>
+                                                <td>@row.Nombre2Esposo</td>
+                                                <td>@row.Nombre3Esposo</td>
+                                                <td>@row.Apellido1Esposo</td>
+                                                <td>@row.Apellido2Esposo</td>
+                                                <td>@row.CuiEsposo</td>
+                                                <td>@row.FNacimientoEsposo</td>
+                                                <td>@row.Nombre1Esposa</td>
+                                                <td>@row.Nombre2Esposa</td>
+                                                <td>@row.Nombre3Esposa</td>
+                                                <td>@row.Apellido1Esposa</td>
+                                                <td>@row.Apellido2Esposa</td>
+                                                <td>@row.ApellidoCasada</td>
+                                                <td>@row.CuiEsposa</td>
+                                                <td>@row.FNacimientoEsposa</td>
+                                                <td>@row.Nombre1Niño</td>
+                                                <td>@row.Nombre2Niño</td>
+                                                <td>@row.Nombre3Niño</td>
+                                                <td>@row.Apellido1Niño</td>
+                                                <td>@row.Apellido2Niño</td>
+                                                <td>@row.CuiNiño</td>
+                                                <td>@row.FNacimientoNiño</td>
+                                                <td>@row.GrupoEtnico</td>
+                                                <td>@row.EstadoFamilia</td>
+                                                <td>@row.CantHombres</td>
+                                                <td>@row.CantMujeres</td>
+                                                <td>@row.CantNiños</td>
+                                                <td>@row.CantNiñas</td>
+                                                <td>@row.NombrePersonaRegistro</td>
+                                                <td>@row.InstitucionRepresenta</td>
+                                                break;
+                                            //Política pública de Chixoy
+                                            case 8:
+                                                <td>@row.NombreCompletoPersona1</td>
+                                                <td>@row.CuiPersona1</td>
+                                                <td>@row.EdadPersona1</td>
+                                                <td>@row.GeneroPersona1</td>
+                                                <td>@row.NombreCompletoPersona2</td>
+                                                <td>@row.CuiPersona2</td>
+                                                <td>@row.EdadPersona2</td>
+                                                <td>@row.GeneroPersona2</td>
+                                                <td>@row.IdDepartamento</td>
+                                                <td>@row.IdMunicipio</td>
+                                                <td>@row.Comunidad</td>
+                                                break;
+                                            //Medidas judiciales
+                                            case 4:
+                                                <td>@row.NombreCompletoPersona1</td>
+                                                <td>@row.CuiPersona1</td>
+                                                <td>@row.EdadPersona1</td>
+                                                @for (int i = 0; i <= 9; i++) // ajusta el número según máximo hijos
+                                                {
+                                                    var n = row.Ninos.ElementAtOrDefault(i);
+                                                    <td>@n?.NombreCompleto</td>
+                                                    <td>@n?.CUI</td>
+                                                    <td>@n?.Edad</td>
+                                                }
+                                                <td>@row.IdDepartamento</td>
+                                                <td>@row.IdMunicipio</td>
+                                                <td>@row.Comunidad</td>
+                                                break;
+                                            //Medidas cautelares
+                                            case 5:
+                                                <td>@row.IdDepartamento</td>
+                                                <td>@row.IdMunicipio</td>
+                                                <td>@row.Comunidad</td>
+                                                <!-- Datos del Esposo -->
+                                                <td>@row.Nombre1Esposo</td>
+                                                <td>@row.Nombre2Esposo</td>
+                                                <td>@row.Nombre3Esposo</td>
+                                                <td>@row.Apellido1Esposo</td>
+                                                <td>@row.Apellido2Esposo</td>
+                                                <td>@row.CuiEsposo</td>
+                                                <td>@row.FNacimientoEsposo</td>
+
+                                                <!-- Datos de la Esposa -->
+                                                <td>@row.Nombre1Esposa</td>
+                                                <td>@row.Nombre2Esposa</td>
+                                                <td>@row.Nombre3Esposa</td>
+                                                <td>@row.Apellido1Esposa</td>
+                                                <td>@row.Apellido2Esposa</td>
+                                                <td>@row.ApellidoCasada</td>
+                                                <td>@row.CuiEsposa</td>
+                                                <td>@row.FNacimientoEsposa</td>
+
+                                                <!-- Datos de los 10 Hijos -->
+                                                @for (int i = 0; i <= 9; i++)
+                                                {
+                                                    var n = row.Ninos?.ElementAtOrDefault(i);
+                                                    <td>@n?.Nombre1</td>
+                                                    <td>@n?.Nombre2</td>
+                                                    <td>@n?.Nombre3</td>
+                                                    <td>@n?.Apellido1</td>
+                                                    <td>@n?.Apellido2</td>
+                                                    <td>@n?.CUI</td>
+                                                    <td>@n?.FechaNacimiento</td>
+                                                }
+
+                                                <!-- Campos adicionales -->
+                                                <td>@row.GrupoEtnico</td>
+                                                <td>@row.EstadoFamilia</td>
+                                                <td>@row.CantHombres</td>
+                                                <td>@row.CantMujeres</td>
+                                                <td>@row.CantNiños</td> <!-- Cantidad de niños como número -->
+                                                <td>@row.CantNiñas</td> <!-- Cantidad de niñas como número -->
+                                                <td>@row.NombrePersonaRegistro</td>
+                                                <td>@row.InstitucionRepresenta</td>
+                                                break;
+                                         }
+
+                                    </tr>
+                                }
+                            </tbody>
+                    </table>
+                    </div>
+                </form>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-primary" asp-controller="Solicitud" asp-route-id="@Model.Solicitud.IdSolicitud" asp-route-k="1" onclick="guardarINFO(document.getElementById('hiddenSolicitudId').value)">Guardar</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+}
+else if (condicion=="2")
+{
+    <div class="modal fade" id="wAddEditDetalleSolicitudAPA" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content" style="height:500px;">
+                <form asp-action="GuardarDetalleSolicitud" asp-controller="Solicitud" asp-route-idDetalle="@Model.DetalleSolicitudAPA.IdDetalleSolicitud" asp-route-k="2" method="post">
+                    <div class="modal-header bg-secondary">
+                        <h5 class="modal-title text-white" id="lblModalTitleAPA">@ViewBag.ModalTitle</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <input type="hidden" id="hiddenSolicitudId" name="idSolicitud" asp-for="@Model.Solicitud.IdSolicitud" />
+                        <input type="hidden" id="hiddenDetSolicitudId" name="idDetalle" asp-for="@Model.DetalleSolicitudAPA.IdDetalleSolicitud" />
+                        @* <div class="form-group">
+                    <label>Correlativo</label>
+                    <input asp-for="@Model.Solicitud.Correlativo" class="form-control" required/>
+                    <span asp-validation-for="@Model.Solicitud.Correlativo" class="text-danger"></span>
+                    </div> *@
+                        <div class="row">
+                            <div class="col-4">
+                                <label class="control-label">Departamento</label>
+                                <select class="form-select" id="cbDepartamento" asp-for="@Model.DetalleSolicitudAPA.IdDepartamento" asp-items="ViewBag.Departamentos" required></select>
+                                <span asp-validation-for="@Model.DetalleSolicitudAPA.IdDepartamento" class="text-danger"></span>
+                            </div>
+                            <div class="col-4">
+                                <label class="control-label">Municipio</label>
+                                <select class="form-select" id="cbMunicipio" asp-for="@Model.DetalleSolicitudAPA.IdMunicipio" asp-items="ViewBag.Municipios" required></select>
+                                <span asp-validation-for="@Model.DetalleSolicitudAPA.IdMunicipio" class="text-danger"></span>
+                            </div>
+                            <div class="col-4">
+                                <label class="control-label">Comunidad</label>
+                                <input class="form-control" id="txtComunidad" asp-for="@Model.DetalleSolicitudAPA.Comunidad" required />
+                                <span asp-validation-for="@Model.DetalleSolicitudAPA.Comunidad" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <label class="control-label">Nombre1</label>
+                                <input class="form-control" type="text" id="txtNombre1Esposo" asp-for="@Model.DetalleSolicitudAPA.Nombre1Esposo" />
+                                <span asp-validation-for="@Model.DetalleSolicitudAPA.Nombre1Esposo" class="text-danger"></span>
+                            </div>
+                            <div class="col">
+                                <label class="control-label">Nombre2</label>
+                                <input class="form-control" type="text" id="txtNombre2Esposo" asp-for="@Model.DetalleSolicitudAPA.Nombre2Esposo" />
+                                <span asp-validation-for="@Model.DetalleSolicitudAPA.Nombre2Esposo" class="text-danger"></span>
+                            </div>
+                            <div class="col">
+                                <label class="control-label">Nombre3</label>
+                                <input class="form-control" type="text" id="txtNombre3Esposo" asp-for="@Model.DetalleSolicitudAPA.Nombre3Esposo" />
+                                <span asp-validation-for="@Model.DetalleSolicitudAPA.Nombre3Esposo" class="text-danger"></span>
+                            </div>
+                            <div class="col">
+                                <label class="control-label">Apellido1</label>
+                                <input class="form-control" type="text" id="txtApellido1Esposo" asp-for="@Model.DetalleSolicitudAPA.Apellido1Esposo" />
+                                <span asp-validation-for="@Model.DetalleSolicitudAPA.Apellido1Esposo" class="text-danger"></span>
+                            </div>
+                            <div class="col">
+                                <label class="control-label">Apellido2</label>
+                                <input class="form-control" type="text" id="txtApellido2Esposo" asp-for="@Model.DetalleSolicitudAPA.Apellido2Esposo" />
+                                <span asp-validation-for="@Model.DetalleSolicitudAPA.Apellido2Esposo" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-2">
+                                <label class="control-label">CUI</label>
+                                <input class="form-control" type="text" id="txtCUIEsposo" asp-for="@Model.DetalleSolicitudAPA.CuiEsposo" />
+                                <span asp-validation-for="@Model.DetalleSolicitudAPA.CuiEsposo" class="text-danger"></span>
+                            </div>
+                            <div class="col-2">
+                                <label class="control-label">Fecha Nacimiento</label>
+                                <input class="form-control" type="date" id="txtFNacimientoEsposo" asp-for="@Model.DetalleSolicitudAPA.FNacimientoEsposo" />
+                                <span asp-validation-for="@Model.DetalleSolicitudAPA.FNacimientoEsposo" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <label class="control-label">Nombre1</label>
+                                <input class="form-control" type="text" id="txtNombre1Esposa" asp-for="@Model.DetalleSolicitudAPA.Nombre1Esposa" />
+                                <span asp-validation-for="@Model.DetalleSolicitudAPA.Nombre1Esposa" class="text-danger"></span>
+                            </div>
+                            <div class="col">
+                                <label class="control-label">Nombre2</label>
+                                <input class="form-control" type="text" id="txtNombre2Esposa" asp-for="@Model.DetalleSolicitudAPA.Nombre2Esposa" />
+                                <span asp-validation-for="@Model.DetalleSolicitudAPA.Nombre2Esposa" class="text-danger"></span>
+                            </div>
+                            <div class="col">
+                                <label class="control-label">Nombre3</label>
+                                <input class="form-control" type="text" id="txtNombre3Esposa" asp-for="@Model.DetalleSolicitudAPA.Nombre3Esposa" />
+                                <span asp-validation-for="@Model.DetalleSolicitudAPA.Nombre3Esposa" class="text-danger"></span>
+                            </div>
+                            <div class="col">
+                                <label class="control-label">Apellido1</label>
+                                <input class="form-control" type="text" id="txtApellido1Esposa" asp-for="@Model.DetalleSolicitudAPA.Apellido1Esposa" />
+                                <span asp-validation-for="@Model.DetalleSolicitudAPA.Apellido1Esposa" class="text-danger"></span>
+                            </div>
+                            <div class="col">
+                                <label class="control-label">Apellido2</label>
+                                <input class="form-control" type="text" id="txtApellido2Esposa" asp-for="@Model.DetalleSolicitudAPA.Apellido2Esposa" />
+                                <span asp-validation-for="@Model.DetalleSolicitudAPA.Apellido2Esposa" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <label class="control-label">Apellido casada</label>
+                                <input class="form-control" type="text" id="txtApellidoCasada" asp-for="@Model.DetalleSolicitudAPA.ApellidoCasada" />
+                                <span asp-validation-for="@Model.DetalleSolicitudAPA.ApellidoCasada" class="text-danger"></span>
+                            </div>
+                            <div class="col">
+                                <label class="control-label">CUI</label>
+                                <input class="form-control" type="text" id="txtCUIEsposa" asp-for="@Model.DetalleSolicitudAPA.CuiEsposa" />
+                                <span asp-validation-for="@Model.DetalleSolicitudAPA.CuiEsposa" class="text-danger"></span>
+                            </div>
+                            <div class="col">
+                                <label class="control-label">Fecha Nacimiento</label>
+                                <input class="form-control" type="date" id="txtFNacimientoEsposa" asp-for="@Model.DetalleSolicitudAPA.FNacimientoEsposa" />
+                                <span asp-validation-for="@Model.DetalleSolicitudAPA.FNacimientoEsposa" class="text-danger"></span>
+                            </div>
+                            <div class="col">
+                                <label class="control-label">Estado civil</label>
+                                <select class="form-select" id="cbEstadoCivil" asp-for="@Model.DetalleSolicitudAPA.EstadoCivil" asp-items="ViewBag.EstadoCivil" required></select>
+                                @*<input class="form-control" type="text" id="txtEstadoCivil" asp-for="@Model.DetalleSolicitud.EstadoCivil" />*@
+                                <span asp-validation-for="@Model.DetalleSolicitudAPA.EstadoCivil" class="text-danger"></span>
+                            </div>
+                            <div class="col">
+                                <label class="control-label">Embarazada</label>
+                                <input class="form-control" type="text" id="txtEmbarazada" asp-for="@Model.DetalleSolicitudAPA.Embarazada" />
+                                <span asp-validation-for="@Model.DetalleSolicitudAPA.Embarazada" class="text-danger"></span>
+                            </div>
+                            <div class="col">
+                                <label class="control-label">Niño desnutrición aguada</label>
+                                <input class="form-control" type="text" id="txtNiñoDA" asp-for="@Model.DetalleSolicitudAPA.NiñoDA" />
+                                <span asp-validation-for="@Model.DetalleSolicitudAPA.NiñoDA" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <label class="control-label">Grupo etnico</label>
+                                <input class="form-control" type="text" id="txtGrupoEtnico" asp-for="@Model.DetalleSolicitudAPA.GrupoEtnico" />
+                                <span asp-validation-for="@Model.DetalleSolicitudAPA.GrupoEtnico" class="text-danger"></span>
+                            </div>
+                            <div class="col">
+                                <label class="control-label">Hombre 0-2 años</label>
+                                <input class="form-control" type="text" id="txtHombre0a2Años" asp-for="@Model.DetalleSolicitudAPA.Hombre0a2Años" />
+                                <span asp-validation-for="@Model.DetalleSolicitudAPA.Hombre0a2Años" class="text-danger"></span>
+                            </div>
+                            <div class="col">
+                                <label class="control-label">Mujer 0-2 años</label>
+                                <input class="form-control" type="text" id="txtMujer0a2Años" asp-for="@Model.DetalleSolicitudAPA.Mujer0a2Años" />
+                                <span asp-validation-for="@Model.DetalleSolicitudAPA.Mujer0a2Años" class="text-danger"></span>
+                            </div>
+                            <div class="col">
+                                <label class="control-label">Hombre 2-5 años</label>
+                                <input class="form-control" type="text" id="txtHombre2a5Años" asp-for="@Model.DetalleSolicitudAPA.Hombre2a5Años" />
+                                <span asp-validation-for="@Model.DetalleSolicitudAPA.Hombre2a5Años" class="text-danger"></span>
+                            </div>
+                            <div class="col">
+                                <label class="control-label">Mujer 2-5 años</label>
+                                <input class="form-control" type="text" id="txtMujer2a5Años" asp-for="@Model.DetalleSolicitudAPA.Mujer2a5Años" />
+                                <span asp-validation-for="@Model.DetalleSolicitudAPA.Mujer2a5Años" class="text-danger"></span>
+                            </div>
+                            <div class="col">
+                                <label class="control-label">Hombre 6-17 años</label>
+                                <input class="form-control" type="text" id="txtHombre6a17Años" asp-for="@Model.DetalleSolicitudAPA.Hombre6a17Años" />
+                                <span asp-validation-for="@Model.DetalleSolicitudAPA.Hombre6a17Años" class="text-danger"></span>
+                            </div>
+                            <div class="col">
+                                <label class="control-label">Mujer 6-17 años</label>
+                                <input class="form-control" type="text" id="txtMujer6a17Años" asp-for="@Model.DetalleSolicitudAPA.Mujer6a17Años" />
+                                <span asp-validation-for="@Model.DetalleSolicitudAPA.Mujer6a17Años" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <label class="control-label">Tipo persona</label>
+                                <input class="form-control" type="text" id="txtTipoPersona" asp-for="@Model.DetalleSolicitudAPA.TipoPersona" />
+                                <span asp-validation-for="@Model.DetalleSolicitudAPA.TipoPersona" class="text-danger"></span>
+                            </div>
+                            <div class="col">
+                                <label class="control-label">Area maiz</label>
+                                <input class="form-control" type="text" id="txtAreaMaiz" asp-for="@Model.DetalleSolicitudAPA.AreaMaiz" />
+                                <span asp-validation-for="@Model.DetalleSolicitudAPA.AreaMaiz" class="text-danger"></span>
+                            </div>
+                            <div class="col">
+                                <label class="control-label">Quintales maiz</label>
+                                <input class="form-control" type="text" id="txtQuintalesMaiz" asp-for="@Model.DetalleSolicitudAPA.QuintalesMaiz" />
+                                <span asp-validation-for="@Model.DetalleSolicitudAPA.QuintalesMaiz" class="text-danger"></span>
+                            </div>
+                            <div class="col">
+                                <label class="control-label">Area frijol</label>
+                                <input class="form-control" type="text" id="txtAreaFrijol" asp-for="@Model.DetalleSolicitudAPA.AreaFrijol" />
+                                <span asp-validation-for="@Model.DetalleSolicitudAPA.AreaFrijol" class="text-danger"></span>
+                            </div>
+                            <div class="col">
+                                <label class="control-label">Quintales frijol</label>
+                                <input class="form-control" type="text" id="txtQuintalesFrijol" asp-for="@Model.DetalleSolicitudAPA.QuintalesFrijol" />
+                                <span asp-validation-for="@Model.DetalleSolicitudAPA.QuintalesFrijol" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <label class="control-label">Tipo agricultura practica</label>
+                                <input class="form-control" type="text" id="txtTipoAgriculturaPractica" asp-for="@Model.DetalleSolicitudAPA.TipoAgriculturaPractica" />
+                                <span asp-validation-for="@Model.DetalleSolicitudAPA.TipoAgriculturaPractica" class="text-danger"></span>
+                            </div>
+                            <div class="col">
+                                <label class="control-label">COCODE</label>
+                                <input class="form-control" type="text" id="txtCOCODE" asp-for="@Model.DetalleSolicitudAPA.NombreCOCODE" />
+                                <span asp-validation-for="@Model.DetalleSolicitudAPA.NombreCOCODE" class="text-danger"></span>
+                            </div>
+                            <div class="col">
+                                <label class="control-label">Nombre persona registro</label>
+                                <input class="form-control" type="text" id="txtNombrePersonaRegistro" asp-for="@Model.DetalleSolicitudAPA.NombrePersonaRegistro" />
+                                <span asp-validation-for="@Model.DetalleSolicitudAPA.NombrePersonaRegistro" class="text-danger"></span>
+                            </div>
+                            <div class="col">
+                                <label class="control-label">Institución que representa</label>
+                                <input class="form-control" type="text" id="txtInstitucionRepresenta" asp-for="@Model.DetalleSolicitudAPA.InstitucionRepresenta" />
+                                <span asp-validation-for="@Model.DetalleSolicitudAPA.InstitucionRepresenta" class="text-danger"></span>
+                            </div>
+                        </div>
+                        @* <div class="form-group">
+                    <label class="control-label">Cantidad de beneficiarios</label>
+                    <input class="form-control" id="txtCantBenef" asp-for="@Model.DetalleSolicitud.CantidadBeneficiarios" required/>
+                    <span asp-validation-for="@Model.DetalleSolicitud.CantidadBeneficiarios" class="text-danger"></span>
+                    </div> *@
+                        @* <div>
+                    <label class="control-label">Archivo actual</label>
+                    <input asp-for="@Model.Solicitud.Archivo" type="text" id="oldfile" class="form-control" disabled />
+                    </div>
+                    <div class="form-group">
+                    <label for="file">Selecciona un archivo:</label>
+                    <input type="file" name="file" id="file" class="form-control" />
+                    </div> *@
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                        <input type="submit" value="Guardar" class="btn btn-primary" onclick="enviarHiddenField()" />
+                        @* <input type="submit" value="Guardar" class="btn btn-primary" /> *@
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Modal -->
+    <div class="modal fade" id="wCargaExcelAPA" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content" style="min-height:750px;">
+                <form id="uploadExcelFormAPA" enctype="multipart/form-data">
+                    <div class="modal-header bg-secondary">
+                        <h5 class="modal-title text-white" id="lblModalTitleAPA">CARGA MASIVA BENEFICIARIOS SOLICITUD @Model.Solicitud.Codigo</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <input type="hidden" id="hiddenSolicitudId" name="idSolicitud" asp-for="@Model.Solicitud.IdSolicitud" />
+
+                        <div class="form-group">
+                            <label for="file">Selecciona archivo excel:</label>
+                            <div class="row">
+                                <div class="col-10">
+                                    <input type="file" name="fileExcel" id="fileExcel" class="form-control" />
+                                </div>
+                                <div class="col-2">
+                                    <button type="button" class="btn btn-primary" onclick="cargarINFO_APA()">Cargar</button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                    <div>
+                    </div>
+
+                    @* <h3>Datos del Archivo Excel</h3> *@
+                  <div class="modal-body" style="overflow-y:auto; width:99%;">
+                        <div id="loading1" style="display:none;">
+                            <div class="loader simple-loader">
+                                <div class="text-center" style="font-size:28px !important; margin-top:270px !important;">Cargando...</div>
+                                <div class="loader-body" style="margin-top:2px !important;">
+                                    <div class="text-center">
+                                        <div class="spinner-border text-primary" style="width: 8rem; height: 8rem;" role="status">
+                                            <span class="visually-hidden">Cargando...</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <table class="table" id="excelDataTableAPA">
+                        <thead>                            
+                            <tr>                                
+                                <th>
+                                    NOMBRE1
+                                </th>
+                                <th>
+                                    NOMBRE2
+                                </th>
+                                <th>
+                                    NOMBRE3
+                                </th>
+                                <th>
+                                    APELLIDO1
+                                </th>
+                                <th>
+                                    APELLIDO2
+                                </th>
+                                <th>
+                                    APELLIDO CASADA
+                                </th>
+                                <th>
+                                    CUI
+                                </th>                                
+                                <th>
+                                    GENERO
+                                </th>
+                                <th>
+                                    GRUPO ETNICO
+                                </th>                                
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var row in Model.listaDetallesSolicitudAPA)
+                            {
+                                <tr>                                    
+                                    <td>
+                                        @row.Nombre1Esposa
+                                    </td>
+                                    <td>
+                                        @row.Nombre2Esposa
+                                    </td>
+                                    <td>
+                                        @row.Nombre3Esposa
+                                    </td>
+                                    <td>
+                                        @row.Apellido1Esposa
+                                    </td>
+                                    <td>
+                                        @row.Apellido2Esposa
+                                    </td>
+                                    <td>
+                                        @row.ApellidoCasada
+                                    </td>
+                                    <td>
+                                        @row.CuiEsposa
+                                    </td>                                    
+                                    <td>
+                                        @row.Genero
+                                    </td>
+                                    <td>
+                                        @row.GrupoEtnico
+                                    </td>                                    
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                  </div>
+                </form>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-primary" asp-controller="Solicitud" asp-route-id="@Model.Solicitud.IdSolicitud" asp-route-k="2" onclick="guardarINFO_APA(document.getElementById('hiddenSolicitudId').value)">Guardar</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+
+<script type="text/javascript">
+    function guardarIdSolicitud() {
+        //Obtener el valor del campo oculto en la vista principal
+        var idSolicitud = document.getElementById("hiddenSolicitudId").value;
+
+        // Asignar el valor al campo oculto en el formulario de la modal
+        document.getElementById("hiddenFieldModal").value = idSolicitud;
+
+        //console.log("ID de solicitud guardado: " + idSolicitud);
+    };
+
+    function cargando() {
+        /*var item1 = document.getElementById('loading');
+        var item2 = document.getElementById('excelDataTable');
+        item1.style.display = 'block';
+        item2.style.display = 'none';*/
+        $('#loading1').show();
+        $('#excelDataTable').hide();
+    };
+
+    function listo() {
+        /*var item1 = document.getElementById('excelDataTable');
+        var item2 = document.getElementById('loading');
+        item2.style.display = 'none';
+        item1.style.display = 'block';*/
+        $('#loading1').hide();
+        $('#excelDataTable').show();
+    };
+
+    function cargandoAPA() {
+        $('#loading1').show();
+        $('#excelDataTableAPA').hide();
+    }
+
+    function listoAPA() {
+        $('#loading1').hide();
+        $('#excelDataTableAPA').show();
+    }
+
+    $(document).ready(function () {
+        var abrirModalEditar = '@ViewBag.AbrirModalEditar';
+        //console.log(abrirModalEditar);
+        if (abrirModalEditar === 'edit') {
+            var modal = new bootstrap.Modal(document.getElementById('wAddEditDetalleSolicitud'));
+            modal.show();
+            //abrirModalYActualizarUrl(0);
+        }
+        else {
+            //alert('xxxxx');
+            //console.log(abrirModalEditar);
+            $('#wAddEditDetalleSolicitud').on('show.bs.modal', function (event) {
+
+                $('#hiddenDetSolicitudId').val(0);
+                //$('#cbIntervencion').val('');
+                $('#cbDepartamento').val('');
+                $('#cbMunicipio').val('');
+                $('#txtComunidad').val('');
+                $('#txtCantBenef').val('');
+                //$('#oldfile').val('');
+            });
+        };        
+    });
+
+    function limpiarINFO() {
+        var table = $('#excelDataTable').DataTable();                
+                //$('#excelModal').on('shown.bs.modal', function () {
+                
+            $('#fileExcel').val('');                
+            table.clear().draw();
+                //});
+    }
+
+    function limpiarINFO_APA() {
+        var table = $('#excelDataTableAPA').DataTable();                
+            $('#fileExcel').val('');                
+            table.clear().draw();               
+    }
+
+                
+                //$("#uploadExcelForm").submit(
+
+    function cargarINFO() {
+        //alert('ENTRO');
+
+        var table = $('#excelDataTable').DataTable();
+
+        event.preventDefault();
+        // Crear un FormData con el archivo seleccionado
+        var formData = new FormData();
+        var fileInput = $("#fileExcel")[0].files[0];
+        formData.append("fileExcel", fileInput);
+
+        // Enviar el archivo al servidor mediante AJAX
+        $.ajax({
+            url: "/Solicitud/CargaMasiva?k=1", // Ruta al controlador que maneja la carga
+            type: "POST",
+            data: formData,
+            contentType: false,
+            processData: false,
+            success: function (data) {
+                table.clear();
+                data.forEach(function (row) {
+                    let rowData = [];
+                    for (let key in row) {
+                        if (row.hasOwnProperty(key)) {
+                            rowData.push(row[key]);
+                        }
+                    }
+                    table.row.add(rowData).draw(false);
+
+                    //$("#excelDataTable tbody").append(rowHtml);
+                });
+            },
+            error: function () {
+                alert("Error al cargar el archivo Excel.");
+            }
+        });
+    }//);
+
+    function cargarINFO_APA() {
+        //alert('ENTRO');
+        var table = $('#excelDataTableAPA').DataTable();
+
+        event.preventDefault();
+        // Crear un FormData con el archivo seleccionado
+        var formData = new FormData();
+        var fileInput = $("#fileExcel")[0].files[0];
+        formData.append("fileExcel", fileInput);
+        cargandoAPA();
+        $.ajax({
+            url: "@ViewData["rutaApp"]/Solicitud/CargaMasiva?k=2",
+            type: "POST",
+            data: formData,
+            contentType: false,
+            processData: false,
+            success: function (data) {                
+                table.clear();
+                //$("#excelDataTableAPA tbody").empty();
+                
+                data.forEach(function (row) {
+                    table.row.add([
+                        row.columna1,
+                        row.columna2,
+                        row.columna3,
+                        row.columna4,
+                        row.columna5,
+                        row.columna6,
+                        row.columna7,
+                        row.columna8,
+                        row.columna9,
+                        row.columna10                        
+                    ]).draw(false);
+                    //$("#excelDataTable tbody").append(rowHtml);
+                });
+            },
+            error: function () {
+                alert("Error al cargar el archivo Excel.");
+            },
+            complete: function () {
+                listoAPA();
+            }
+        });
+    }//);
+
+        function guardarINFO(hf){
+            //alert('PARAMETRO: ' + hf);  es el idSolicitud
+        var idIntervencion = @ViewBag.IdIntervencion;
+        var table = $('#excelDataTable').DataTable();
+        var datosTabla = [];
+
+        table.rows().every(function (rowIdx, tableLoop, rowLoop) {
+            var data = this.data();
+            var fila = { columna1: hf };
+
+            for (var i = 0; i < data.length; i++) {
+                fila['columna' + (i + 2)] = data[i]; // +2 porque columna1 es hf
+            }
+
+            datosTabla.push(fila);
+        });            ///console.log('DATA:' + JSON.stringify(datosTabla));
+            cargando();
+            // Enviar los datos al servidor mediante AJAX
+            $.ajax({
+                url: '@ViewData["rutaApp"]/Solicitud/GuardarCargaMasiva?k=1&idInteraccion=' + idIntervencion, // Ruta del controlador para guardar en BD
+                type: 'POST',
+                contentType: 'application/json',
+                //data: JSON.stringify(datosTabla),
+            data: JSON.stringify({
+                InfoData: datosTabla, // Para infodat
+                InfoDat: []         // Si no hay datos para infodata, pasa un arreglo vacío
+            }),
+            success: function (response) {
+                    //alert("Datos guardados exitosamente en la BD");
+                    $('#wCargaExcel').modal('hide');
+                    location.reload();
+                    
+                },
+                error: function (xhr, status, error) {
+                    alert("Error al guardar los datos: " + error);
+                },
+                complete: function () {
+                    listo();
+                }
+            });        
+        }
+
+    function guardarINFO_APA(hf) {
+        //alert('Entro guardar info apa: ' + hf);  //es el idSolicitud
+        var table = $('#excelDataTableAPA').DataTable();
+
+        // Obtener los datos de la tabla
+        var datosTabla = [];
+        table.rows().every(function (rowIdx, tableLoop, rowLoop) {
+            var data = this.data();
+            datosTabla.push({
+                columna1: hf,
+                columna2: data[0],
+                columna3: data[1],
+                columna4: data[2],
+                columna5: data[3],
+                columna6: data[4],
+                columna7: data[5],
+                columna8: data[6],
+                columna9: data[7],
+                columna10: data[8]                              
+            });
+        });
+        //console.log('DATA:' + JSON.stringify(datosTabla));
+
+        cargandoAPA();
+        $.ajax({
+            url: '@ViewData["rutaApp"]/Solicitud/GuardarCargaMasiva?k=2',
+
+            type: 'POST',
+            contentType: 'application/json',
+            //data: JSON.stringify(datosTabla),
+            data: JSON.stringify({
+                    InfoDat: datosTabla, // Para infodat
+                    InfoData: []         // Si no hay datos para infodata, pasa un arreglo vacío
+                   }),     
+            success: function (response) {
+                //alert("Datos guardados exitosamente en la BD");
+                $('#wCargaExcelAPA').modal('hide');
+                location.reload();
+
+            },
+            error: function (xhr, status, error) {
+                alert('Cantidad de beneficiarios sobrepasa el límite aceptado de 250');
+                //alert("Error al guardar los datos: " + error);
+            },
+            complete: function () {
+                listoAPA();
+            }
+        });
+    }
+
+    function enviarHiddenField() {
+        var idSolicitud = document.getElementById("hiddenSolicitudId").value; //$("hiddenSolicitudId").val(); // Obtiene el valor del hidden field
+        var idDetalle = document.getElementById("hiddenDetSolicitudId").value;
+        //alert('IDs enviados: ' + idSolicitud + '----' + idDetalle);
+        $.ajax({
+            url: '@ViewData["rutaApp"]/Solicitud/IndexDetalle', // La URL del método en el controlador
+            type: 'POST',
+            data: { IdSolicitud: idSolicitud, IdDetalle: idDetalle }, // Enviar los datos
+            success: function (response) {
+                console.log('Datos enviados correctamente:', response);
+            },
+            error: function (xhr, status, error) {
+                console.error('Error al enviar los datos:', error);
+            }
+        });
+    }
+      
+
+    function abrirModalYActualizarUrl(idSolicitud, idDetalle) {
+    
+        const nuevaUrl = `@ViewData["rutaApp"]/Solicitud/IndexDetalle?idSolicitud=${idSolicitud}&idDetalle=${idDetalle}`;
+        
+        history.pushState(null, '', nuevaUrl);
+        //alert(nuevaUrl);
+        //alert('SOL:' + idSolicitud + ' DET:' + idDetalle);
+        if (idDetalle == 0) {
+            var ventanaTitle = document.getElementById("lblModalTitle");
+            ventanaTitle.textContent = "NUEVO DETALLE DE SOLICITUD";
+
+            $('#hiddenDetSolicitudId').val(0);
+            //$('#cbIntervencion').val('');
+            $('#cbDepartamento').val('');
+            $('#cbMunicipio').val('');
+            $('#txtComunidad').val('');
+            $('#txtNombre1Esposo').val('');
+            $('#txtNombre2Esposo').val('');
+            $('#txtNombre3Esposo').val('');
+            $('#txtApellido1Esposo').val('');
+            $('#txtApellido2Esposo').val('');
+            $('#txtCUIEsposo').val('');
+            $('#txtFNacimientoEsposo').val('');
+
+            $('#txtNombre1Esposa').val('');
+            $('#txtNombre2Esposa').val('');
+            $('#txtNombre3Esposa').val('');
+            $('#txtApellido1Esposa').val('');
+            $('#txtApellido2Esposa').val('');
+            $('#txtApellidoCasada').val('');
+            $('#txtCUIEsposa').val('');
+            $('#txtFNacimientoEsposa').val('');
+
+            $('#cbEstadoCivil').val(0);
+            $('#txtEmbarazada').val('');
+            $('#txtNiñoDA').val('');
+            $('#txtGrupoEtnico').val(0);
+
+            $('#txtHombre0a2Años').val(0);
+            $('#txtMujer0a2Años').val(0);
+            $('#txtHombre2a5Años').val(0);
+            $('#txtMujer2a5Años').val(0);
+            $('#txtHombre6a17Años').val(0);
+            $('#txtMujer6a17Años').val(0);
+            $('#txtTipoPersona').val(0);
+
+            $('#txtAreaMaiz').val(0);
+            $('#txtQuintalesMaiz').val(0);
+            $('#txtAreaFrijol').val(0);
+            $('#txtQuintalesFrijol').val(0);
+            $('#txtTipoAgriculturaPractica').val(0);
+            $('#txtCOCODE').val('');
+            $('#txtNombrePersonaRegistro').val('');
+            $('#txtInstitucionRepresenta').val('');
+
+            //$('#oldfile').val('');
+        }
+        else {
+            //$('#lblModalTitle').val('MODIFICAR SOLICITUD');
+            var ventanaTitle = document.getElementById("lblModalTitle");
+            ventanaTitle.textContent = "MODIFICAR DETALLE DE SOLICITUD";
+
+        }
+
+        // Abre el modal
+        var modal = new bootstrap.Modal(document.getElementById('wAddEditDetalleSolicitud'));
+        modal.show();        
+        
+        // Llamada AJAX para obtener los datos de la solicitud
+        $.ajax({
+            url: `@ViewData["rutaApp"]/Solicitud/ObtenerDetalleSolicitud?idDetalle=${idDetalle}`, // URL para obtener los datos
+            type: 'GET',
+            success: function (data) {
+                console.log('data' + JSON.stringify(data));
+                // Llenar el formulario del modal con los datos de la solicitud
+                $('#hiddenDetSolicitudId').val(data.idDetalleSolicitud);
+                //$('#cbIntervencion').val(data.idIntervencion);
+                $('#cbDepartamento').val(data.idDepartamento);
+                $('#cbMunicipio').val(data.idMunicipio);
+                $('#txtComunidad').val(data.comunidad);
+                
+                $('#txtNombre1Esposo').val(data.nombre1Esposo);
+                $('#txtNombre2Esposo').val(data.nombre2Esposo);
+                $('#txtNombre3Esposo').val(data.nombre3Esposo);
+                $('#txtApellido1Esposo').val(data.apellido1Esposo);
+                $('#txtApellido2Esposo').val(data.apellido2Esposo);
+                $('#txtCUIEsposo').val(data.cuiEsposo);
+                $('#txtFNacimientoEsposo').val(data.fNacimientoEsposo);
+
+                $('#txtNombre1Esposa').val(data.nombre1Esposa);
+                $('#txtNombre2Esposa').val(data.nombre2Esposa);
+                $('#txtNombre3Esposa').val(data.nombre3Esposa);
+                $('#txtApellido1Esposa').val(data.apellido1Esposa);
+                $('#txtApellido2Esposa').val(data.apellido2Esposa);
+                $('#txtApellidoCasada').val(data.apellidoCasada);
+                $('#txtCUIEsposa').val(data.cuiEsposa);
+                $('#txtFNacimientoEsposa').val(data.fNacimientoEsposa);                
+
+                $('#cbEstadoCivil').val(data.estadoCivil);
+                $('#txtEmbarazada').val(data.embarazada);
+                $('#txtNiñoDA').val(data.niñoDA);
+                $('#txtGrupoEtnico').val(data.grupoEtnico);
+
+                $('#txtHombre0a2Años').val(data.hombre0a2Años);
+                $('#txtMujer0a2Años').val(data.mujer0a2Años);
+                $('#txtHombre2a5Años').val(data.hombre2a5Años);
+                $('#txtMujer2a5Años').val(data.mujer2a5Años);
+                $('#txtHombre6a17Años').val(data.hombre6a17Años);
+                $('#txtMujer6a17Años').val(data.mujer6a17Años);
+                $('#txtTipoPersona').val(data.tipoPersona);
+
+                $('#txtAreaMaiz').val(data.areaMaiz);
+                $('#txtQuintalesMaiz').val(data.quintalesMaiz);
+                $('#txtAreaFrijol').val(data.areaFrijol);
+                $('#txtQuintalesFrijol').val(data.quintalesFrijol);
+                $('#txtTipoAgriculturaPractica').val(data.tipoAgriculturaPractica);
+                $('#txtCOCODE').val(data.nombreCOCODE);
+                $('#txtNombrePersonaRegistro').val(data.nombrePersonaRegistro);
+                $('#txtInstitucionRepresenta').val(data.institucionRepresenta);
+
+                //$('#oldfile').val(data.archivo);
+
+            },
+            error: function (xhr, status, error) {
+                console.error('Error al obtener los datos de la solicitud:', error);
+            }
+        });
+        
+    }
+    
+    function abrirModalYActualizarUrlAPA(idSolicitud, idDetalle) {
+
+        const nuevaUrl = `@ViewData["rutaApp"]/Solicitud/IndexDetalle?idSolicitud=${idSolicitud}&idDetalle=${idDetalle}`;
+
+        history.pushState(null, '', nuevaUrl);
+        //alert(nuevaUrl);
+        //alert('SOL:' + idSolicitud + ' DET:' + idDetalle);
+        if (idDetalle == 0) {
+            var ventanaTitle = document.getElementById("lblModalTitleAPA");
+            ventanaTitle.textContent = "NUEVO DETALLE DE SOLICITUD";
+
+            $('#hiddenDetSolicitudId').val(0);
+            //$('#cbIntervencion').val('');
+            $('#cbDepartamento').val('');
+            $('#cbMunicipio').val('');
+            $('#txtComunidad').val('');
+            $('#txtNombre1Esposo').val('');
+            $('#txtNombre2Esposo').val('');
+            $('#txtNombre3Esposo').val('');
+            $('#txtApellido1Esposo').val('');
+            $('#txtApellido2Esposo').val('');
+            $('#txtCUIEsposo').val('');
+            $('#txtFNacimientoEsposo').val('');
+
+            $('#txtNombre1Esposa').val('');
+            $('#txtNombre2Esposa').val('');
+            $('#txtNombre3Esposa').val('');
+            $('#txtApellido1Esposa').val('');
+            $('#txtApellido2Esposa').val('');
+            $('#txtApellidoCasada').val('');
+            $('#txtCUIEsposa').val('');
+            $('#txtFNacimientoEsposa').val('');
+
+            $('#cbEstadoCivil').val(0);
+            $('#txtEmbarazada').val('');
+            $('#txtNiñoDA').val('');
+            $('#txtGrupoEtnico').val(0);
+
+            $('#txtHombre0a2Años').val(0);
+            $('#txtMujer0a2Años').val(0);
+            $('#txtHombre2a5Años').val(0);
+            $('#txtMujer2a5Años').val(0);
+            $('#txtHombre6a17Años').val(0);
+            $('#txtMujer6a17Años').val(0);
+            $('#txtTipoPersona').val(0);
+
+            $('#txtAreaMaiz').val(0);
+            $('#txtQuintalesMaiz').val(0);
+            $('#txtAreaFrijol').val(0);
+            $('#txtQuintalesFrijol').val(0);
+            $('#txtTipoAgriculturaPractica').val(0);
+            $('#txtCOCODE').val('');
+            $('#txtNombrePersonaRegistro').val('');
+            $('#txtInstitucionRepresenta').val('');
+            //$('#oldfile').val('');
+        }
+        else {
+            //$('#lblModalTitle').val('MODIFICAR SOLICITUD');
+            var ventanaTitle = document.getElementById("lblModalTitle");
+            ventanaTitle.textContent = "MODIFICAR DETALLE DE SOLICITUD";
+
+        }
+
+        // Abre el modal
+        var modal = new bootstrap.Modal(document.getElementById('wAddEditDetalleSolicitudAPA'));
+        modal.show();
+
+        // Llamada AJAX para obtener los datos de la solicitud
+        $.ajax({
+            url: `@ViewData["rutaApp"]/Solicitud/ObtenerDetalleSolicitudAPA?idDetalle=${idDetalle}`, // URL para obtener los datos
+            type: 'GET',
+            success: function (data) {
+                console.log('data' + JSON.stringify(data));
+                // Llenar el formulario del modal con los datos de la solicitud
+                $('#hiddenDetSolicitudId').val(data.idDetalleSolicitud);
+                //$('#cbIntervencion').val(data.idIntervencion);
+                $('#cbDepartamento').val(data.idDepartamento);
+                $('#cbMunicipio').val(data.idMunicipio);
+                $('#txtComunidad').val(data.comunidad);
+
+                $('#txtNombre1Esposo').val(data.nombre1Esposo);
+                $('#txtNombre2Esposo').val(data.nombre2Esposo);
+                $('#txtNombre3Esposo').val(data.nombre3Esposo);
+                $('#txtApellido1Esposo').val(data.apellido1Esposo);
+                $('#txtApellido2Esposo').val(data.apellido2Esposo);
+                $('#txtCUIEsposo').val(data.cuiEsposo);
+                $('#txtFNacimientoEsposo').val(data.fNacimientoEsposo);
+
+                $('#txtNombre1Esposa').val(data.nombre1Esposa);
+                $('#txtNombre2Esposa').val(data.nombre2Esposa);
+                $('#txtNombre3Esposa').val(data.nombre3Esposa);
+                $('#txtApellido1Esposa').val(data.apellido1Esposa);
+                $('#txtApellido2Esposa').val(data.apellido2Esposa);
+                $('#txtApellidoCasada').val(data.apellidoCasada);
+                $('#txtCUIEsposa').val(data.cuiEsposa);
+                $('#txtFNacimientoEsposa').val(data.fNacimientoEsposa);
+
+                $('#cbEstadoCivil').val(data.estadoCivil);
+                $('#txtEmbarazada').val(data.embarazada);
+                $('#txtNiñoDA').val(data.niñoDA);
+                $('#txtGrupoEtnico').val(data.grupoEtnico);
+
+                $('#txtHombre0a2Años').val(data.hombre0a2Años);
+                $('#txtMujer0a2Años').val(data.mujer0a2Años);
+                $('#txtHombre2a5Años').val(data.hombre2a5Años);
+                $('#txtMujer2a5Años').val(data.mujer2a5Años);
+                $('#txtHombre6a17Años').val(data.hombre6a17Años);
+                $('#txtMujer6a17Años').val(data.mujer6a17Años);
+                $('#txtTipoPersona').val(data.tipoPersona);
+
+                $('#txtAreaMaiz').val(data.areaMaiz);
+                $('#txtQuintalesMaiz').val(data.quintalesMaiz);
+                $('#txtAreaFrijol').val(data.areaFrijol);
+                $('#txtQuintalesFrijol').val(data.quintalesFrijol);
+                $('#txtTipoAgriculturaPractica').val(data.tipoAgriculturaPractica);
+                $('#txtCOCODE').val(data.nombreCOCODE);
+                $('#txtNombrePersonaRegistro').val(data.nombrePersonaRegistro);
+                $('#txtInstitucionRepresenta').val(data.institucionRepresenta);
+                //$('#oldfile').val(data.archivo);
+
+            },
+            error: function (xhr, status, error) {
+                console.error('Error al obtener los datos de la solicitud:', error);
+            }
+        });
+
+    }
+    
+    function popupExcel(idSolicitud) {
+        
+        //const nuevaUrl = `/Solicitud/IndexDetalle?idSolicitud=${idSolicitud}&idDetalle=${idDetalle}`;
+        
+        //history.pushState(null, '', nuevaUrl);
+        //alert(nuevaUrl);
+        //alert('SOL:' + idSolicitud + ' DET:' + idDetalle);
+        //if (idDetalle == 0) {
+            //var ventanaTitle = document.getElementById("lblModalTitle");
+            //ventanaTitle.textContent = "NUEVO DETALLE DE SOLICITUD";
+
+            /*$('#hiddenDetSolicitudId').val(0);
+            //$('#cbIntervencion').val('');
+            $('#cbDepartamento').val('');
+            $('#cbMunicipio').val('');
+            $('#txtComunidad').val('');
+            $('#txtCantBenef').val('');*/
+            //$('#oldfile').val('');
+        //}
+        //else {
+            //$('#lblModalTitle').val('MODIFICAR SOLICITUD');
+            /*var ventanaTitle = document.getElementById("lblModalTitle");
+            ventanaTitle.textContent = "MODIFICAR DETALLE DE SOLICITUD";*/
+        //}
+
+        // Abre el modal
+        var modal = new bootstrap.Modal(document.getElementById('wCargaExcel'));
+        modal.show();        
+    }
+
+    window.onpopstate = function (event) {
+        // Cierra el modal si el usuario va hacia atrás
+        var modalElement = document.getElementById('wAddEditDetalleSolicitud');
+        var modal = bootstrap.Modal.getInstance(modalElement);
+
+        if (modal) {
+            modal.hide();
+        }
+    };
+
+    function confirmarDetalle(e) {
+        var res = confirm("Esta seguro de eliminar el detalle de la solicitud");
+        if (res) {
+            //enviarHiddenField();
+            return true;
+        }
+        if (res == false) e.preventDefault();
+
+        //return false;
+    }
+
+    /*function cancerlarFila(){
+        row.find('.edit-btn').show();
+        row.find('.save-btn').hide();
+        row.find('.cancel-btn').hide();
+    }
+    
+    function editarFila() {
+        var fila = $(this).closest("tr");
+        fila.find(".edit-boton").hide();
+        alert(fila);
+    }*/
+</script>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- JS -->
+<script src="https://cdn.datatables.net/2.2.1/js/dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/3.2.0/js/dataTables.buttons.min.js"></script>
+

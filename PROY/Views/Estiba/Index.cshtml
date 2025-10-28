@@ -1,0 +1,201 @@
+﻿@model PROY.ViewModels.EstibaVM;
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
+<head>
+</head>
+@{
+
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Mensaje"]
+    </div>
+}
+
+@* <div class="=row">
+        <div class="col-sm-8"> *@
+<h2 class="float-start">Administración Estiba</h2> <a class="btn btn-primary btn-sm float-end" onclick="abrirModalYActualizarUrl(0)"><i class="fas fa-plus-square"></i> Estibas</a>
+<p><br /></p>
+<a class="btn btn-secondary btn-sm" asp-controller="SubBodega" asp-action="Index" asp-route-idBodega="@Model.Estiba.IdBodega"><i class="fas fa-warehouse"></i>&nbsp;Regresar a Sub Bodegas</a>
+<table class="table">
+    <thead>
+        <tr>
+            <th>CÓDIGO ESTIBA</th>
+            <th>BODEGA</th>
+            <th>SUB BODEGA</th>
+            <th>PRODUCTO ALIMENTICIO</th>
+            <th>OPCIONES</th>
+        </tr>
+    </thead>
+    <tbody>
+        @try
+        {
+            foreach (var item in Model.listaEstibas)
+            {
+                <tr>
+                    <td>
+                        @{
+                            // Obtener la descripción usando el diccionario
+                            string descripcionBodega = Model.BodegaDict.TryGetValue(item.IdBodega ?? 0, out var descBod)
+                            ? descBod
+                            : "Bodega no encontrado";
+                        }
+                        @descripcionBodega
+                    </td>
+                    <td>
+                        @{
+                            // Obtener la descripción usando el diccionario
+                            string descripcionSubBodega = Model.SubBodegaDict.TryGetValue(item.IdSubBodega ?? 0, out var descSub)
+                            ? descSub
+                            : "Sub Bodega no encontrado";
+                        }
+                        @descripcionSubBodega
+                    </td>
+                    <td>@item.CodigoEstiba</td>
+                    <td>
+                        @{
+                            // Obtener la descripción usando el diccionario
+                            string descripcionProducto = Model.ProductoDict.TryGetValue(item.IdProducto ?? 0, out var descProd)
+                            ? descProd
+                            : "Producto no encontrado";
+                        }
+                        @descripcionProducto
+                    </td>
+                    <td class="text-center">
+                        <a class="btn btn-info btn-sm" onclick="abrirModalYActualizarUrl(@item.IdEstiba)"><i class="fas fa-edit"></i> Editar</a>
+                        <a class="btn btn-danger btn-sm" asp-controller="Estiba" asp-action="Eliminar" asp-route-idSubBodega="@item.IdSubBodega" asp-route-idBodega="@item.IdBodega" asp-route-id="@item.IdEstiba" onclick="confirmar(event)"><i class="fas fa-trash"></i> Eliminar</a>
+                    </td>
+
+                </tr>
+            }
+        }
+        catch
+        {
+
+        }
+
+    </tbody>
+</table>
+
+<!-- Modal -->
+<div class="modal fade" id="wNewEstiba" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="height:600px;">
+            <form asp-action="GuardarEstiba" asp-controller="Estiba" method="post">
+                <div class="modal-header bg-secondary">
+                    <h5 class="modal-title text-white" id="lblModalTitle">@ViewBag.ModalTitle</h5>
+                    <button type="button" id="btnClose" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <input type="hidden" id="idEstiba" asp-for="@Model.Estiba.IdEstiba" />
+                    <div>
+                        <div class="col">
+                            <label for="cbIdBodega" class="control-label">Bodega</label>
+                            <select disabled class="form-select" id="cbIdBodega" asp-for="@Model.Estiba.IdBodega" asp-items="ViewBag.Bodegas" required></select>
+                            <span asp-validation-for="@Model.Estiba.IdBodega" class="text-danger"></span>
+                        </div>
+                        <input type="hidden" asp-for="@Model.Estiba.IdBodega" />
+                        <div class="col">
+                            <label for="cbIdSubBodega" class="control-label">Sub Bodega</label>
+                            <select disabled class="form-select" id="cbIdTipoBodega" asp-for="@Model.Estiba.IdSubBodega" asp-items="ViewBag.SubBodegas" required></select>
+                            <span asp-validation-for="@Model.Estiba.IdSubBodega" class="text-danger"></span>
+                        </div>
+                        <input type="hidden" asp-for="@Model.Estiba.IdSubBodega" />
+                        <div class="col">
+                            <label for="txtCodigo" class="control-label">Código</label>
+                            <input type="text" class="form-control" id="txtCodigo" asp-for="@Model.Estiba.CodigoEstiba" required></input>
+                            <span asp-validation-for="@Model.Estiba.CodigoEstiba" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label for="txtDescripcion" class="control-label">Descripción</label>
+                            <input type="text" class="form-control" id="txtDescripcion" asp-for="@Model.Estiba.DescripcionEstiba" required></input>
+                            <span asp-validation-for="@Model.Estiba.DescripcionEstiba" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label for="cbIdProducto" class="control-label">Productos Alimenticios</label>
+                            <select class="form-select" id="cbIdProducto" asp-for="@Model.Estiba.IdProducto" asp-items="ViewBag.Productos" required></select>
+                            <span asp-validation-for="@Model.Estiba.IdProducto" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label for="txtMetrosCuadrados" class="control-label">Metros Cuadrados</label>
+                            <input type="text" class="form-control" id="txtMetrosCuadrados" asp-for="@Model.Estiba.MetrosCuadrados" required></input>
+                            <span asp-validation-for="@Model.Estiba.MetrosCuadrados" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <input type="submit" value="Guardar" class="btn btn-primary" />
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        function abrirModalYActualizarUrl(id) {
+            if (id == 0) {
+                var ventanaTitle = document.getElementById("lblModalTitle");
+                ventanaTitle.textContent = "REGISTRO ESTIBA";
+
+                $('#idEstiba').val(0);
+                $('#cbIdBodega').val();
+                $('#cbIdTipoBodega').val();
+                $('#txtCodigo').val('');
+                $('#txtDescripcion').val('');
+                $('#cbIdProducto').val();
+                $('#txtMetrosCuadrados').val('');
+            }
+            else {
+
+                $.ajax({
+                    url: `@ViewData["rutaApp"]/Estiba/ObtenerEstiba/${id}`, // URL para obtener los datos
+                    type: 'GET',
+                    success: function (data) {
+
+                        console.log('data' + JSON.stringify(data));
+                        // Llenar el formulario del modal con los datos de la ESTIBA
+                        $('#idEstiba').val(id);
+                        $('#cbIdBodega').val(data.idBodega);
+                        $('#cbIdTipoBodega').val(data.idSubBodega);
+                        $('#txtCodigo').val(data.codigo);
+                        $('#txtDescripcion').val(data.descripcionEstiba);
+                        $('#cbIdProducto').val(data.idProducto);
+                        $('#txtMetrosCuadrados').val(data.metrosCuadrados);
+                        //alert(id);
+
+                        var ventanaTitle = document.getElementById("lblModalTitle");
+                        ventanaTitle.textContent = "MODIFICAR ESTIBA ";
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error al obtener los datos de la estiba:', error);
+                    }
+                });
+            }
+
+            var modal = new bootstrap.Modal(document.getElementById('wNewEstiba'));
+            modal.show();
+
+        }
+
+        function confirmar(e){
+            var res=confirm("Esta seguro de eliminar la estiba");
+            if (res) return true;
+            if (res==false) e.preventDefault();
+
+            //return false;
+        }
+    </script>
+}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+

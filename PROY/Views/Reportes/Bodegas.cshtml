@@ -1,0 +1,104 @@
+﻿@model PROY.ViewModels.BodegaVM;
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
+<head>
+</head>
+@{
+
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@{
+    ViewData["Title"] = "Reporte Bodegas";
+}
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Mensaje"]
+    </div>
+}
+
+
+<h2 class="float-start">Reporte Listado de Bodegas</h2> 
+<p><br /></p>
+
+<br />
+
+@await Html.PartialAsync("_CriteriosDeBusqueda")
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>NOMBRE</th>
+            <th>TIPO BODEGA</th>
+            <th>DEPARTAMENTO</th>
+            <th>MUNICIPIO</th>
+        </tr>
+    </thead>
+    <tbody>
+        @try
+        {
+            foreach (var item in Model.listaBodegas)
+            {
+                <tr>
+                    <td>@item.NombreBodega</td>
+                    <td>
+                        @{
+                            // Obtener la descripción usando el diccionario
+                            string descripcionTipoBodega = Model.TipoBodegaDict.TryGetValue(item.IdTipoBodega ?? 0, out var descTipo)
+                            ? descTipo
+                            : "Departamento no encontrado";
+                        }
+                        @descripcionTipoBodega
+                    </td>
+                    <td>
+                        @{
+                            // Obtener la descripción usando el diccionario
+                            string descripcionDepartamento = Model.DepartamentoDict.TryGetValue(item.IdDepartamento ?? 0, out var descDepto)
+                            ? descDepto
+                            : "Departamento no encontrado";
+                        }
+                        @descripcionDepartamento
+                    </td>
+                    <td>
+                        @{
+                            // Obtener la descripción usando el diccionario
+                            string descripcionMunicipio = Model.MunicipioDict.TryGetValue(item.IdMunicipio ?? 0, out var descMuni)
+                            ? descMuni
+                            : "Municipio no encontrado";
+                        }
+                        @descripcionMunicipio
+                    </td>
+
+                </tr>
+            }
+        }
+        catch
+        {
+
+        }
+
+    </tbody>
+</table>
+
+
+
+@section Scripts {
+
+    <script>
+
+        var tipoReporte = 1;
+        var nombreReporte = "Reporte Listado de Bodegas";
+
+    </script>
+}
+
+<script src="~/js/reportes.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+ @* CDN para la creación del archivo xlsx *@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+@* CDN para la creación del archivo PDF *@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+

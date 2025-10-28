@@ -1,0 +1,172 @@
+﻿@model PROY.ViewModels.SolicitudesVM;
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
+<head>
+    <style>
+        .modal-header .btn-close {
+            color: white !important; /* Asegura que el ícono de la "X" sea blanco */
+            opacity: 1;
+            -webkit-filter: invert(1);
+        }
+    </style>
+</head>
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    ViewData["rutaApp"] = @Model.rutaApp;
+}
+
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Mensaje"]
+    </div>
+}
+
+@* <div class="=row">
+        <div class="col-sm-8"> *@
+<h2 class="float-start">Administración de Catálogos</h2> <a class="btn btn-primary btn-sm float-end" onclick="abrirModalYActualizarUrl(0)"><i class="fas fa-plus-square"></i> Catalogo</a>
+<p><br /></p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>TIPO</th>
+            <th>DESCRIPCION</th>            
+            <th>ORDEN</th>
+            <th>OPCIONES</th>
+        </tr>
+    </thead>
+    <tbody>
+        @try
+        {
+            foreach (var item in Model.listaCatalogos)
+            {
+                <tr>
+                    <td>@item.Tipo</td>
+                    <td>@item.Descripcion</td>                    
+                    <td>@item.Orden</td>
+                    <td class="text-center">
+                        <a class="btn btn-info btn-sm" onclick="abrirModalYActualizarUrl(@item.IdCatalogo)"><i class="fas fa-edit"></i> Editar</a>
+                        <a class="btn btn-danger btn-sm" asp-controller="Catalogo" asp-action="Eliminar" asp-route-idCat="@item.IdCatalogo" onclick="confirmar(event)"><i class="fas fa-trash"></i> Eliminar</a>
+                    </td>
+
+                </tr>
+            }
+        }
+        catch
+        {
+
+        }
+    </tbody>
+</table>
+
+<!-- Modal -->
+<div class="modal fade" id="wNewCatalogo" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="height:400px;">
+            <form asp-action="GuardarCatalogo" asp-controller="Catalogo" method="post">
+                <div class="modal-header bg-secondary">
+                    <h5 class="modal-title text-white" id="lblModalTitle">@ViewBag.ModalTitle</h5>
+                    <button type="button" id="btnClose" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <input type="hidden" id="catalogoId" asp-for="@Model.Catalogo.IdCatalogo" />                    
+                    <div>
+                        <div class="col">
+                            <label for="txtIdCatalogo" class="control-label">Correlativo</label>
+                            <input asp-for="@Model.Catalogo.IdCatalogo" type="text" id="txtIdCatalogo" class="form-control" hidden/>
+                            <span asp-validation-for="@Model.Catalogo.IdCatalogo" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label for="cbTipoCatalogo" class="control-label">Tipo</label>
+                            <select class="form-select" id="cbTipoCatalogo" asp-for="@Model.Catalogo.Tipo" asp-items="ViewBag.Catalogos" required></select>
+                            @*<select class="form-select" id="cbTipoCatalogo">
+                                <option value="@Model.Catalogo.Tipo">@Model.Catalogo.Tipo</option>                                
+                            </select>*@
+                            <span asp-validation-for="@Model.Catalogo.Tipo" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label for="txtDescripcion" class="control-label">Descripcion</label>
+                            <input type="text" class="form-control" id="txtDescripcion" asp-for="@Model.Catalogo.Descripcion" required></input>
+                            <span asp-validation-for="@Model.Catalogo.Descripcion" class="text-danger"></span>
+                        </div>
+                        <div class="col">
+                            <label for="txtOrden" class="control-label">Orden</label>
+                            <input type="number" class="form-control" id="txtOrden" asp-for="@Model.Catalogo.Orden" required/>
+                            <span asp-validation-for="@Model.Catalogo.Orden" class="text-danger"></span>
+                        </div>
+                    </div>                                        
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <input type="submit" value="Guardar" class="btn btn-primary" />
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+    <script>
+        function abrirModalYActualizarUrl(id) {
+            //const nuevaUrl = `/Catalogo/Index/${idCatalogo}`;            
+            //history.pushState(null, '', nuevaUrl);
+        
+            if (id == 0) {
+                var ventanaTitle = document.getElementById("lblModalTitle");
+                ventanaTitle.textContent = "REGISTRO CATALOGO";
+
+                $('#catalogoId').val(0);
+                $('#txtIdCatalogo').val();
+                $('#cbTipoCatalogo').val();            
+                $('#txtDescripcion').val('');
+                $('#txtOrden').val();
+            }
+            else {                
+                var ventanaTitle = document.getElementById("lblModalTitle");
+                ventanaTitle.textContent = "MODIFICAR CATALOGO";                
+            }
+
+            var modal = new bootstrap.Modal(document.getElementById('wNewCatalogo'));
+            modal.show();
+
+            $.ajax({
+                url: `@ViewData["rutaApp"]/Catalogo/ObtenerCatalogo/${id}`, // URL para obtener los datos
+                type: 'GET',
+                success: function (data) {
+
+                    //console.log('data' + JSON.stringify(data));
+                    // Llenar el formulario del modal con los datos de la solicitud
+                    $('#catalogoId').val(id);
+                    $('#txtIdCatalogo').val(id);
+                    $('#cbTipoCatalogo').val(data.tipo);
+                    $('#txtDescripcion').val(data.descripcion);
+                    $('#txtOrden').val(data.orden);
+                //alert(id);
+                    
+                    var ventanaTitle = document.getElementById("lblModalTitle");
+                    ventanaTitle.textContent = "MODIFICAR CATALOGO ";
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error al obtener los datos de la solicitud:', error);
+                }
+            });
+        }
+
+        function confirmar(e){
+            var res=confirm("Esta seguro de eliminar el usuario");
+            if (res) return true;
+            if (res==false) e.preventDefault();
+
+            //return false;
+        }
+    </script>
+
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+

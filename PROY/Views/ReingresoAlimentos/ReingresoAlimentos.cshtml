@@ -1,0 +1,281 @@
+﻿<head>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css"> 
+</head>
+
+@model PROY.ViewModels.ReingresoAlimentosVM
+
+@{
+    ViewData["Title"] = "Egreso de Alimentos";
+}
+
+<h3>Creación de Reingreso de Alimentos de Bodega</h3>
+
+<br />
+
+<div>
+    <form id="frmReingreso">
+
+        <input type="hidden" id="idReingresoAlimentos" asp-for="@Model.ReingresoAlimentos.IdReingresoAlimentos" />
+        <input type="hidden" id="idEgresoAlimentos" asp-for="@Model.ReingresoAlimentos.IdEgresoAlimentos" />
+
+        <br />
+        <br />
+
+        <div class="row">
+            <div class="col-6">
+                <label for="txtFechaSolicitud" class="control-label">Fecha de Solicitud</label>
+                <input type="date" id="txtFechaSolicitud" class="form-control" />
+            </div>
+        </div>
+        <br />
+        <div class="row">
+            <div class="col-6">
+                <label for="cbIdPrograma" class="control-label">Departamento Solicitante</label>
+                <select class="form-select" id="cbIdPrograma" asp-for="@Model.ReingresoAlimentos.IdPrograma" asp-items="ViewBag.Programas" required></select>
+                <span asp-validation-for="@Model.ReingresoAlimentos.IdPrograma" class="text-danger"></span>
+            </div>
+        </div>
+        <br />
+        <div class="row">
+            <div class="col-6">
+                <div class="form-group">
+                    <label for="txtNoDespachoAlmacen" class="control-label"><b>No. Despacho Almacén </b></label>
+                    <input type="text" id="txtNoDespachoAlmacen" class="form-control" required>
+                </div>
+            </div>
+        </div>
+        <br />
+        <div class="row">
+            <div class="col-6">
+                <label for="txtNoOficio" class="control-label">No de Oficio</label>
+                <input type="text" min="0" id="txtNoOficio" class="form-control" />
+            </div>
+        </div>
+        <br />
+        <div class="row">
+            <div class="col-6">
+                <label for="archivoOficio" class="control-label">Archivo Oficio de Solicitud de Reingreso de Alimentos</label>
+                <input type="file" name="file" id="archivoOficio" class="form-control" />
+            </div>
+            <div class="col-2 text-center" id="divBtnDescarga">
+                <label for="btnDescarga" class="control-label text-center"> Descargar Docto </label>
+                <input type="hidden" id="txtArchivoOficio" value="@Model.ReingresoAlimentos.ArchivoOficioReingreso" />
+                <a type="button" id="btnDescarga" class="btn btn-primary btn-sm text-center" href="@Url.Action("DownloadFile", new { fileName = Model.ReingresoAlimentos.ArchivoOficioReingreso, carpeta = "oficioReingresoAlimentos" })">
+                    <i class="fas fa-download"></i>
+                </a>
+            </div>
+        </div>
+
+
+        <br />
+        <br />
+
+        <div class="row float-end">
+            <div class="col-6">
+                <a type="button" class="btn btn-secondary btn" asp-action="Index">Regresar</a>
+            </div>
+            <div class="col-6">
+                <input type="button" value="Guardar" class="btn btn-primary camposAlmacenamiento" onclick="return ConfirmSave();" />
+            </div>
+        </div>
+
+    </form>
+</div>
+
+
+@section Scripts {
+
+    <script>
+        $(document).ready(function() {
+
+            var urlObj = new URL(window.location.href);
+            var type = urlObj.searchParams.get("type");
+            var id = window.location.pathname.split('/').pop();
+
+            abrirYActualizarUrl(id, type);
+            // iniciarAutocompletado(); // Llamamos la función después de cargar jQuery UI
+        });
+
+        function abrirYActualizarUrl(id, tipoApertura) {
+
+            // El tipo de apertura 1 indica que se var almacenar o editar un registro
+            // El tipo de apertura 2 indica solo de observación
+            if(tipoApertura == 1){
+                $('.camposAlmacenamiento').show();
+                $("#frmReingreso input").attr("disabled", false);  // Hace los inputs solo lectura
+                $("#frmReingreso select").prop("disabled", false); // Deshabilita los selects
+            }else{
+                $('.camposAlmacenamiento').hide();
+                $("#frmReingreso input").prop("disabled", true); // Deshabilita los selects
+                $("#frmReingreso select").prop("disabled", true); // Deshabilita los selects
+            }
+
+            if (id == 0) {
+
+                $('#idReingresoAlimentos').val(0);
+                $('#cbIdPrograma').val();
+                $('#txtFechaSolicitud').val();
+                $('#txtNoOficio').val();
+                $('#divBtnDescarga').hide();
+            }
+            else {
+
+                $.ajax({
+                    url: `@ViewData["rutaApp"]/ReingresoAlimentos/ObtenerReingresoAlimentos/${id}`, // URL para obtener los datos
+                    type: 'GET',
+                    success: function (data) {
+
+                        console.log('data' + JSON.stringify(data));
+
+                        var ea = data.reingresoAlimentos;
+                        var egreso = data.egresoAlimentos;
+
+                        var fechaFormateada = '';
+
+                        if(ea.fechaSolicitud != null){
+                            var fecha = ea.fechaSolicitud;  // Fecha recibida
+                            var fechaFormateada = fecha.split("T")[0]; // Extrae solo la parte "YYYY-MM-DD"
+                        }
+
+                        // Llenar el formulario con los datos de Egreso de Alimentos
+                        $('#idReingresoAlimentos').val(ea.idReingresoAlimentos);
+                        $('#idEgresoAlimentos').val(ea.idEgresoAlimentos);
+                        $('#cbIdPrograma').val(ea.idPrograma);
+                        $('#txtFechaSolicitud').val(fechaFormateada);
+                        $('#txtNoOficio').val(ea.noOficioReingreso);
+
+                        $("#txtNoDespachoAlmacen").val(egreso.noDespachoAlmacen);
+                        $("#txtNoDespachoAlmacen").css('font-weight', 'bold');
+
+                        if (ea.archivoOficioReingreso == null){
+                            $('#divBtnDescarga').hide();
+                        }
+
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error al obtener los datos del reingreso de alimentos: ', error);
+                    }
+                });
+            }
+        }
+
+        function iniciarAutocompletado(){
+            // Evento de autocompletado
+            $("#txtNoDespachoAlmacen").autocomplete({
+                source: function (request, response) {
+                    $.ajax({
+                        url: `@ViewData["rutaApp"]/ReingresoAlimentos/ObtenerListEgresos`,
+                        dataType: "json",
+                        type: "POST",
+                        contentType: "application/json",
+                        data: JSON.stringify({ term: request.term }),
+                        dataFilter: function (data) { return data; },
+                        success: function (data) {
+                            $("#idEgresoAlimentos").val('');
+
+                            $("#txtNoDespachoAlmacen").css('font-weight', 'normal');
+                            response(data);
+                        }
+                    });
+                },
+                select: function (event, ui) {
+                    $("#idEgresoAlimentos").val(ui.item.id);
+                    $("#txtNoDespachoAlmacen").css('font-weight', 'bold');
+
+                    // obtenerDatosEgreso(ui.item.id);
+                }
+            });
+        }
+
+        function ConfirmSave(){
+            Swal.fire({
+              title: "Está seguro de Guardar el Reingreso de Alimentos?",
+              showCancelButton: true,
+              confirmButtonText: "Guardar",
+              icon: "question"
+            }).then((result) => {
+              if (result.isConfirmed) {
+                  GuardarEgresoAlimentosBodega();
+              }
+            });
+        }
+
+        function GuardarEgresoAlimentosBodega() {
+            let reingresoAlimentos = {
+                IdReingresoAlimentos: $("#idReingresoAlimentos").val(),
+                FechaSolicitud: $("#txtFechaSolicitud").val(),
+                IdPrograma: $("#cbIdPrograma").val(),
+                IdEgresoAlimentos: $("#idEgresoAlimentos").val(),
+                NoOficioReingreso: $("#txtNoOficio").val(),
+                ArchivoOficioReingreso : $("#txtArchivoOficio").val()
+            };
+
+            // Validación de todos los datos
+            if (!reingresoAlimentos.FechaSolicitud || !reingresoAlimentos.IdPrograma || !reingresoAlimentos.NoOficioReingreso || !reingresoAlimentos.IdEgresoAlimentos ){
+                Swal.fire({
+                    title: "Error!",
+                    text: "Debe de Completar todos los campos.",
+                    icon: "warning"
+                });
+
+                return;
+            }
+
+            // Validación de carga deL documento
+            if ($('#archivoOficio')[0].files[0] == undefined && $('#txtArchivoOficio').val() == ''){
+                Swal.fire({
+                    title: "Error!",
+                    text: "Debe de cargar el documento de Oficio.",
+                    icon: "warning"
+                });
+
+                return;
+            }
+
+            let datosEnvio = {
+                ReingresoAlimentos: reingresoAlimentos
+            };
+
+            // Crear un objeto FormData
+            var formData = new FormData();
+
+            // Agregar los datos del formulario al objeto FormData
+            formData.append('modelo', JSON.stringify(datosEnvio)); // Enviar el modelo como JSON
+            formData.append('file', $('#archivoOficio')[0].files[0]); // Agregar el archivo 
+
+            $.ajax({
+                url: `@ViewData["rutaApp"]/ReingresoAlimentos/GuardarReingresoAlimentos`,
+                type: "POST",
+                contentType: false,
+                processData: false,
+                data: formData,
+                success: function (respuesta) {
+
+                    Swal.fire("Almacenado!", "", "success");
+
+                    // Redireccionar o limpiar formulario si es necesario
+                    window.location.href = `@ViewData["rutaApp"]/ReingresoAlimentos/Index`;
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error al guardar:", error);
+                    alert("Ocurrió un error al guardar el Egreso de Alimentos.");
+                }
+            });
+        }
+
+    </script>
+}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    // Forzar la carga de jQuery UI si no está disponible
+        if (typeof $.ui === "undefined") {
+            $.getScript("https://code.jquery.com/ui/1.12.1/jquery-ui.min.js", function () {
+                console.log("jQuery UI cargado correctamente.");
+                iniciarAutocompletado(); // Llamamos la función después de cargar jQuery UI
+            });
+        }
+
+</script>
+
