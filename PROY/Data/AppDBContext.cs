@@ -24,6 +24,7 @@ namespace PROY.Data
         public DbSet<DetalleEvaluacionAPA> DetalleEvaluacionAPA { get; set; }
         public DbSet<Catalogo> Catalogos { get; set; }
         public DbSet<AsignaRacion> AsignaRaciones { get; set; }
+        public DbSet<TipoIntervencion> TipoIntervencion { get; set; }
 
         
         // Módulo de Bodegas
@@ -247,6 +248,34 @@ namespace PROY.Data
                 //tb.HasOne(at => at.Tecnico)
                 //  .WithMany(t => t.AsignaTecnicos)
                 //  .HasForeignKey(at => at.TecnicoId);
+            });
+
+            modelBuilder.Entity<Deptos>(tb =>
+            {
+                tb.ToTable("DEPTOS");
+                tb.HasKey(col => col.Id);
+                tb.HasIndex(col => col.Id).IsUnique();
+                tb.Property(col => col.Id).ValueGeneratedOnAdd().HasColumnName("ID");
+                tb.Property(col => col.NombreDepto).HasColumnName("NOMBRE_DEPTO");
+                tb.Property(col => col.Abreviatura).HasColumnName("ABREVIATURA");
+                tb.Property(col => col.Estado).HasColumnName("ESTADO");
+                tb.ToTable("DEPTOS", "SGI");
+                tb.HasKey(e => e.Id);
+            });
+            
+            modelBuilder.Entity<TipoIntervencion>(tb =>
+            {
+                tb.ToTable("TIPO_INTERVENCION");
+                tb.HasKey(col => col.IdTipoIntervencion);
+                tb.HasIndex(col => col.IdTipoIntervencion).IsUnique();
+                tb.Property(col => col.IdTipoIntervencion).ValueGeneratedOnAdd().HasColumnName("ID_TIPO_INTERVENCION");                
+                tb.Property(col => col.Nombre).HasColumnName("NOMBRE").HasMaxLength(255).IsRequired();
+                tb.Property(col => col.IdDepto).HasColumnName("ID_DEPTO").IsRequired();
+                tb.Property(col => col.Estado).HasColumnName("ESTADO").IsRequired().HasDefaultValue(0);
+                tb.HasOne(e => e.Depto)
+                  .WithMany()
+                  .HasForeignKey(e => e.IdDepto)
+                  .HasConstraintName("TIPO_INTERVENCION_DEPTOS_FK");
             });
 
             modelBuilder.Entity<Solicitud>(tb =>
