@@ -1,0 +1,336 @@
+﻿@inject IHttpContextAccessor HttpContextAccessor
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
+
+<style>
+    .modal-header .btn-close {
+        color: white !important;
+        opacity: 1;
+        -webkit-filter:invert(1);
+    }
+</style>
+
+@model PROY.ViewModels.SolicitudesVM
+
+@{
+    ViewData["Title"] = "Index";
+    ViewData["rutaApp"] = @Model.rutaApp;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    @* var depto = "";
+
+    try
+    {
+        depto = User.FindFirst("depto")?.Value;
+    }
+    catch
+    {
+
+    }
+
+    var rol = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+    var idDepto = User.FindFirst("idDepto")?.Value;
+    var usr = User.FindFirst("Usuario")?.Value; *@
+}
+
+@* @{
+    // Usamos el HttpContext inyectado para acceder al QueryString
+    var valorK = HttpContextAccessor.HttpContext?.Request.Query["k"].ToString();
+    bool tieneValorK = !string.IsNullOrEmpty(valorK);
+    var condicion = "";
+
+    if ((depto == "DAAN" && rol != "Admin") || (tieneValorK && valorK == "1" && rol == "Admin"))
+        condicion = "1";
+    else if ((depto == "DAPA" && rol != "Admin") || (tieneValorK && valorK == "2" && rol == "Admin"))
+        condicion = "2";
+
+    //Verificar DEPTO
+    if (rol == "Admin")
+    {
+        if (valorK == "1")
+            idDepto = "1";
+        else if (valorK == "2")
+            idDepto = "2";
+    }
+} *@
+
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Mensaje"]
+    </div>
+}
+
+<ul class="nav nav-tabs" id="myTab" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="home-tab" data-bs-toggle="tab" data-bs-target="#home" type="button" role="tab" aria-controls="home" aria-selected="true">Solicitudes en Evaluación</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab" aria-controls="profile" aria-selected="false">Solicitudes Rechazadas</button>
+    </li>    
+</ul>
+<div class="tab-content" id="myTabContent">
+    <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
+        <table class="table" style="width:100%;">
+            <thead>
+                <tr>
+                    <th>CODIGO</th>
+                    <th>No. SOLICITUD</th>
+                    <th>PROYECTO</th>
+                    <th>INTERVENCION</th>
+                    <th>FECHA INGRESO A DESPACHO</th>
+                    <th>FECHA INGRESO A DIRECCIÓN</th>
+                    <th>FECHA INGRESO A DEPARTAMENTO</th>
+                    <th>MEDIO VERIFICACIÓN</th>
+                    <th>FALLECIDOS</th>
+                    <th>DUPLICADOS</th>
+                    <th>SIN DATOS</th>
+                    <th>GOBIERNO</th>
+                    <th>VÁLIDOS</th>
+                    <th>OPCIONES</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (Solicitud item in Model.Solicitudes)
+                {
+                    <tr>
+                        <td>@item.Codigo</td>
+                        <td>@item.Correlativo</td>
+                        <td>
+                            @{
+                                // Obtener la descripción usando el diccionario
+                                /*string descripcionInstitucion = Model.InstitucionDict.TryGetValue(item.IdInstitucion, out var descInst)
+                                ? descInst
+                                : "Institución no encontrada";*/
+
+                                string descripcionProyecto = item.IdProyecto.HasValue
+                                ? Model.ProyectoDict.TryGetValue(item.IdProyecto.Value, out var descProy)
+                                ? descProy : "Proyecto no encontrado"
+                                : "IdProyecto no especificado";
+                            }
+                            @descripcionProyecto
+                        </td>
+                        <td>
+                            @{
+                                // Obtener la descripción usando el diccionario
+                                string descripcionIntervencion = Model.IntervencionDict.TryGetValue(item.IdIntervencion, out var descInter)
+                                ? descInter
+                                : "Intervención no encontrada";
+                            }
+                            @descripcionIntervencion
+                        </td>
+                        <td>@item.FechaIngresoDespacho.Date.ToString("dd/MM/yyyy")</td>
+                        <td>@item.FechaIngresoDireccion.Date.ToString("dd/MM/yyyy")</td>
+                        <td>@item.FechaIngresoUnidad.Date.ToString("dd/MM/yyyy")</td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(item.Archivo))
+                            {
+                                var extension = System.IO.Path.GetExtension(item.Archivo).ToLower();
+
+                                if (extension == ".pdf")
+                                {
+                                    <a href="@Url.Action("PreviewFile", new { fileName = item.Archivo })" target="_blank">
+                                        <i class="fas fa-file-pdf"></i> Ver PDF
+                                    </a>
+                                }
+                                else if (extension == ".xls" || extension == ".xlsx")
+                                {
+                                    <a href="@Url.Action("DownloadFile", new { fileName = item.Archivo })">
+                                        <i class="fas fa-file-excel"></i> Descargar
+                                    </a>
+                                }
+                                else if (extension == ".doc" || extension == ".docx")
+                                {
+                                    <a href="@Url.Action("DownloadFile", new { fileName = item.Archivo })">
+                                        <i class="fas icon-file-word"></i> Descargar
+                                    </a>
+                                }
+                                else if (extension == ".ppt" || extension == ".pptx")
+                                {
+                                    <a href="@Url.Action("DownloadFile", new { fileName = item.Archivo })">
+                                        <i class="fas icon-file-ppt"></i> Descargar
+                                    </a>
+                                }
+                                else if (extension == ".jpg" || extension == ".jpeg" || extension == ".png" || extension == ".gif" || extension == ".bmp")
+                                {
+                                    <a href="@Url.Action("PreviewFile", new { fileName = item.Archivo })" target="_blank">
+                                        <i class="fas fa-file-image"></i> Ver Imagen
+                                    </a>
+                                }
+                            }
+                            else
+                            {
+                                <span>No disponible</span>
+                            }
+                        </td>
+                        <td>
+                            @{
+                                int contadorFallecido = 0;
+                                contadorFallecido = 0;
+                                foreach (var detalle in item.DetallesSolicitudAPA ?? Enumerable.Empty<DetalleSolicitudAPA>())
+                                {
+                                    foreach (var cat in Model.AnulacionDict)
+                                    {
+                                        if (detalle.IdAnulacion != null)
+                                        {
+                                            if (detalle.IdAnulacion == cat.Key && cat.Value == "FALLECIDO")
+                                            {
+                                                contadorFallecido++;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            @contadorFallecido
+                        </td>
+                        <td>
+                            @{
+                                int contadorDuplicado = 0;
+                                foreach (var detalle in item.DetallesSolicitudAPA ?? Enumerable.Empty<DetalleSolicitudAPA>())
+                                {
+                                    foreach (var cat in Model.AnulacionDict)
+                                    {
+                                        if (detalle.IdAnulacion == cat.Key && cat.Value == "DUPLICADO")
+                                        {
+                                            contadorDuplicado++;
+                                        }
+                                    }
+                                }
+                            }
+                            @contadorDuplicado
+                        </td>
+                        <td>
+                            @{
+                                int contadorSinDatos = 0;
+                                foreach (var detalle in item.DetallesSolicitudAPA ?? Enumerable.Empty<DetalleSolicitudAPA>())
+                                {
+                                    foreach (var cat in Model.AnulacionDict)
+                                    {
+                                        if (detalle.IdAnulacion == cat.Key && cat.Value == "SIN DATOS")
+                                        {
+                                            contadorSinDatos++;
+                                        }
+                                    }
+                                }
+                            }
+                            @contadorSinDatos
+                        </td>
+                        <td>
+                            @{
+                                int contadorGobierno = 0;
+                                foreach (var detalle in item.DetallesSolicitudAPA ?? Enumerable.Empty<DetalleSolicitudAPA>())
+                                {
+                                    foreach (var cat in Model.AnulacionDict)
+                                    {
+                                        if (detalle.IdAnulacion == cat.Key && cat.Value == "GOBIERNO")
+                                        {
+                                            contadorGobierno++;
+                                        }
+                                    }
+                                }
+                            }
+                            @contadorGobierno
+                        </td>
+                        <td>
+                            @{
+                                int contadorValidos = 0;
+                                foreach (var detalle in item.DetallesSolicitudAPA ?? Enumerable.Empty<DetalleSolicitudAPA>())
+                                {
+                                    contadorValidos++;
+                                }
+                                contadorValidos = contadorValidos - contadorFallecido - contadorDuplicado - contadorSinDatos - contadorGobierno;
+                            }
+                            @contadorValidos
+                        </td>
+
+                        <td>
+                            @* @if (rol == "Admin")
+                            {
+                                <a class="btn btn-primary btn-sm" onclick="abrirModalYActualizarUrl(@item.IdSolicitud, @idDepto)"><i class="fas fa-edit"></i> Ajustes</a>
+                            }
+                            else
+                            {
+                                if (usr == item.UsuarioRegistro)
+                                {
+                                    <a class="btn btn-primary btn-sm" onclick="abrirModalYActualizarUrl(@item.IdSolicitud, @idDepto)"><i class="fas fa-edit"></i> Ajustes</a>
+                                }
+                                else
+                                {
+                                    <a class="btn btn-gray btn-sm disabled" href="javascript:void(0);"><i class="fas fa-edit"></i> Ajustes</a>
+                                }
+                            }
+                            @if (rol == "Admin")
+                            {
+                                <a class="btn btn-dark btn-sm" asp-controller="Evaluacion" asp-action="ListaDetalle" asp-route-idEvaluacion="@item.IdSolicitud" asp-route-k="@condicion"><i class="fas fa-bars"></i> Beneficiarios</a>
+                            }
+                            else
+                            {
+                                if (usr == item.UsuarioRegistro)
+                                {
+                                    <a class="btn btn-dark btn-sm" asp-controller="Evaluacion" asp-action="ListaDetalle" asp-route-idEvaluacion="@item.IdSolicitud"><i class="fas fa-bars"></i> Beneficiarios</a>
+                                }
+                                else
+                                {
+                                    <a class="btn btn-gray btn-sm disabled" href="javascript:void(0);"><i class="fas fa-bars"></i> Beneficiarios</a>
+                                }
+                            }
+                            @if (rol == "Admin")
+                            {
+                                <a class="btn btn-info btn-sm" asp-controller="Evaluacion" asp-action="IndexDetalle" asp-route-idEvaluacion="@item.IdSolicitud" asp-route-k="@condicion"><i class="fas fa-bars"></i> Medios Verificacion</a>
+                            }
+                            else
+                            {
+                                if (usr == item.UsuarioRegistro)
+                                {
+                                    <a class="btn btn-info btn-sm" asp-controller="Evaluacion" asp-action="IndexDetalle" asp-route-idEvaluacion="@item.IdSolicitud" asp-route-k="@condicion"><i class="fas fa-bars"></i> Medios Verificacion</a>
+                                }
+                                else
+                                {
+                                    <a class="btn btn-gray btn-sm disabled" href="javascript:void(0);"><i class="fas fa-bars"></i> Medios Verificacion</a>
+                                }
+                            }
+
+                            @if (rol == "Admin")
+                            {
+                                <a class="btn btn-outline-danger btn-sm" asp-controller="Evaluacion" asp-action="EnviarRechazado" asp-route-idEvaluacion="@item.IdSolicitud" asp-route-k="@condicion" onclick="confirmarRechazo(event,'@item.Codigo', this)"><i class="fas fa-times"></i> Rechazar</a>
+                            }
+                            else
+                            {
+                                if (usr == item.UsuarioRegistro)
+                                {
+                                    <a class="btn btn-outline-danger btn-sm" asp-controller="Evaluacion" asp-action="EnviarRechazado" asp-route-idEvaluacion="@item.IdSolicitud" asp-route-k="@condicion" onclick="confirmarRechazo(event,'@item.Codigo', this)"><i class="fas fa-times"></i> Rechazar</a>
+                                }
+                                else
+                                {
+                                    <a class="btn btn-gray btn-sm disabled" href="javascript:void(0);"><i class="fas fa-times"></i> Rechazar</a>
+                                }
+                            }
+
+                            @if (rol == "Admin")
+                            {
+                                <a class="btn btn-danger btn-sm" asp-controller="Evaluacion" asp-action="EnviarEvaluacion" asp-route-idEvaluacion="@item.IdSolicitud" asp-route-k="@condicion" onclick="confirmarEnvio(event,'@item.Codigo', this)" title="Enviar solicitud a status de programación"><i class="fas fa-bolt"></i> Enviar</a>
+                            }
+                            else
+                            {
+                                if (usr == item.UsuarioRegistro)
+                                {
+                                    <a class="btn btn-danger btn-sm" asp-controller="Evaluacion" asp-action="EnviarEvaluacion" asp-route-idEvaluacion="@item.IdSolicitud" onclick="confirmarEnvio(event,'@item.Codigo', this)" title="Enviar solicitud a status de programación"><i class="fas fa-bolt"></i> Enviar</a>
+                                }
+                                else
+                                {
+                                    <a class="btn btn-gray btn-sm disabled" href="javascript:void(0);"><i class="fas fa-bolt"></i> Enviar</a>
+                                }
+
+                            } *@
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>

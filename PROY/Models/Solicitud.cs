@@ -51,6 +51,10 @@ namespace PROY.Models
         public List<DetalleEvaluacionAPA> DetallesEvaluacionAPA { get; set; }
         //public List<AsignaTecnico> AsignaTecnicos { get; set; }
         [NotMapped]
-        public Boolean ? BotonDespacho { get; set; }
+        public Boolean? BotonDespacho { get; set; }
+        
+        public string? NombreCocode { get; set; }
+        public string? ComunidadCocode { get; set; }
+        public string ? TelefonoCocode { get; set; }
     }
 }

@@ -31,6 +31,7 @@ namespace PROY.Services
         Task<ServiceResponse<DetalleSolicitudAPA>> UpdateListaDetalleSolicitudAPA(List<Models.ExcelRowAPA> datos);
         Task<ServiceResponse<Solicitud>> UpdateSolicitud(Solicitud modelo);
         Task<ServiceResponse<Solicitud>> UpdateEstado(Solicitud modelo);
+        Task<ServiceResponse<Solicitud>> UpdateEstadoARevAdministrativa(Solicitud modelo);
         Task<ServiceResponse<DetalleSolicitud>> UpdateDetalleSolicitud(DetalleSolicitud modelo, string proceso);
         Task<ServiceResponse<DetalleSolicitudAPA>> UpdateDetalleSolicitudAPA(DetalleSolicitudAPA modelo);
         Task<ServiceResponse<Solicitud>> DeleteSolicitud(Int64 id);

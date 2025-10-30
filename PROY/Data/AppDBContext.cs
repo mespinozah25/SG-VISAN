@@ -315,6 +315,9 @@ namespace PROY.Data
                 tb.Property(col => col.FechaRegistro).HasColumnName("FECHA_REGISTRO");
                 tb.Property(col => col.UsuarioRegistro).HasColumnName("USUARIO_REGISTRO");
                 tb.Property(col => col.FechaIngresoDireccion).HasColumnName("FECHAINGRESODIRECCION");
+                tb.Property(col => col.NombreCocode).HasColumnName("NOMBRE_COCODE");
+                tb.Property(col => col.ComunidadCocode).HasColumnName("COMUNIDAD_COCODE");
+                tb.Property(col => col.TelefonoCocode).HasColumnName("TELEFONO_COCODE");
             });
 
             modelBuilder.Entity<DetalleSolicitud>(tb =>

@@ -766,6 +766,12 @@
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link" asp-controller="RevAdministrativa" asp-action="Index">
+                                <i class="fas fa-edit"></i>
+                                <span class="item-name">Revisión<br>Administrativa</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link" asp-controller="Programacion" asp-action="Index" asp-route-k="2">
                                 <i class="icon">
                                     <svg class="icon-20" width="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -814,6 +820,14 @@
                                 <span class="item-name">Registro</span>
                             </a>
                         </li>
+                        if (User.FindFirst("idDepto").Value == "2") {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="RevAdministrativa" asp-action="Index">
+                                    <i class="fas fa-cog"></i>
+                                    <span class="item-name">Revisión<br>Administrativa</span>
+                                </a>
+                            </li>
+                        }
                         <li class="nav-item">
                             <a class="nav-link" asp-controller="Evaluacion" asp-action="Index">
                                 <i class="icon">
