@@ -1,0 +1,107 @@
+﻿@inject IHttpContextAccessor HttpContextAccessor
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
+
+<style>
+    .modal-header .btn-close {
+        color: white !important;
+        opacity: 1;
+        -webkit-filter: invert(1);
+    }
+
+    .table .dropdown-menu {
+        z-index: 1050;
+    }
+</style>
+
+@model PROY.ViewModels.SolicitudesVM
+
+@{
+    ViewData["Title"] = "Index";
+    ViewData["rutaApp"] = @Model.rutaApp;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Mensaje"]
+    </div>
+}
+<h1 class="display-6">Verificación de Campo</h1>
+<table class="table p-5">
+    <thead>
+        <tr>
+            <th>CODIGO</th>
+            <th>No. SOLICITUD</th>
+            <th>PROYECTO</th>
+            <th>INTERVENCION</th>
+            <th>FECHA INGRESO A DESPACHO</th>
+            <th>FECHA INGRESO A DIRECCIÓN</th>
+            <th>FECHA INGRESO A DEPARTAMENTO</th>
+            <th>OPCIONES</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (Solicitud item in Model.Solicitudes)
+        {
+            string descripcionProyecto = item.IdProyecto.HasValue
+            ? Model.ProyectoDict.TryGetValue(item.IdProyecto.Value, out var descProy)
+            ? descProy : "Proyecto no encontrado"
+            : "IdProyecto no especificado";
+
+            string descripcionIntervencion = Model.IntervencionDict.TryGetValue(item.IdIntervencion, out var descInter)
+            ? descInter
+            : "Intervención no encontrada";
+
+            <tr>
+                <td>@item.Codigo</td>
+                <td>@item.Correlativo</td>
+                <td class="text-truncate" style="max-width: 150px;">@descripcionProyecto</td>
+                <td>@descripcionIntervencion</td>
+                <td>@item.FechaIngresoDespacho.Date.ToString("dd/MM/yyyy")</td>
+                <td>@item.FechaIngresoDireccion.Date.ToString("dd/MM/yyyy")</td>
+                <td>@item.FechaIngresoUnidad.Date.ToString("dd/MM/yyyy")</td>
+                <td>
+                    <div class="dropdown">
+                        <button class="btn btn-secondary dropdown-toggle" type="button" id="opcionesVerificacionCampo"
+                            data-bs-toggle="dropdown" aria-expanded="false" data-bs-container="body">
+                            Opciones
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="opcionesVerificacionCampo">
+                            <li>
+                                <a class="dropdown-item" asp-controller="VerificacionCampo" asp-action="EnviarSolicitud" asp-route-IdSolicitud="@item.IdSolicitud" onclick="confirmarEnvio(event, this,'@item.Codigo')">Enviar</a>
+                            <li>
+                        </ul>
+                    </div>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+    function confirmarEnvio(evento, elemento, codigoSolicitud){
+
+        evento.preventDefault();
+
+        Swal.fire({
+            title: "ATENCIÓN",
+            text: "¿Desea enviar la solicitud " + codigoSolicitud + " a un status de evaluación?",
+            icon: "question",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Aceptar",
+            cancelButtonText: "Cancelar"
+        }).then((result) => {
+            if (result.isConfirmed) window.location.href = elemento.href;
+            else if (result.dismiss === Swal.DismissReason.cancel) evento.preventDefault();
+        });
+    }    
+</script>

@@ -46,6 +46,8 @@ builder.Services.AddScoped<IEvaluacionRepository, EvaluacionRepository>();
 builder.Services.AddScoped<IEvaluacionService, EvaluacionService>();
 builder.Services.AddScoped<IRevAdministrativaRepository, RevAdministrativaRepository>();
 builder.Services.AddScoped<IRevAdministrativaService, RevAdministrativaService>();
+builder.Services.AddScoped<IVerificacionCampoRepository, VerificacionCampoRepository>();
+builder.Services.AddScoped<IVerificacionCampoService, VerificacionCampoService>();
 builder.Services.AddScoped<IProgramacionRepository, ProgramacionRepository>();
 builder.Services.AddScoped<IProgramacionService, ProgramacionService>();
 builder.Services.AddScoped<IEjecucionRepository, EjecucionRepository>();
