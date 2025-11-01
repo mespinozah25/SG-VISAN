@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PROY.Data;
-using PROY.Models;
+using PROY.Models.TableroDeDatos;
 
 namespace PROY.Repositories
 {
@@ -13,29 +13,77 @@ namespace PROY.Repositories
             _dbContext = dbContext;
         }
 
-        public List<dynamic> ChartBodegasExistenciaProductos()
+        public List<BodegaProducto> ChartBodegasExistenciaProductos()
         {
-            var query = (from a in _dbContext.MovimientosProductos
-                         join b in _dbContext.Bodegas on a.IdBodega equals (int)b.IdBodega
-                         join c in _dbContext.ProductoAlimenticio on a.IdProductoAlimenticio equals (int)c.IdProductoAlimenticio
-                         where a.Estado == 0
-                         select new
-                         {
-                             b.NombreBodega,
-                             c.NombrePA,
-                             a.Existencias,
-                         }).ToList<dynamic>();
+            // Usar Database Facade para evitar problemas de EF
+            var connection = _dbContext.Database.GetDbConnection();
+            var command = connection.CreateCommand();
 
-            return query;
+            command.CommandText = @"
+                        SELECT 
+                            b.NOMBRE_BODEGA AS NombreBodega,
+                            p.NOMBRE_PA AS NombrePA,
+                            m.EXISTENCIAS AS Existencias
+                        FROM SGI.MOVIMIENTOS_PRODUCTOS m
+                        INNER JOIN SGI.BODEGA b ON m.BODEGA_ID = b.ID
+                        INNER JOIN SGI.PRODUCTO_ALIMENTICIO p ON m.PRODUCTO_ALIMENTICIO_ID = p.ID
+                        WHERE m.ESTADO = 0";
+
+            var result = new List<BodegaProducto>();
+
+            if (connection.State != System.Data.ConnectionState.Open)
+                connection.Open();
+
+            using (var reader = command.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    result.Add(new BodegaProducto
+                    {
+                        NombreBodega = reader["NombreBodega"]?.ToString() ?? "Desconocido",
+                        NombrePA = reader["NombrePA"]?.ToString() ?? "Desconocido",
+                        Existencias = Convert.ToDecimal(reader["Existencias"])
+                    });
+                }
+            }
+
+            return result;
         }
 
-        public List<dynamic> ChartRaciones()
+        public List<Racion> ChartRaciones()
         {
-            var query = (from a in _dbContext.RacionMaestro
-                         where a.Estado == 0
-                         select a).ToList<dynamic>();
+            // Usar Database Facade para evitar problemas de EF
+            var connection = _dbContext.Database.GetDbConnection();
+            var command = connection.CreateCommand();
 
-            return query;
+            command.CommandText = @"
+            SELECT 
+                COALESCE(p.NOMBRE_PA, 'Desconocido') AS NombrePrograma,
+                COALESCE(SUM(r.CANTIDAD_MEDIDA), 0) AS TotalRaciones
+            FROM SGI.RACION_DETALLE r
+            INNER JOIN SGI.PRODUCTO_ALIMENTICIO p ON r.PRODUCTO_ID = p.ID
+            WHERE r.ESTADO = 0
+            GROUP BY p.NOMBRE_PA";
+
+            var result = new List<Racion>();
+
+            if (connection.State != System.Data.ConnectionState.Open)
+                connection.Open();
+
+            using (var reader = command.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    result.Add(new Racion
+                    {
+                        NombrePrograma = reader["NombrePrograma"]?.ToString() ?? "Desconocido",
+                        TotalRaciones = Convert.ToDecimal(reader["TotalRaciones"])
+                    });
+                }
+            }
+
+            return result;
+
         }
     }
 }
