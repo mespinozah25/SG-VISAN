@@ -1,0 +1,143 @@
+@inject IHttpContextAccessor HttpContextAccessor
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
+
+@model PROY.ViewModels.SolicitudesVM
+
+@{
+    ViewData["Title"] = "Index";
+    ViewData["rutaApp"] = @Model.rutaApp;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Mensaje"]
+    </div>
+}
+@{
+    int contadorAsignacionRaciones = 0;
+    string descripcionDepartamento = Model.Solicitud!.Departamento.HasValue
+    ? Model.DepartamentoDict.TryGetValue(Model.Solicitud!.Departamento.Value, out string? descDep)
+    ? descDep : "Departamento no encontrado" : "Departamento no especificado";
+    string descripcionMunicipio = Model.Solicitud!.Municipio.HasValue
+    ? Model.MunicipioDict.TryGetValue(Model.Solicitud!.Municipio.Value, out string? descMun)
+    ? descMun : "Municipio no encontrado" : "Municipio no especificado";
+}
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-md-11">
+            <h1 class="display-6">Despacho de Alimentos Por Acciones</h1>
+        </div>
+        <div class="col-md-1">
+            <a class="btn btn-primary w-100" asp-controller="SolicitudV2"
+                asp-action="DetalleSolicitud" asp-route-IdSolicitud="@Model.Solicitud!.IdSolicitud">
+                Regresar
+            </a>
+        </div>
+    </div>
+    <div class="row g-4">
+        <div class="col-12 section-separator">
+            <h3 class="fs-5 fw-bold text-dark">Detalle de raciones</h3>
+        </div>
+        <div class="col-md-4">
+            <dt>Departamento</dt>
+            <dd>@descripcionDepartamento</dd>
+        </div>
+        <div class="col-md-4">
+            <dt>Municipio</dt>
+            <dd>@descripcionMunicipio</dd>
+        </div>
+        <div class="col-md-4">
+            <dt>Comunidad</dt>
+            <dd>@Model.Solicitud!.Comunidad</dd>
+        </div>
+        <div class="col-md-6">
+            <dt>Beneficiarios</dt>
+            <dd>@(Model.Solicitud!.Validos + Model.Solicitud!.NoAplica)</dd>
+        </div>
+        <div class="col-md-6">
+            <dt>Raciones</dt>
+            <dd>@(Model.Solicitud!.Raciones * (Model.Solicitud!.Validos + Model.Solicitud!.NoAplica))</dd>
+        </div>
+    </div>
+    <form asp-action="AgregarAsignacionRacion" asp-controller="SolicitudV2" method="post">
+        <div class="row my-3">
+            <input type="hidden" asp-for="@Model.Solicitud.IdSolicitud" />
+            <input type="hidden" asp-for="@Model.Solicitud.Departamento" />
+            <input type="hidden" asp-for="@Model.Solicitud.Municipio" />
+            <input type="hidden" asp-for="@Model.Solicitud.Comunidad" />
+            <input type="hidden" asp-for="@Model.Solicitud.Raciones" />
+            <input type="hidden" asp-for="@Model.Solicitud.Validos" />
+            <input type="hidden" asp-for="@Model.Solicitud.NoAplica" />
+            <input type="hidden" asp-for="@Model.AsignaRacionV2!.UsuarioRegistro" />
+            <div class="col-md-3">
+                <label class="control-label">Departamento</label>
+                <select disabled class="form-select" id="cbDeptoRacion" asp-for="@Model.Solicitud.Departamento" asp-items="ViewBag.Departamentos" required></select>
+                <span asp-validation-for="@Model.Solicitud.Departamento" class="text-danger"></span>
+            </div>
+            <div class="col-md-3">
+                <label class="control-label">Municipio</label>
+                <select disabled class="form-select" id="cbMuniRacion" asp-for="@Model.Solicitud.Municipio" asp-items="ViewBag.Municipios" required></select>
+                <span asp-validation-for="@Model.Solicitud.Municipio" class="text-danger"></span>
+            </div>
+            <div class="col-md-3">
+                <label class="control-label">Comunidad</label>
+                <input disabled type="text" class="form-control" id="txtComunidad" asp-for="@Model.Solicitud!.Comunidad" required></input>
+            </div>
+            <div class="col-md-2">
+                <label for="txtRacion" class="control-label">Ración</label>
+                <input type="text" class="form-control" id="txtRacion" asp-for="@Model.AsignaRacionV2!.RacionAsignada" required maxlength="10"></input>
+            </div>
+            <div class="col-md-1">
+                <input type="submit" value="Agregar" class="btn btn-primary w-100 h-100" />
+            </div>
+        </div>
+    </form>
+    <div class="row">
+        <div class="col-12">
+            <div class="table-responsive">
+                <table class="table p-5">
+                    <thead>
+                        <tr>
+                            <th>ELIMINAR</th>
+                            <th>DEPARTAMENTO</th>
+                            <th>MUNICIPIO</th>
+                            <th>COMUNIDAD</th>
+                            <th>RACIONES</th>
+                            <th>SALDO</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (AsignaRacionV2 item in Model.DetalleRacionesV2)
+                        {
+                            <tr>
+                                <td>
+                                    <a class="btn btn-danger" asp-controller="SolicitudV2"
+                                        asp-action="EliminarAsignacionRacion" asp-route-IdSolicitud="@Model.Solicitud!.IdSolicitud"
+                                        asp-route-IdAsignaRacion="@item.IdAsignaRacion">
+                                        Eliminar
+                                    </a>
+                                </td>
+                                <td>@descripcionDepartamento</td>
+                                <td>@descripcionMunicipio</td>
+                                <td>@Model.Solicitud!.Comunidad</td>
+                                <td>@item.RacionAsignada</td>
+                                <td>@item.RacionSaldo</td>
+                            </tr>
+
+                            contadorAsignacionRaciones++;
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>

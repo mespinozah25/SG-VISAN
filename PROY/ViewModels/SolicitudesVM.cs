@@ -40,7 +40,9 @@ namespace PROY.ViewModels
         public List<Agrupado> Agrupados { get; set; }
         public AsignaRacion AsignaRacion { get; set; }
         public List<AsignaRacion> DetalleRaciones { get; set; }
-
+        public AsignaRacionV2 AsignaRacionV2 { get; set; }
+        public List<AsignaRacionV2> DetalleRacionesV2 { get; set; }
+        public List<EstadoSolicitud> EstadosSolicitud { get; set; } = new List<EstadoSolicitud>();
         public string rutaApp { get; } = ControlGlobal.rutaApp;
     }
  

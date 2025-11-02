@@ -571,6 +571,8 @@ namespace PROY.Controllers
                             return RedirectToAction("Index", "Solicitud");
                         }*/
 
+                        if(idDepto == "2") return RedirectToAction("DetalleSolicitud", "SolicitudV2", new { idSolicitud = modelo.IdSolicitud});
+
                         if (varRetorno == "Programacion")
                         {
                             TempData["Mensaje"] = result.Message;
@@ -578,19 +580,22 @@ namespace PROY.Controllers
                         }
 
                         TempData["Mensaje"] = result.Message;
-                        return RedirectToAction("Index", "Solicitud", new {k=condicion});
+                        return RedirectToAction("Index", "Solicitud", new { k = condicion });
                     }
                     else
                     {
                         TempData["Mensaje"] = result.Message;
+
+                        if(idDepto == "2") return RedirectToAction("DetalleSolicitud", "SolicitudV2", new { idSolicitud = modelo.IdSolicitud});
+
                         return View(modelo);
                     }
 
                 }
                 else
-                {            
+                {
 
-                    var result=await _solicitudService.UpdateSolicitud(modelo);
+                    var result = await _solicitudService.UpdateSolicitud(modelo);
 
                     if (result.Success && result.Data != null)
                     {
@@ -615,7 +620,7 @@ namespace PROY.Controllers
                             {
 
                             }
-                            
+
                             // Obtenemos la extensión del archivo
                             var extension = Path.GetExtension(file.FileName);
                             // Obtenemos el nombre del archivo sin la extensión
@@ -682,6 +687,8 @@ namespace PROY.Controllers
                             return RedirectToAction("Index", "Solicitud");
                         }*/
 
+                        if(idDepto == "2") return RedirectToAction("DetalleSolicitud", "SolicitudV2", new { idSolicitud = modelo.IdSolicitud});
+
                         if (varRetorno == "Programacion")
                         {
                             TempData["Mensaje"] = result.Message;
@@ -689,10 +696,13 @@ namespace PROY.Controllers
                         }
 
                         TempData["Mensaje"] = result.Message;
-                        return RedirectToAction("Index", "Solicitud", new {k=condicion});
+
+                        return RedirectToAction("Index", "Solicitud", new { k = condicion });
                     }
-                }                
+                }
             }
+            if(idDepto == "2") return RedirectToAction("Index", "SolicitudV2");
+            
             return View(modelo);            
         }
 

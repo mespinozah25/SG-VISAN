@@ -183,7 +183,7 @@ else if (idDepto == "2")
                         string descripcionProyecto = item.IdProyecto.HasValue 
                                     ? Model.ProyectoDict.TryGetValue(item.IdProyecto.Value, out var descProy) 
                                     ? descProy : "Proyecto no encontrada" 
-                                               : "IdProyecto no especificado";
+                                                : "IdProyecto no especificado";
                     }
                     @descripcionProyecto
                 </td>   
