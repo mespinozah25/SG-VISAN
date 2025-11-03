@@ -43,6 +43,8 @@ namespace PROY.Services
 
             solicitud.NoAplica = await _detalleSolicitudAPARepository.TotalRegistrosSegunAnulacion(IdSolicitud, int.Parse(_configuration["Catalogos:Anulaciones:NO_APLICA"]!));
 
+            solicitud.MostrarContinuidadVerificacionCampo = await _detalleEvaluacionAPARepository.ExisteRegistroSegunProceso(IdSolicitud, _configuration["Procesos:APA:VERIFICACION_CAMPO"]!);
+
             solicitud.MostrarDespachoEnProgramacion = await _detalleEvaluacionAPARepository.ExisteRegistroSegunProceso(IdSolicitud, _configuration["Procesos:APA:PROGRAMACION"]!);
 
             solicitud.MostrarDespachoEnEjecucion = await _detalleEvaluacionAPARepository.ExisteRegistroSegunProceso(IdSolicitud, _configuration["Procesos:APA:EJECUCION"]!);

@@ -165,6 +165,29 @@
                                                 Rechazar Solicitud
                                             </a>
                                         }
+                                        @if ($"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:VERIFICACION_DE_CAMPO"]}"){
+                                            <a class="dropdown-item" asp-controller="Evaluacion" asp-action="IndexDetalle"
+                                                asp-route-idEvaluacion="@Model.Solicitud!.IdSolicitud" asp-route-k="2" asp-route-proceso="VERIFICACION_CAMPO">
+                                                Medios de Verificación
+                                            </a>
+                                            @if(Model.Solicitud!.MostrarContinuidadVerificacionCampo){    
+                                                <a class="dropdown-item" asp-controller="SolicitudV2" asp-action="DetalleSolicitud" 
+                                                    asp-route-IdSolicitud="@Model.Solicitud!.IdSolicitud" asp-route-Rechazada="1">
+                                                    Rechazar Solicitud
+                                                </a>
+                                                <a class="dropdown-item" asp-controller="SolicitudV2"
+                                                    asp-action="CambioEtapaSolicitud" asp-route-IdSolicitud="@Model.Solicitud!.IdSolicitud"
+                                                    onclick="confirmarOperacion(event, this,`¿Desea enviar la solicitud @Model.Solicitud!.Codigo a @Model.Solicitud!.EstadoSolicitud.EstadoSolicitudSiguiente!.Nombre?`)">
+                                                    Enviar a etapa: @Model.Solicitud!.EstadoSolicitud.EstadoSolicitudSiguiente!.Nombre
+                                                </a>
+                                            }
+                                            else
+                                            {
+                                                <a class="dropdown-item text-danger">
+                                                    debe ingresar un medio de verificación para aprobación/rechazo
+                                                </a>
+                                            }
+                                        }
                                         @if ($"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:EVALUACION"]}"){
                                             <a class="dropdown-item" asp-controller="Evaluacion" asp-action="ListaDetalle"
                                                 asp-route-idEvaluacion="@Model.Solicitud!.IdSolicitud" asp-route-k="2">
@@ -237,7 +260,9 @@
                                                 Medios de Verificación
                                             </a>
                                         }
-                                        @if(Model.Solicitud!.EstadoSolicitud.EstadoSolicitudSiguiente != null && $"{Model.Solicitud!.IdEstadoSolicitud}" != $"{@Configuration["EtapasSolicitud:APA:PROGRAMACION"]}"){
+                                        @if(Model.Solicitud!.EstadoSolicitud.EstadoSolicitudSiguiente != null &&
+                                            $"{Model.Solicitud!.IdEstadoSolicitud}" != $"{@Configuration["EtapasSolicitud:APA:VERIFICACION_DE_CAMPO"]}" &&
+                                            $"{Model.Solicitud!.IdEstadoSolicitud}" != $"{@Configuration["EtapasSolicitud:APA:PROGRAMACION"]}"){
                                             <a class="dropdown-item" asp-controller="SolicitudV2"
                                                 asp-action="CambioEtapaSolicitud" asp-route-IdSolicitud="@Model.Solicitud!.IdSolicitud"
                                                 onclick="confirmarOperacion(event, this,`¿Desea enviar la solicitud @Model.Solicitud!.Codigo a @Model.Solicitud!.EstadoSolicitud.EstadoSolicitudSiguiente!.Nombre?`)">
@@ -250,7 +275,10 @@
                         </div>
                     </div>
                 </div>
-                @if(Rechazada == 1 && $"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:REVISION_ADMINISTRATIVA"]}"){
+                @if(Rechazada == 1 && (
+                    $"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:VERIFICACION_DE_CAMPO"]}" ||
+                    $"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:REVISION_ADMINISTRATIVA"]}"
+                )){
                     <form asp-action="RechazarSolicitudConComentario" asp-controller="SolicitudV2" method="post">
                         <div class="row my-3 g-3">
                             <input type="hidden" asp-for="@Model.Solicitud.IdSolicitud" />

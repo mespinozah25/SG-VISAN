@@ -27,6 +27,7 @@
 @{
     int? IdEstado = ViewData["IdEstado"] as int?;
     string Offset4 = $"{IdEstado}" == $"{@Configuration["EtapasSolicitud:APA:CREADA"]}" ||
+                    $"{IdEstado}" == $"{@Configuration["EtapasSolicitud:APA:REVISION_ADMINISTRATIVA"]}" ||
                     $"{IdEstado}" == $"{@Configuration["EtapasSolicitud:APA:EVALUACION"]}" ? "" : "offset-4";
 }
 
@@ -63,6 +64,7 @@
             </div>
         </div>
         @if ($"{IdEstado}" == $"{@Configuration["EtapasSolicitud:APA:CREADA"]}" ||
+            $"{IdEstado}" == $"{@Configuration["EtapasSolicitud:APA:REVISION_ADMINISTRATIVA"]}" ||
             $"{IdEstado}" == $"{@Configuration["EtapasSolicitud:APA:EVALUACION"]}"){
             <div class="col-md-4">
                 <div class="btn-group w-100" role="group" aria-label="EstadosEvaluacion">

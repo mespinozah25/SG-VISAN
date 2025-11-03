@@ -146,18 +146,11 @@ namespace PROY.Services
                     IdTipoValidacion = modelo.IdTipoValidacion,
                     Archivo = modelo.Archivo,
                     Observaciones = modelo.Observaciones,
-                    Proceso = "VALIDACION",
+                    Proceso = proceso,
                     Restrictiva = 0,
                     FechaRegistro = modelo.FechaRegistro,
                     UsuarioRegistro = modelo.UsuarioRegistro
                 };
-
-                if (proceso == "EJECUCION")
-                    detEvaluacion.Proceso = "EJECUCION";
-                else if (proceso == "PROGRAMACION")
-                    detEvaluacion.Proceso = "PROGRAMACION";                
-                else if (proceso == "VALIDACION")
-                    detEvaluacion.Proceso = "VALIDACION";
 
                 // Guardar evaluacion en la base de datos
                 await _evaluacionRepository.SaveDetalleEvaluacionAPA(detEvaluacion);

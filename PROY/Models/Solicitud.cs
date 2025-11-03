@@ -59,6 +59,9 @@ namespace PROY.Models
         public Boolean? BotonDespacho { get; set; }
 
         [NotMapped]
+        public bool MostrarContinuidadVerificacionCampo { get; set; } = false;
+
+        [NotMapped]
         public bool MostrarDespachoEnProgramacion { get; set; } = false;
 
         [NotMapped]
