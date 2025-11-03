@@ -6,7 +6,8 @@ namespace PROY.Services
     {
         Task<List<Solicitud>> ObtenerSolicitudesSegunEstado(int IdEstado, int IdDepartamento, int Rechazada);
         Task<Solicitud?> ObtenerSolicitudSegunIdSolicitud(int IdSolicitud);
-        Task<string> AvanzarASiguienteEstapa(int IdSolicitud);
+        Task<string> AvanzarASiguienteEtapa(int IdSolicitud);
+        Task<string> RegresarAEtapaAnterior(int IdSolicitud, string? ComentarioRechazo = null);
         Task<string> EliminarSolicitud(int IdSolicitud);
         Task<string> RechazarSolicitud(int IdSolicitud);
         Task<string> HabilitarSolicitud(int IdSolicitud);

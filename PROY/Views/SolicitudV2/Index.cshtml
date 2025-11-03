@@ -26,7 +26,8 @@
 
 @{
     int? IdEstado = ViewData["IdEstado"] as int?;
-    int Rechazada = (int)(ViewData["Rechazada"] ?? 0);
+    string Offset4 = $"{IdEstado}" == $"{@Configuration["EtapasSolicitud:APA:CREADA"]}" ||
+                    $"{IdEstado}" == $"{@Configuration["EtapasSolicitud:APA:EVALUACION"]}" ? "" : "offset-4";
 }
 
 @if (TempData["Mensaje"] != null)
@@ -61,7 +62,8 @@
                 </ul>
             </div>
         </div>
-        @if ($"{IdEstado}" == $"{@Configuration["EtapasSolicitud:APA:EVALUACION"]}"){
+        @if ($"{IdEstado}" == $"{@Configuration["EtapasSolicitud:APA:CREADA"]}" ||
+            $"{IdEstado}" == $"{@Configuration["EtapasSolicitud:APA:EVALUACION"]}"){
             <div class="col-md-4">
                 <div class="btn-group w-100" role="group" aria-label="EstadosEvaluacion">
                     <a type="button" class="btn btn-secondary" asp-controller="SolicitudV2" asp-action="Index"
@@ -75,7 +77,7 @@
                 </div>
             </div>
         }
-        <div class="col-md-4 @($"{IdEstado}" == $"{@Configuration["EtapasSolicitud:APA:EVALUACION"]}" ? "" : "offset-4")">
+        <div class="col-md-4 @Offset4">
             <a class="btn btn-secondary w-100" asp-controller="SolicitudV2" asp-action="FormularioSolicitud">
                 Nueva solicitud
             </a>
@@ -113,8 +115,14 @@
                                     <a type="button" class="btn btn-link" asp-controller="SolicitudV2" asp-action="DetalleSolicitud"
                                         asp-route-IdSolicitud="@item.IdSolicitud">@item.Codigo</a>
                                 </td>
-                                <td>@item.Correlativo</td>
-                                <td class="text-truncate" style="max-width: 150px;">@descripcionProyecto</td>
+                                <td style="max-width: 250px;">
+                                    @item.Correlativo
+                                    @if(item.Rechazada == 1 && item.ComentarioRechazo != null){
+                                        <br />
+                                        <p class="text-danger text-truncate">@item.ComentarioRechazo</p>
+                                    }
+                                </td>
+                                <td class="text-truncate" style="max-width: 250px;">@descripcionProyecto</td>
                                 <td>@descripcionIntervencion</td>
                                 <td>@item.FechaIngresoDespacho.Date.ToString("dd/MM/yyyy")</td>
                                 <td>@item.FechaIngresoDireccion.Date.ToString("dd/MM/yyyy")</td>

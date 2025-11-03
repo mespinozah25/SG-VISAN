@@ -366,6 +366,7 @@ namespace PROY.Data
                 tb.Property(col => col.TelefonoCocode).HasColumnName("TELEFONO_COCODE");
                 tb.Property(col => col.IdEstadoSolicitud).HasColumnName("ID_ESTADO_SOLICITUD");
                 tb.Property(col => col.Rechazada).HasColumnName("RECHAZADA");
+                tb.Property(col => col.ComentarioRechazo).HasColumnName("COMENTARIO_RECHAZO");
                 tb.HasOne(e => e.EstadoSolicitud)
                     .WithMany()
                     .HasForeignKey(e => e.IdEstadoSolicitud)

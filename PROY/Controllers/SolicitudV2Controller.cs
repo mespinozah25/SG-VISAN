@@ -46,12 +46,11 @@ namespace PROY.Controllers
             solicitudVM.EstadosSolicitud = await _estadoSolicitudService.ObtenerTodos();
 
             ViewData["IdEstado"] = IdEstado;
-            ViewData["Rechazada"] = Rechazada;
 
             return View(solicitudVM);
         }
 
-        public async Task<IActionResult> DetalleSolicitud(int IdSolicitud)
+        public async Task<IActionResult> DetalleSolicitud(int IdSolicitud, int Rechazada = 0)
         {
             string? departamento = User.FindFirst("depto")?.Value;
             string? rol = User.FindFirst(ClaimTypes.Role)?.Value;
@@ -75,12 +74,14 @@ namespace PROY.Controllers
             solicitudVM.MunicipioDict = (await _catalogoService.GetCatalogo("MUNICIPIO"))
                 .ToDictionary(i => i.IdCatalogo, i => i.Descripcion);
 
+            ViewData["Rechazada"] = Rechazada;
+
             return View(solicitudVM);
         }
 
         public async Task<ActionResult> CambioEtapaSolicitud(int IdSolicitud)
         {
-            TempData["Mensaje"] = await _solicitudV2Service.AvanzarASiguienteEstapa(IdSolicitud); ;
+            TempData["Mensaje"] = await _solicitudV2Service.AvanzarASiguienteEtapa(IdSolicitud); ;
 
             return RedirectToAction("DetalleSolicitud", "SolicitudV2", new { IdSolicitud });
         }
@@ -128,6 +129,14 @@ namespace PROY.Controllers
             TempData["Mensaje"] = await _solicitudV2Service.RechazarSolicitud(IdSolicitud); ;
 
             return RedirectToAction("DetalleSolicitud", "SolicitudV2", new { IdSolicitud });
+        }
+
+        [HttpPost]
+        public async Task<ActionResult> RechazarSolicitudConComentario(SolicitudesVM modeloVM)
+        {
+            TempData["Mensaje"] = await _solicitudV2Service.RegresarAEtapaAnterior((int)modeloVM.Solicitud!.IdSolicitud, modeloVM.Solicitud!.ComentarioRechazo);
+
+            return RedirectToAction("DetalleSolicitud", "SolicitudV2", new { modeloVM.Solicitud!.IdSolicitud });
         }
 
         public async Task<ActionResult> HabilitarSolicitud(int IdSolicitud)

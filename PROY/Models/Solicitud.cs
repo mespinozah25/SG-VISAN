@@ -73,5 +73,6 @@ namespace PROY.Models
         public int IdEstadoSolicitud { get; set; } = 1;
         public EstadoSolicitud EstadoSolicitud { get; set; }
         public int Rechazada { get; set; } = 0;
+        public string? ComentarioRechazo { get; set; }
     }
 }

@@ -63,6 +63,8 @@
     string? rol = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
     string? usuario = User.FindFirst("Usuario")?.Value;
 
+    int Rechazada = (int)(ViewData["Rechazada"] ?? 0);
+
     string descripcionIntervencion = Model.IntervencionDict.TryGetValue(Model.Solicitud!.IdIntervencion, out string?
     descInter)
     ? descInter : "Intervención no encontrada";
@@ -142,11 +144,11 @@
                             <ul class="dropdown-menu" aria-labelledby="dropdownOpcionesSolicitud">
                                 <li>
                                     @if (rol == "Admin" || usuario == Model.Solicitud!.UsuarioRegistro){
-                                        <a class="dropdown-item" asp-controller="SolicitudV2"
-                                            asp-action="FormularioSolicitud" asp-route-IdSolicitud="@Model.Solicitud!.IdSolicitud">
-                                            Editar Solicitud
-                                        </a>
                                         @if ($"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:CREADA"]}"){
+                                            <a class="dropdown-item" asp-controller="SolicitudV2"
+                                                asp-action="FormularioSolicitud" asp-route-IdSolicitud="@Model.Solicitud!.IdSolicitud">
+                                                Editar Solicitud
+                                            </a>
                                             <a class="dropdown-item" asp-controller="SolicitudV2"
                                                 asp-action="EliminarSolicitud" asp-route-IdSolicitud="@Model.Solicitud!.IdSolicitud"
                                                 onclick="confirmarOperacion(event, this, '¿Esta seguro que desea eliminar la solicitud?')">
@@ -155,6 +157,12 @@
                                             <a class="dropdown-item" asp-controller="Solicitud" asp-action="IndexDetalle" 
                                                 asp-route-idSolicitud="@Model.Solicitud!.IdSolicitud" asp-route-k="2">
                                                 Gestionar Beneficiarios
+                                            </a>
+                                        }
+                                        @if ($"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:REVISION_ADMINISTRATIVA"]}"){
+                                            <a class="dropdown-item" asp-controller="SolicitudV2" asp-action="DetalleSolicitud" 
+                                                asp-route-IdSolicitud="@Model.Solicitud!.IdSolicitud" asp-route-Rechazada="1">
+                                                Rechazar Solicitud
                                             </a>
                                         }
                                         @if ($"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:EVALUACION"]}"){
@@ -242,6 +250,29 @@
                         </div>
                     </div>
                 </div>
+                @if(Rechazada == 1 && $"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:REVISION_ADMINISTRATIVA"]}"){
+                    <form asp-action="RechazarSolicitudConComentario" asp-controller="SolicitudV2" method="post">
+                        <div class="row my-3 g-3">
+                            <input type="hidden" asp-for="@Model.Solicitud.IdSolicitud" />
+                            <div class="col-md-12">
+                                <label for="txtComentarioRechazo" class="control-label">Comentario de rechazo</label>
+                                <input type="text" class="form-control" id="txtComentarioRechazo" asp-for="@Model.Solicitud!.ComentarioRechazo" required maxlength="255"></input>
+                                <span asp-validation-for="@Model.Solicitud!.ComentarioRechazo" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-12">
+                                <input type="submit" value="Rechazar y regresar etapa" class="btn btn-danger w-100 h-100" />
+                            </div>
+                        </div>
+                    </form>
+                }
+                @if(Model.Solicitud!.Rechazada == 1 && Model.Solicitud!.ComentarioRechazo != null){
+                    <div class="card text-white bg-danger mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title text-white">Comentario de rechazo</h5>
+                            <p class="card-text">@Model.Solicitud!.ComentarioRechazo</p>
+                        </div>
+                    </div>
+                }
                 <div class="row g-4">
                     <div class="col-12 section-separator">
                         <h3 class="fs-5 fw-bold text-dark">Información Básica</h3>
@@ -350,7 +381,6 @@
 <script>
 
     function confirmarOperacion(evento, elemento, mensaje){
-console.log(mensaje)
         evento.preventDefault();
 
         Swal.fire({

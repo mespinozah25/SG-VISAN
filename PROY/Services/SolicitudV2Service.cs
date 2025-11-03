@@ -56,7 +56,7 @@ namespace PROY.Services
             return solicitud;
         }
 
-        public async Task<string> AvanzarASiguienteEstapa(int IdSolicitud)
+        public async Task<string> AvanzarASiguienteEtapa(int IdSolicitud)
         {
             try
             {
@@ -68,6 +68,10 @@ namespace PROY.Services
 
                 solicitud.IdEstadoSolicitud = (int)solicitud.EstadoSolicitud.IdEstadoSolicitudSiguiente;
 
+                solicitud.Rechazada = 0;
+
+                solicitud.ComentarioRechazo = null;
+
                 await _solicitudV2Repository.ActualizarSolicitud(solicitud);
 
                 return "Solicitud enviada exitosamente";
@@ -75,6 +79,32 @@ namespace PROY.Services
             catch (Exception ex)
             {
                 return $"Error al enviar solicitud: {ex}";
+            }
+        }
+
+        public async Task<string> RegresarAEtapaAnterior(int IdSolicitud, string? ComentarioRechazo = null)
+        {
+            try
+            {
+                Solicitud? solicitud = await _solicitudV2Repository.ObtenerSolicitudSegunIdSolicitud(IdSolicitud);
+
+                if (solicitud == null) return "No se encontro la solicitud";
+
+                if (solicitud.EstadoSolicitud.IdEstadoSolicitudAnterior == null) return "No se encontro la etapa anterior";
+
+                solicitud.IdEstadoSolicitud = (int)solicitud.EstadoSolicitud.IdEstadoSolicitudAnterior;
+
+                solicitud.Rechazada = 1;
+
+                solicitud.ComentarioRechazo = ComentarioRechazo;
+
+                await _solicitudV2Repository.ActualizarSolicitud(solicitud);
+
+                return "Solicitud regresada exitosamente";
+            }
+            catch (Exception ex)
+            {
+                return $"Error al regresar solicitud: {ex}";
             }
         }
 
