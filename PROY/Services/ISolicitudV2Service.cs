@@ -11,5 +11,6 @@ namespace PROY.Services
         Task<string> EliminarSolicitud(int IdSolicitud);
         Task<string> RechazarSolicitud(int IdSolicitud);
         Task<string> HabilitarSolicitud(int IdSolicitud);
+        Task<string> ActualizarFechasEntregaSolicitud(int IdSolicitud, DateTime FechaInicio, DateTime FechaFin, string? Observaciones);
     }
 }

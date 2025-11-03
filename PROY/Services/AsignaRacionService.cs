@@ -41,7 +41,7 @@ namespace PROY.Services
 
                 asignaRacion.Restrictiva = 1;
 
-                await _asignaRacionRepository.ActulizarAsignacionRacion(asignaRacion);
+                await _asignaRacionRepository.ActualizarAsignacionRacion(asignaRacion);
 
                 return "Asignación de ración eliminada exitosamente";
             }

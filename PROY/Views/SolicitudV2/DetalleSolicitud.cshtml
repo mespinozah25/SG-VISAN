@@ -219,6 +219,10 @@
                                                 asp-route-idEvaluacion="@Model.Solicitud!.IdSolicitud" asp-route-k="2" asp-route-proceso="PROGRAMACION">
                                                 Medios de Verificación
                                             </a>
+                                            <a class="dropdown-item" asp-controller="SolicitudV2" asp-action="FormularioTecnicos"
+                                                    asp-route-IdSolicitud="@Model.Solicitud!.IdSolicitud">
+                                                    Datos de Entrega y Gestión de Técnicos
+                                                </a>
                                             @if (Model.Solicitud!.MostrarDespachoEnProgramacion){
                                                 <a class="dropdown-item" asp-controller="SolicitudV2" asp-action="FormularioDespacho"
                                                     asp-route-IdSolicitud="@Model.Solicitud!.IdSolicitud">
@@ -391,6 +395,21 @@
                     <div class="col-12 col-md-6">
                         <dt>Teléfono</dt>
                         <dd>@Model.Solicitud!.TelefonoCocode</dd>
+                    </div>
+                    <div class="col-12 section-separator">
+                        <h3 class="fs-5 fw-bold text-dark">Información de entrega</h3>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <dt>Fecha de inicio de entrega</dt>
+                        <dd>@Model.Solicitud!.FInicioEntrega?.Date.ToString("dd/MM/yyyy")</dd>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <dt>Fecha de fin de entrega</dt>
+                        <dd>@Model.Solicitud!.FFinEntrega?.Date.ToString("dd/MM/yyyy")</dd>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <dt>Observaciones de entrega</dt>
+                        <dd>@Model.Solicitud!.TecnicoObservaciones</dd>
                     </div>
                 </div>
             </div>

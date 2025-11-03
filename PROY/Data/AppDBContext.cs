@@ -25,6 +25,7 @@ namespace PROY.Data
         public DbSet<Catalogo> Catalogos { get; set; }
         public DbSet<AsignaRacion> AsignaRaciones { get; set; }
         public DbSet<AsignaRacionV2> AsignaRacionV2 { get; set; }
+        public DbSet<AsignaTecnicoV2> AsignaTecnicoV2 { get; set; }
         public DbSet<TipoIntervencion> TipoIntervencion { get; set; }
         public DbSet<EstadoSolicitud> EstadoSolicitud { get; set; }
 
@@ -230,6 +231,24 @@ namespace PROY.Data
                 //  .HasForeignKey(at => at.TecnicoId);
             });
 
+            modelBuilder.Entity<AsignaTecnicoV2>(tb =>
+            {
+                tb.ToTable("ASIGNA_TECNICO_V2");
+                tb.HasKey(col => col.IdAsignaTecnico);
+                tb.HasIndex(col => col.IdAsignaTecnico).IsUnique();
+                tb.Property(col => col.IdAsignaTecnico).ValueGeneratedOnAdd().HasColumnName("ID_ASIGNA_TECNICO");                
+                tb.Property(col => col.IdSolicitud).HasColumnName("ID_SOLICITUD").IsRequired();
+                tb.Property(col => col.IdTecnico).HasColumnName("ID_TECNICO").IsRequired();
+                tb.Property(col => col.IdDepartamento).HasColumnName("ID_DEPARTAMENTO").IsRequired();
+                tb.Property(col => col.IdMunicipio).HasColumnName("ID_MUNICIPIO").IsRequired();
+                tb.Property(col => col.DireccionEntrega).HasColumnName("DIRECCION_ENTREGA").HasMaxLength(250).IsRequired();
+                tb.Property(col => col.Restrictiva).HasColumnName("RESTRICTIVA").IsRequired();
+                tb.HasOne(d => d.Tecnico)
+                    .WithMany()
+                    .HasForeignKey(d => d.IdTecnico)
+                    .HasConstraintName("ASIGNA_TECNICO_V2_TECNICO_FK");
+            });
+
             modelBuilder.Entity<AsignaRacion>(tb =>
             {
                 tb.ToTable("ASIGNA_RACION");
@@ -263,8 +282,6 @@ namespace PROY.Data
                 tb.Property(col => col.IdMunicipio).HasColumnName("ID_MUNICIPIO").IsRequired();
                 tb.Property(col => col.Comunidad).HasColumnName("COMUNIDAD").HasMaxLength(250).IsRequired();
                 tb.Property(col => col.RacionAsignada).HasColumnName("RACION_ASIGNADA").IsRequired();
-                tb.Property(col => col.RacionSaldo).HasColumnName("RACION_SALDO").IsRequired();
-                tb.Property(col => col.UsuarioRegistro).HasColumnName("RACION_SALDO").IsRequired();
                 tb.Property(col => col.RacionSaldo).HasColumnName("RACION_SALDO").IsRequired();
                 tb.Property(col => col.UsuarioRegistro).HasColumnName("USUARIO_REGISTRO").HasMaxLength(30).IsRequired();
                 tb.Property(col => col.FechaRegistro).HasColumnName("FECHA_REGISTRO").IsRequired();

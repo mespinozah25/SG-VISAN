@@ -15,13 +15,17 @@ namespace PROY.Controllers
         private readonly ISolicitudV2Service _solicitudV2Service;
         private readonly IEstadoSolicitudService _estadoSolicitudService;
         private readonly IAsignaRacionService _asignaRacionService;
+        private readonly IAsignaTecnicoService _asignaTecnicoService;
+        private readonly ITecnicoService _tecnicoService;
 
-        public SolicitudV2Controller(ICatalogoService catalogoService, ISolicitudV2Service solicitudV2Service, IEstadoSolicitudService estadoSolicitudService, IAsignaRacionService AsignaRacionService)
+        public SolicitudV2Controller(ICatalogoService catalogoService, ISolicitudV2Service solicitudV2Service, IEstadoSolicitudService estadoSolicitudService, IAsignaRacionService AsignaRacionService, IAsignaTecnicoService AsignaTecnicoService, ITecnicoService TecnicoService)
         {
             _catalogoService = catalogoService;
             _solicitudV2Service = solicitudV2Service;
             _estadoSolicitudService = estadoSolicitudService;
             _asignaRacionService = AsignaRacionService;
+            _asignaTecnicoService = AsignaTecnicoService;
+            _tecnicoService = TecnicoService;
         }
 
         public async Task<IActionResult> Index(int? IdEstado, int Rechazada = 0)
@@ -203,12 +207,73 @@ namespace PROY.Controllers
 
             return RedirectToAction("FormularioDespacho", "SolicitudV2", new { modeloVM.Solicitud!.IdSolicitud });
         }
-        
+
         public async Task<IActionResult> EliminarAsignacionRacion(int IdSolicitud, int IdAsignaRacion)
         {
             TempData["Mensaje"] = await _asignaRacionService.EliminarAsignacionRacion(IdAsignaRacion); ;
 
             return RedirectToAction("FormularioDespacho", "SolicitudV2", new { IdSolicitud });
+        }
+
+        public async Task<IActionResult> FormularioTecnicos(int IdSolicitud)
+        {
+            string? departamento = User.FindFirst("depto")?.Value;
+            string? rol = User.FindFirst(ClaimTypes.Role)?.Value;
+
+            if (rol != "Admin" && (departamento == "DAAN" || string.IsNullOrEmpty(departamento)))
+                return Unauthorized();
+
+            SolicitudesVM solicitudVM = new SolicitudesVM();
+
+            solicitudVM.Solicitud = await _solicitudV2Service.ObtenerSolicitudSegunIdSolicitud(IdSolicitud);
+
+            solicitudVM.ListDetalleTecnicos = await _asignaTecnicoService.ObtenerAsignacionesTecnico(IdSolicitud);
+
+            solicitudVM.AsignaRacionV2 = new AsignaRacionV2()
+            {
+                Comunidad = solicitudVM.Solicitud!.Comunidad!,
+                UsuarioRegistro = User.FindFirst("Usuario")?.Value!
+            };
+
+            solicitudVM.DepartamentoDict = (await _catalogoService.GetCatalogo("DEPARTAMENTO"))
+                .ToDictionary(i => i.IdCatalogo, i => i.Descripcion);
+            solicitudVM.MunicipioDict = (await _catalogoService.GetCatalogo("MUNICIPIO"))
+                .ToDictionary(i => i.IdCatalogo, i => i.Descripcion);
+            solicitudVM.TecnicoDict = (await _tecnicoService.GetAll())
+                .ToDictionary(i => (int)i.IdTecnico, i => i.Nombre);
+
+            ViewBag.Departamentos = new SelectList(await _catalogoService.GetCatalogo("DEPARTAMENTO"), "IdCatalogo", "Descripcion");
+            ViewBag.Municipios = new SelectList(await _catalogoService.GetCatalogo("MUNICIPIO"), "IdCatalogo", "Descripcion");
+            ViewBag.Tecnicos = new SelectList(await _tecnicoService.GetAll(), "IdTecnico", "Nombre");
+
+            return View(solicitudVM);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ActualizarFechasEntregaSolicitud(SolicitudesVM modeloVM)
+        {
+            TempData["Mensaje"] = await _solicitudV2Service.ActualizarFechasEntregaSolicitud((int)modeloVM.Solicitud!.IdSolicitud, (DateTime)modeloVM.Solicitud!.FInicioEntrega!, (DateTime)modeloVM.Solicitud!.FFinEntrega!, modeloVM.Solicitud!.TecnicoObservaciones); ;
+
+            return RedirectToAction("FormularioTecnicos", "SolicitudV2", new { modeloVM.Solicitud!.IdSolicitud, });
+        }
+        
+        [HttpPost]
+        public async Task<IActionResult> AgregarAsignacionTecnico(SolicitudesVM modeloVM)
+        {
+            modeloVM.AsignaTecnicoV2!.IdSolicitud = (int)modeloVM.Solicitud!.IdSolicitud;
+            modeloVM.AsignaTecnicoV2!.IdDepartamento = (int)modeloVM.Solicitud!.Departamento!;
+            modeloVM.AsignaTecnicoV2!.IdMunicipio = (int)modeloVM.Solicitud!.Municipio!;
+
+            TempData["Mensaje"] = await _asignaTecnicoService.GuardarAsignacionTecnico(modeloVM.AsignaTecnicoV2!); ;
+
+            return RedirectToAction("FormularioTecnicos", "SolicitudV2", new { modeloVM.Solicitud!.IdSolicitud });
+        }
+
+        public async Task<IActionResult> EliminarAsignacionTecnico(int IdSolicitud, int IdAsignaTecnico)
+        {
+            TempData["Mensaje"] = await _asignaTecnicoService.EliminarAsignacionTecnico(IdAsignaTecnico); ;
+
+            return RedirectToAction("FormularioTecnicos", "SolicitudV2", new { IdSolicitud });
         }
     }
 }

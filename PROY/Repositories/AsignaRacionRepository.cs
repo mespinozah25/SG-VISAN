@@ -42,7 +42,7 @@ namespace PROY.Repositories
             return asignaRacion;
         }
 
-        public async Task<AsignaRacionV2> ActulizarAsignacionRacion(AsignaRacionV2 asignaRacion)
+        public async Task<AsignaRacionV2> ActualizarAsignacionRacion(AsignaRacionV2 asignaRacion)
         {
             _dbContext.AsignaRacionV2.Update(asignaRacion);
 

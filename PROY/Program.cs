@@ -40,6 +40,8 @@ builder.Services.AddScoped<ISolicitudRepository, SolicitudRepository>();
 builder.Services.AddScoped<ISolicitudService, SolicitudService>();
 builder.Services.AddScoped<IAsignaRacionRepository, AsignaRacionRepository>();
 builder.Services.AddScoped<IAsignaRacionService, AsignaRacionService>();
+builder.Services.AddScoped<IAsignaTecnicoRepository, AsignaTecnicoRepository>();
+builder.Services.AddScoped<IAsignaTecnicoService, AsignaTecnicoService>();
 builder.Services.AddScoped<ISolicitudV2Repository, SolicitudV2Repository>();
 builder.Services.AddScoped<IDetalleSolicitudAPARepository, DetalleSolicitudAPARepository>();
 builder.Services.AddScoped<IDetalleEvaluacionAPARepository, DetalleEvaluacionAPARepository>();

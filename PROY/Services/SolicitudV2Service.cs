@@ -149,7 +149,7 @@ namespace PROY.Services
                 return $"Error al rechazar solicitud: {ex}";
             }
         }
-        
+
         public async Task<string> HabilitarSolicitud(int IdSolicitud)
         {
             try
@@ -167,6 +167,30 @@ namespace PROY.Services
             catch (Exception ex)
             {
                 return $"Error al habilitar solicitud: {ex}";
+            }
+        }
+        
+        public async Task<string> ActualizarFechasEntregaSolicitud(int IdSolicitud, DateTime FechaInicio, DateTime FechaFin, string? Observaciones)
+        {
+            try
+            {
+                Solicitud? solicitud = await _solicitudV2Repository.ObtenerSolicitudSegunIdSolicitud(IdSolicitud);
+
+                if (solicitud == null) return "No se encontro la solicitud";
+
+                solicitud.FInicioEntrega = FechaInicio;
+
+                solicitud.FFinEntrega = FechaFin;
+
+                solicitud.TecnicoObservaciones = Observaciones;
+
+                await _solicitudV2Repository.ActualizarSolicitud(solicitud);
+
+                return "Solicitud actualizada exitosamente";
+            }
+            catch (Exception ex)
+            {
+                return $"Error al actualizada solicitud: {ex}";
             }
         }
     }

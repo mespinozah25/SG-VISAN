@@ -729,13 +729,14 @@
                                 <span class="item-name">Ejecucion</span>
                             </a>
                         </li>
+                        <li><hr class="hr-horizontal"></li>
                         <li class="nav-item static-item">
                             <a class="nav-link static-item" asp-controller="SolicitudV2" asp-action="Index" tabindex="-1">
                                 <span class="default-icon">Solicitudes<br />Alimentos por acciones</span>
                                 <span class="mini-icon">-</span>
                             </a>
                         </li>
-                        @* <li class="nav-item">
+                        <li class="nav-item">
                             <a class="nav-link" asp-controller="Solicitud" asp-action="Index" asp-route-k="2">
                                 <i class="icon">
                                     <svg class="icon-20" width="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -778,7 +779,7 @@
                                 </i>
                                 <span class="item-name">Ejecucion</span>
                             </a>
-                        </li> *@
+                        </li>
                     }
                     else
                     {           
@@ -792,6 +793,7 @@
                                 }
                                 else if (User.FindFirst("idDepto").Value == "2")
                                 {
+                                    <li><hr class="hr-horizontal"></li>
                                     <a class="nav-link static-item" asp-controller="SolicitudV2" asp-action="Index" tabindex="-1">
                                         <span class="default-icon">Solicitudes<br />Alimentos por acciones</span>
                                         <span class="mini-icon">-</span>

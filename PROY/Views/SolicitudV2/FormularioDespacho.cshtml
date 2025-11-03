@@ -16,7 +16,6 @@
     </div>
 }
 @{
-    int contadorAsignacionRaciones = 0;
     string descripcionDepartamento = Model.Solicitud!.Departamento.HasValue
     ? Model.DepartamentoDict.TryGetValue(Model.Solicitud!.Departamento.Value, out string? descDep)
     ? descDep : "Departamento no encontrado" : "Departamento no especificado";
@@ -125,8 +124,6 @@
                                 <td>@item.RacionAsignada</td>
                                 <td>@item.RacionSaldo</td>
                             </tr>
-
-                            contadorAsignacionRaciones++;
                         }
                     </tbody>
                 </table>
