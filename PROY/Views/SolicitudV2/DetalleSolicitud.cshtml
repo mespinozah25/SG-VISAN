@@ -264,6 +264,12 @@
                                                 Medios de Verificación
                                             </a>
                                         }
+                                        @if ($"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:PREVIO_A_LIQUIDACION"]}"){
+                                            <a class="dropdown-item" asp-controller="Evaluacion" asp-action="IndexDetalle"
+                                                asp-route-idEvaluacion="@Model.Solicitud!.IdSolicitud" asp-route-k="2" asp-route-proceso="PREVIO_LIQUIDACION">
+                                                Medios de Verificación
+                                            </a>
+                                        }
                                         @if(Model.Solicitud!.EstadoSolicitud.EstadoSolicitudSiguiente != null &&
                                             $"{Model.Solicitud!.IdEstadoSolicitud}" != $"{@Configuration["EtapasSolicitud:APA:VERIFICACION_DE_CAMPO"]}" &&
                                             $"{Model.Solicitud!.IdEstadoSolicitud}" != $"{@Configuration["EtapasSolicitud:APA:PROGRAMACION"]}"){
