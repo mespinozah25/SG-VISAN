@@ -58,12 +58,11 @@ namespace PROY.Repositories
 
             command.CommandText = @"
             SELECT 
-                COALESCE(p.NOMBRE_PA, 'Desconocido') AS NombrePrograma,
-                COALESCE(SUM(r.CANTIDAD_MEDIDA), 0) AS TotalRaciones
-            FROM SGI.RACION_DETALLE r
-            INNER JOIN SGI.PRODUCTO_ALIMENTICIO p ON r.PRODUCTO_ID = p.ID
-            WHERE r.ESTADO = 0
-            GROUP BY p.NOMBRE_PA";
+                COALESCE(p.NOMBRE_PROGRAMA, '') AS NombrePrograma, 
+                COUNT(*) AS TotalRaciones
+            FROM SGI.RACION_MAESTRO rm 
+            INNER JOIN SGI.PROGRAMAS p ON rm.PROGRAMA_ID = p.ID
+            GROUP BY p.NOMBRE_PROGRAMA";
 
             var result = new List<Racion>();
 
