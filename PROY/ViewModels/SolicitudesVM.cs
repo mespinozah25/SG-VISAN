@@ -34,13 +34,16 @@ namespace PROY.ViewModels
         public Dictionary<int, string> ProyectoDict { get; set; }
         public Dictionary<int, string> ValidacionDict { get; set; }
         public AsignaTecnico AsignaTecnico { get; set; }
-        //public List<AsignaTecnico> DetalleTecnicos { get; set; }
+        public AsignaTecnicoV2 AsignaTecnicoV2 { get; set; }
+        public List<AsignaTecnicoV2> ListDetalleTecnicos { get; set; }
         public List<dynamic> DetalleTecnicos { get; set; }
         public List<Tecnico> Tecnicos { get; set; }
         public List<Agrupado> Agrupados { get; set; }
         public AsignaRacion AsignaRacion { get; set; }
         public List<AsignaRacion> DetalleRaciones { get; set; }
-
+        public AsignaRacionV2 AsignaRacionV2 { get; set; }
+        public List<AsignaRacionV2> DetalleRacionesV2 { get; set; }
+        public List<EstadoSolicitud> EstadosSolicitud { get; set; } = new List<EstadoSolicitud>();
         public string rutaApp { get; } = ControlGlobal.rutaApp;
     }
  

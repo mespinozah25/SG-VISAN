@@ -394,14 +394,15 @@ else if (condicion == "2")
     <input type="hidden" name="idSOL" value="@Model.Solicitud.IdSolicitud" />
     <h2 class="float-start">BENEFICIARIOS DE SOLICITUD @Model.Solicitud.Codigo</h2>
     @*<a class="btn btn-warning btn-sm btn-fixed-end" style="margin-right:300px;" asp-controller="Programacion" asp-action="Index" asp-route-k="2"><i class="fas fa-undo"></i> Regresar</a>*@
-    @if (valorRetorno == "Ejecucion" || ViewBag.RC == "Ejecucion")
+    @* @if (valorRetorno == "Ejecucion" || ViewBag.RC == "Ejecucion")
     {
         <a class="btn btn-warning btn-sm btn-fixed-end" style="margin-right:545px; position:absolute; z-index:1;" asp-controller="Ejecucion" asp-action="Index" asp-route-k="2"><i class="fas fa-undo"></i> Regresar</a>
     }
     else
     {
         <a class="btn btn-warning btn-sm btn-fixed-end" style="margin-right:545px; position:absolute; z-index:1;" asp-controller="Programacion" asp-action="Index" asp-route-k="2"><i class="fas fa-undo"></i> Regresar</a>
-    }
+    } *@
+    <a class="btn btn-warning btn-sm btn-fixed-end" style="margin-right:545px; position:absolute; z-index:1;" asp-controller="SolicitudV2" asp-action="DetalleSolicitud" asp-route-IdSolicitud="@Model.Solicitud.IdSolicitud"><i class="fas fa-undo"></i> Regresar</a>
 
     <a class="btn btn-success btn-sm btn-fixed-end" style="margin-right:405px; position:absolute; z-index:1;" data-bs-toggle="modal" data-bs-target="#wCargaExcelAPA" onclick="limpiarINFO_APA()"><i class="fas fa-plus-square"></i> Cargar Excel</a>
     <a class="btn btn-primary btn-sm btn-fixed-end" style="margin-right:270px; position:absolute; z-index:1;" onclick="abrirModalYActualizarUrlAPA(@Model.Solicitud.IdSolicitud,0,'@Model.Solicitud.Codigo')"><i class="fas fa-plus-square"></i> Beneficiario</a>

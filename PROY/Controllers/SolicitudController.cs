@@ -315,7 +315,10 @@ namespace PROY.Controllers
                 IdProyecto=solicitud.IdProyecto,
                 Departamento=solicitud.Departamento,
                 Municipio=solicitud.Municipio,
-                Comunidad=solicitud.Comunidad
+                Comunidad=solicitud.Comunidad,
+                nombreCocode=solicitud.NombreCocode,
+                comunidadCocode=solicitud.ComunidadCocode,
+                telefonoCocode=solicitud.TelefonoCocode
             });
        
         }
@@ -478,12 +481,15 @@ namespace PROY.Controllers
                 Municipio=modeloVM.Solicitud.Municipio ?? null,
                 Comunidad=modeloVM.Solicitud.Comunidad ?? null,
                 FechaRegistro = DateTime.Now.Date, //modeloVM.DetalleEvaluacion.FechaRegistro,
-                UsuarioRegistro = User.FindFirst("Usuario")?.Value
+                UsuarioRegistro = User.FindFirst("Usuario")?.Value,
+                NombreCocode = modeloVM.Solicitud.NombreCocode ?? null,
+                ComunidadCocode = modeloVM.Solicitud.ComunidadCocode ?? null,
+                TelefonoCocode = modeloVM.Solicitud.TelefonoCocode ?? null
             };
 
             if (modelo.Depto == "2")
             {
-                modelo.Raciones = 1;
+                //modelo.Raciones = 1;
                 modelo.IdInstitucion = null;
             }
                 
@@ -565,6 +571,8 @@ namespace PROY.Controllers
                             return RedirectToAction("Index", "Solicitud");
                         }*/
 
+                        if(idDepto == "2") return RedirectToAction("DetalleSolicitud", "SolicitudV2", new { idSolicitud = modelo.IdSolicitud});
+
                         if (varRetorno == "Programacion")
                         {
                             TempData["Mensaje"] = result.Message;
@@ -572,19 +580,22 @@ namespace PROY.Controllers
                         }
 
                         TempData["Mensaje"] = result.Message;
-                        return RedirectToAction("Index", "Solicitud", new {k=condicion});
+                        return RedirectToAction("Index", "Solicitud", new { k = condicion });
                     }
                     else
                     {
                         TempData["Mensaje"] = result.Message;
+
+                        if(idDepto == "2") return RedirectToAction("DetalleSolicitud", "SolicitudV2", new { idSolicitud = modelo.IdSolicitud});
+
                         return View(modelo);
                     }
 
                 }
                 else
-                {            
+                {
 
-                    var result=await _solicitudService.UpdateSolicitud(modelo);
+                    var result = await _solicitudService.UpdateSolicitud(modelo);
 
                     if (result.Success && result.Data != null)
                     {
@@ -609,7 +620,7 @@ namespace PROY.Controllers
                             {
 
                             }
-                            
+
                             // Obtenemos la extensión del archivo
                             var extension = Path.GetExtension(file.FileName);
                             // Obtenemos el nombre del archivo sin la extensión
@@ -676,6 +687,8 @@ namespace PROY.Controllers
                             return RedirectToAction("Index", "Solicitud");
                         }*/
 
+                        if(idDepto == "2") return RedirectToAction("DetalleSolicitud", "SolicitudV2", new { idSolicitud = modelo.IdSolicitud});
+
                         if (varRetorno == "Programacion")
                         {
                             TempData["Mensaje"] = result.Message;
@@ -683,10 +696,13 @@ namespace PROY.Controllers
                         }
 
                         TempData["Mensaje"] = result.Message;
-                        return RedirectToAction("Index", "Solicitud", new {k=condicion});
+
+                        return RedirectToAction("Index", "Solicitud", new { k = condicion });
                     }
-                }                
+                }
             }
+            if(idDepto == "2") return RedirectToAction("Index", "SolicitudV2");
+            
             return View(modelo);            
         }
 
@@ -709,8 +725,16 @@ namespace PROY.Controllers
 
             Solicitud solicitud = new Solicitud();
             solicitud = await _solicitudService.GetSolicitud((long)id);
-            var result = await _solicitudService.UpdateEstado(solicitud);
-      
+            ServiceResponse<Solicitud> result = new ServiceResponse<Solicitud>();
+            if (condicion == "1")
+            {
+                result = await _solicitudService.UpdateEstado(solicitud);
+            }
+            else if (condicion == "2")
+            {
+                result = await _solicitudService.UpdateEstadoARevAdministrativa(solicitud);
+            }
+            
             if (result.Success && result.Data != null)
             {
                 if (varRetorno == "Evaluacion")

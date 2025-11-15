@@ -24,6 +24,10 @@ namespace PROY.Data
         public DbSet<DetalleEvaluacionAPA> DetalleEvaluacionAPA { get; set; }
         public DbSet<Catalogo> Catalogos { get; set; }
         public DbSet<AsignaRacion> AsignaRaciones { get; set; }
+        public DbSet<AsignaRacionV2> AsignaRacionV2 { get; set; }
+        public DbSet<AsignaTecnicoV2> AsignaTecnicoV2 { get; set; }
+        public DbSet<TipoIntervencion> TipoIntervencion { get; set; }
+        public DbSet<EstadoSolicitud> EstadoSolicitud { get; set; }
 
         
         // Módulo de Bodegas
@@ -227,12 +231,30 @@ namespace PROY.Data
                 //  .HasForeignKey(at => at.TecnicoId);
             });
 
+            modelBuilder.Entity<AsignaTecnicoV2>(tb =>
+            {
+                tb.ToTable("ASIGNA_TECNICO_V2");
+                tb.HasKey(col => col.IdAsignaTecnico);
+                tb.HasIndex(col => col.IdAsignaTecnico).IsUnique();
+                tb.Property(col => col.IdAsignaTecnico).ValueGeneratedOnAdd().HasColumnName("ID_ASIGNA_TECNICO");                
+                tb.Property(col => col.IdSolicitud).HasColumnName("ID_SOLICITUD").IsRequired();
+                tb.Property(col => col.IdTecnico).HasColumnName("ID_TECNICO").IsRequired();
+                tb.Property(col => col.IdDepartamento).HasColumnName("ID_DEPARTAMENTO").IsRequired();
+                tb.Property(col => col.IdMunicipio).HasColumnName("ID_MUNICIPIO").IsRequired();
+                tb.Property(col => col.DireccionEntrega).HasColumnName("DIRECCION_ENTREGA").HasMaxLength(250).IsRequired();
+                tb.Property(col => col.Restrictiva).HasColumnName("RESTRICTIVA").IsRequired();
+                tb.HasOne(d => d.Tecnico)
+                    .WithMany()
+                    .HasForeignKey(d => d.IdTecnico)
+                    .HasConstraintName("ASIGNA_TECNICO_V2_TECNICO_FK");
+            });
+
             modelBuilder.Entity<AsignaRacion>(tb =>
             {
                 tb.ToTable("ASIGNA_RACION");
                 tb.HasKey(col => col.IdAsignaRacion);
                 tb.HasIndex(col => col.IdAsignaRacion).IsUnique();
-                tb.Property(col => col.IdAsignaRacion).ValueGeneratedOnAdd().HasColumnName("ID_ASIGNA_RACION");                
+                tb.Property(col => col.IdAsignaRacion).ValueGeneratedOnAdd().HasColumnName("ID_ASIGNA_RACION");
                 tb.Property(col => col.SolicitudId).HasColumnName("ID_SOLICITUD");
                 tb.Property(col => col.DepartamentoId).HasColumnName("ID_DEPARTAMENTO");
                 tb.Property(col => col.IdMunicipio).HasColumnName("ID_MUNICIPIO");
@@ -247,6 +269,75 @@ namespace PROY.Data
                 //tb.HasOne(at => at.Tecnico)
                 //  .WithMany(t => t.AsignaTecnicos)
                 //  .HasForeignKey(at => at.TecnicoId);
+            });
+            
+            modelBuilder.Entity<AsignaRacionV2>(tb =>
+            {
+                tb.ToTable("ASIGNA_RACION_V2");
+                tb.HasKey(col => col.IdAsignaRacion);
+                tb.HasIndex(col => col.IdAsignaRacion).IsUnique();
+                tb.Property(col => col.IdAsignaRacion).ValueGeneratedOnAdd().HasColumnName("ID_ASIGNA_RACION");                
+                tb.Property(col => col.IdSolicitud).HasColumnName("ID_SOLICITUD").IsRequired();
+                tb.Property(col => col.IdDepartamento).HasColumnName("ID_DEPARTAMENTO").IsRequired();
+                tb.Property(col => col.IdMunicipio).HasColumnName("ID_MUNICIPIO").IsRequired();
+                tb.Property(col => col.Comunidad).HasColumnName("COMUNIDAD").HasMaxLength(250).IsRequired();
+                tb.Property(col => col.RacionAsignada).HasColumnName("RACION_ASIGNADA").IsRequired();
+                tb.Property(col => col.RacionSaldo).HasColumnName("RACION_SALDO").IsRequired();
+                tb.Property(col => col.UsuarioRegistro).HasColumnName("USUARIO_REGISTRO").HasMaxLength(30).IsRequired();
+                tb.Property(col => col.FechaRegistro).HasColumnName("FECHA_REGISTRO").IsRequired();
+                tb.Property(col => col.Restrictiva).HasColumnName("RESTRICTIVA").IsRequired();
+            });
+
+            modelBuilder.Entity<Deptos>(tb =>
+            {
+                tb.ToTable("DEPTOS");
+                tb.HasKey(col => col.Id);
+                tb.HasIndex(col => col.Id).IsUnique();
+                tb.Property(col => col.Id).ValueGeneratedOnAdd().HasColumnName("ID");
+                tb.Property(col => col.NombreDepto).HasColumnName("NOMBRE_DEPTO");
+                tb.Property(col => col.Abreviatura).HasColumnName("ABREVIATURA");
+                tb.Property(col => col.Estado).HasColumnName("ESTADO");
+                tb.ToTable("DEPTOS", "SGI");
+                tb.HasKey(e => e.Id);
+            });
+
+            modelBuilder.Entity<TipoIntervencion>(tb =>
+            {
+                tb.ToTable("TIPO_INTERVENCION");
+                tb.HasKey(col => col.IdTipoIntervencion);
+                tb.HasIndex(col => col.IdTipoIntervencion).IsUnique();
+                tb.Property(col => col.IdTipoIntervencion).ValueGeneratedOnAdd().HasColumnName("ID_TIPO_INTERVENCION");
+                tb.Property(col => col.Nombre).HasColumnName("NOMBRE").HasMaxLength(255).IsRequired();
+                tb.Property(col => col.IdDepto).HasColumnName("ID_DEPTO").IsRequired();
+                tb.Property(col => col.Estado).HasColumnName("ESTADO").IsRequired().HasDefaultValue(0);
+                tb.HasOne(e => e.Depto)
+                  .WithMany()
+                  .HasForeignKey(e => e.IdDepto)
+                  .HasConstraintName("TIPO_INTERVENCION_DEPTOS_FK");
+            });
+            
+            modelBuilder.Entity<EstadoSolicitud>(tb =>
+            {
+                tb.ToTable("ESTADO_SOLICITUD");
+                tb.HasKey(col => col.IdEstadoSolicitud);
+                tb.HasIndex(col => col.IdEstadoSolicitud).IsUnique();
+                tb.Property(col => col.IdEstadoSolicitud).ValueGeneratedOnAdd().HasColumnName("ID_ESTADO_SOLICITUD");
+                tb.Property(col => col.Nombre).HasColumnName("NOMBRE").HasMaxLength(75).IsRequired();
+                tb.Property(col => col.IdEstadoSolicitudAnterior).HasColumnName("ID_ESTADO_SOLICITUD_ANTERIOR");
+                tb.Property(col => col.IdEstadoSolicitudSiguiente).HasColumnName("ID_ESTADO_SOLICITUD_SIGUIENTE");
+                tb.Property(col => col.IdDepto).HasColumnName("ID_DEPTO").IsRequired();
+                tb.HasOne(d => d.EstadoSolicitudAnterior)
+                    .WithMany()
+                    .HasForeignKey(d => d.IdEstadoSolicitudAnterior)
+                    .HasConstraintName("ESTADO_SOLICITUD_ANTERIOR_FK");
+                tb.HasOne(d => d.EstadoSolicitudSiguiente)
+                    .WithMany()
+                    .HasForeignKey(d => d.IdEstadoSolicitudSiguiente)
+                    .HasConstraintName("ESTADO_SOLICITUD_SIGUIENTE_FK");
+                tb.HasOne(e => e.Depto)
+                    .WithMany()
+                    .HasForeignKey(e => e.IdDepto)
+                    .HasConstraintName("ESTADO_SOLICITUD_DEPTO_FK");
             });
 
             modelBuilder.Entity<Solicitud>(tb =>
@@ -286,6 +377,17 @@ namespace PROY.Data
                 tb.Property(col => col.FechaRegistro).HasColumnName("FECHA_REGISTRO");
                 tb.Property(col => col.UsuarioRegistro).HasColumnName("USUARIO_REGISTRO");
                 tb.Property(col => col.FechaIngresoDireccion).HasColumnName("FECHAINGRESODIRECCION");
+                tb.Property(col => col.NombreCocode).HasColumnName("NOMBRE_COCODE");
+                tb.Property(col => col.ComunidadCocode).HasColumnName("COMUNIDAD_COCODE");
+                tb.Property(col => col.TelefonoCocode).HasColumnName("TELEFONO_COCODE");
+                tb.Property(col => col.TelefonoCocode).HasColumnName("TELEFONO_COCODE");
+                tb.Property(col => col.IdEstadoSolicitud).HasColumnName("ID_ESTADO_SOLICITUD");
+                tb.Property(col => col.Rechazada).HasColumnName("RECHAZADA");
+                tb.Property(col => col.ComentarioRechazo).HasColumnName("COMENTARIO_RECHAZO");
+                tb.HasOne(e => e.EstadoSolicitud)
+                    .WithMany()
+                    .HasForeignKey(e => e.IdEstadoSolicitud)
+                    .HasConstraintName("SOLICITUD_ESTADO_SOLICITUD_FK");
             });
 
             modelBuilder.Entity<DetalleSolicitud>(tb =>

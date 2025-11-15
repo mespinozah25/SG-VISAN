@@ -235,7 +235,10 @@ namespace PROY.Services
                     IdProyecto = modelo.Depto == "2" ? modelo.IdProyecto : null,
                     Departamento = modelo.Depto == "2" ? modelo.Departamento : null,
                     Municipio = modelo.Depto == "2" ? modelo.Municipio : null,
-                    Comunidad = modelo.Depto == "2" ? modelo.Comunidad : null
+                    Comunidad = modelo.Depto == "2" ? modelo.Comunidad : null,
+                    NombreCocode = modelo.Depto == "2" ? modelo.NombreCocode : null,
+                    ComunidadCocode = modelo.Depto == "2" ? modelo.ComunidadCocode : null,
+                    TelefonoCocode = modelo.Depto == "2" ? modelo.TelefonoCocode : null,
                 };
 
                 // Guardar solicitud en la base de datos
@@ -1071,6 +1074,9 @@ namespace PROY.Services
                 solicitud_encontrada.Municipio = modelo.Depto == "2" ? !string.IsNullOrEmpty(modelo.Municipio.ToString()) ? modelo.Municipio : solicitud_encontrada.Municipio : null;
                 //solicitud_encontrada.Comunidad = modelo.Depto == "2" ? solicitud_encontrada.Comunidad : modelo.Comunidad;
                 solicitud_encontrada.Comunidad = modelo.Depto == "2" ? !string.IsNullOrEmpty(modelo.Comunidad.ToString()) ? modelo.Comunidad : solicitud_encontrada.Comunidad : null;
+                solicitud_encontrada.NombreCocode = modelo.Depto == "2" ? !string.IsNullOrEmpty(modelo.NombreCocode.ToString()) ? modelo.NombreCocode : solicitud_encontrada.NombreCocode : null;
+                solicitud_encontrada.ComunidadCocode = modelo.Depto == "2" ? !string.IsNullOrEmpty(modelo.ComunidadCocode.ToString()) ? modelo.ComunidadCocode : solicitud_encontrada.ComunidadCocode : null;
+                solicitud_encontrada.TelefonoCocode = modelo.Depto == "2" ? !string.IsNullOrEmpty(modelo.TelefonoCocode.ToString()) ? modelo.TelefonoCocode : solicitud_encontrada.TelefonoCocode : null;
                 await _solicitudRepository.UpdateSolicitud(solicitud_encontrada);
 
                 response.Data = solicitud_encontrada;
@@ -1094,6 +1100,30 @@ namespace PROY.Services
             try
             {
                 solicitud_encontrada.Estado = "EVALUACION";
+
+                await _solicitudRepository.UpdateSolicitud(solicitud_encontrada);
+
+                response.Data = solicitud_encontrada;
+                response.Success = true;
+                response.Message = "Solicitud enviada exitosamente";
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = $"Error al enviar la solicitud: {ex.Message}";
+            }
+
+            return response;
+        }
+
+        public async Task<ServiceResponse<Solicitud>> UpdateEstadoARevAdministrativa(Solicitud modelo)
+        {
+            var response = new ServiceResponse<Solicitud>();
+            Solicitud solicitud_encontrada = await _solicitudRepository.GetSolicitud(modelo.IdSolicitud);
+
+            try
+            {
+                solicitud_encontrada.Estado = "REV ADMINISTRATIVA";
 
                 await _solicitudRepository.UpdateSolicitud(solicitud_encontrada);
 

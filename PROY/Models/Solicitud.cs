@@ -24,7 +24,12 @@ namespace PROY.Models
         public int IdIntervencion { get; set; }
         public string? Archivo {  get; set; }
         public int Restrictiva {  get; set; }
-        public string Estado {  get; set; }
+        public string Estado { get; set; }
+        
+        [NotMapped]
+        public int? Validos { get; set; }
+        [NotMapped]
+        public int? NoAplica { get; set; }
         public int? Fallecidos { get; set; }
         public int? Duplicados { get; set; }
         public int? SinDatos { get; set; }
@@ -51,6 +56,26 @@ namespace PROY.Models
         public List<DetalleEvaluacionAPA> DetallesEvaluacionAPA { get; set; }
         //public List<AsignaTecnico> AsignaTecnicos { get; set; }
         [NotMapped]
-        public Boolean ? BotonDespacho { get; set; }
+        public Boolean? BotonDespacho { get; set; }
+
+        [NotMapped]
+        public bool MostrarContinuidadVerificacionCampo { get; set; } = false;
+
+        [NotMapped]
+        public bool MostrarDespachoEnProgramacion { get; set; } = false;
+
+        [NotMapped]
+        public bool MostrarDespachoEnEjecucion { get; set; } = false;
+
+        [NotMapped]
+        public bool AsignacionDeRacionesCompleta { get; set; } = false;
+        
+        public string? NombreCocode { get; set; }
+        public string? ComunidadCocode { get; set; }
+        public string? TelefonoCocode { get; set; }
+        public int IdEstadoSolicitud { get; set; } = 1;
+        public EstadoSolicitud EstadoSolicitud { get; set; }
+        public int Rechazada { get; set; } = 0;
+        public string? ComentarioRechazo { get; set; }
     }
 }
