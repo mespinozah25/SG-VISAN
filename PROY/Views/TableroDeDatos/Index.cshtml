@@ -1,5 +1,4 @@
-﻿
-<head>
+﻿<head>
 </head>
 
 <div style="display:block; justify-content:center; align-items:center; position: relative;">
@@ -32,39 +31,75 @@
     <table class="table" style="width: 98%; margin-left: 15px;">
         <thead>
             <tr style="text-align: center;">
-                <th colspan="3" style="border: black 1px solid;"><h3 style="font-weight: bold;">TOTAL DE RACIONES DISPONIBLES</h3></></th>
+                <th colspan="3" style="border: black 1px solid;">
+                    <h3 style="font-weight: bold;">TOTAL DE RACIONES DISPONIBLES</h3>
+                    </>
+                </th>
             </tr>
         </thead>
         <tbody>
             <tr>
-                <td style="width: 60%; text-align: center; font-weight: bold; border-top: black 1px solid; border-left: black 1px solid; border-right: black 1px solid;">Reservas Estrategicas de Granos Básicos</td>
-                <td style="width: 20%; text-align: right;  border-top: black 1px solid;  border-right: black 1px solid;"></td>
-                <td style="width: 20%; text-align: left;  border-top: black 1px solid;  border-right: black 1px solid;"></td>
+                <td
+                    style="width: 60%; text-align: center; font-weight: bold; border-top: black 1px solid; border-left: black 1px solid; border-right: black 1px solid;">
+                    Reservas Estrategicas de Granos Básicos</td>
+                <td
+                    style="width: 20%; text-align: right;  border-top: black 1px solid;  border-right: black 1px solid;">
+                </td>
+                <td style="width: 20%; text-align: left;  border-top: black 1px solid;  border-right: black 1px solid;">
+                </td>
             </tr>
+            @foreach (var item in Model.raciones_disponibles)
+            {
+                @if (item.Tipo == 1)
+                {
+                    <tr>
+                        <td
+                            style="width: 60%; text-align: center; border-bottom: black 1px solid; border-left: black 1px solid; border-right: black 1px solid;">
+                            @item.Convenio (@item.Descripcion)</td>
+                        <td
+                            style="width: 20%; text-align: right; border-bottom: black 1px solid; border-right: black 1px solid;">
+                            @item.Raciones.ToString("N0")</td>
+                        <td
+                            style="width: 20%; text-align: left; border-bottom: black 1px solid; border-right: black 1px solid;">
+                            Raciones</td>
+                    </tr>
+                }
+            }
             <tr>
-                <td style="width: 60%; text-align: center; border-bottom: black 1px solid; border-left: black 1px solid; border-right: black 1px solid;">(CONV 05-2024, CONV 20-2023, CONV 18-2024)</td>
-                <td style="width: 20%; text-align: right; border-bottom: black 1px solid; border-right: black 1px solid;">232,690</td>
-                <td style="width: 20%; text-align: left; border-bottom: black 1px solid; border-right: black 1px solid;">Raciones</td>
+                <td
+                    style="width: 60%; text-align: center; font-weight: bold; border-top: black 1px solid; border-left: black 1px solid; border-right: black 1px solid;">
+                    Programas Regulares</td>
+                <td style="width: 20%; text-align: right; border-top: black 1px solid;  border-right: black 1px solid;">
+                </td>
+                <td style="width: 20%; text-align: left; border-top: black 1px solid;  border-right: black 1px solid;">
+                </td>
             </tr>
+            @foreach (var item in Model.raciones_disponibles)
+            {
+                @if (item.Tipo == 2)
+                {
+                    <tr>
+                        <td
+                            style="width: 60%; text-align: center; border-left: black 1px solid; border-right: black 1px solid;">
+                            @item.Convenio (@item.Descripcion)</td>
+                        <td style="width: 20%; text-align: right; border-right: black 1px solid;">@item.Raciones.ToString("N0")
+                        </td>
+                        <td style="width: 20%; text-align: left;border-left: black 1px solid;  border-right: black 1px solid;">
+                            Raciones</td>
+                    </tr>
+                }
+            }
             <tr>
-                <td style="width: 60%; text-align: center; font-weight: bold; border-top: black 1px solid; border-left: black 1px solid; border-right: black 1px solid;">Programas Regulares</td>
-                <td style="width: 20%; text-align: right; border-top: black 1px solid;  border-right: black 1px solid;"></td>
-                <td style="width: 20%; text-align: left; border-top: black 1px solid;  border-right: black 1px solid;"></td>
-            </tr>
-            <tr>
-                <td style="width: 60%; text-align: center; border-left: black 1px solid; border-right: black 1px solid;">NDA + MEDIDAS (CONV 01-2024, CONV 04-2024, CONV 21-2024)</td>
-                <td style="width: 20%; text-align: right; border-left: black 1px solid; border-right: black 1px solid;">48,789</td>
-                <td style="width: 20%; text-align: left;border-left: black 1px solid;  border-right: black 1px solid;">Raciones</td>
-            </tr>
-            <tr>
-                <td style="width: 60%; text-align: center; border-bottom: black 1px solid; border-left: black 1px solid; border-right: black 1px solid;">INSAN + APA (CONV 02-2024, CONV 03-2024, CONV 20-2024)</td>
-                <td style="width: 20%; text-align: right; border-bottom: black 1px solid; border-left: black 1px solid;  border-right: black 1px solid;">121,233</td>
-                <td style="width: 20%; text-align: left; border-bottom: black 1px solid; border-left: black 1px solid; border-right: black 1px solid;">Raciones</td>
-            </tr>
-            <tr>
-                <td style="width: 60%; text-align: center; font-weight: bold; border: black 1px solid; border-top: black 1px solid;"><h3 style="font-weight: bold;">TOTAL</h3></td>
-                <td style="width: 20%; text-align: right; font-weight: bold; border: black 1px solid; border-top: black 1px solid;">402,712</td>
-                <td style="width: 20%; text-align: left; font-weight: bold; border: black 1px solid; border-top: black 1px solid;">Raciones</td>
+                <td
+                    style="width: 60%; text-align: center; font-weight: bold; border: black 1px solid; border-top: black 2px solid;">
+                    <h3 style="font-weight: bold;">TOTAL</h3>
+                </td>
+                <td
+                    style="width: 20%; text-align: right; font-weight: bold; border: black 1px solid; border-top: black 2px solid;">
+                    @Model.total_raciones.ToString("N0")</td>
+                <td
+                    style="width: 20%; text-align: left; font-weight: bold; border: black 1px solid; border-top: black 2px solid;">
+                    Raciones</td>
             </tr>
         </tbody>
     </table>
@@ -74,7 +109,10 @@
     <table class="table" style="width: 98%; margin-left: 15px; border: black 1px solid;">
         <thead>
             <tr style="text-align: center;">
-                <th colspan="7" ><h4 style="font-weight: bold;">AVANCE DE RECEPCIÓN, EJECUCIÓN Y DISPONIBILIDAD POR CONVENIOS</h4></></th>
+                <th colspan="7">
+                    <h4 style="font-weight: bold;">AVANCE DE RECEPCIÓN, EJECUCIÓN Y DISPONIBILIDAD POR CONVENIOS</h4>
+                    </>
+                </th>
             </tr>
         </thead>
         <tbody>
@@ -87,80 +125,35 @@
                 <td style="width: 10%; text-align: center; font-weight: bold;">Pendientes de <br /> Entregar</td>
                 <td style="width: 10%; text-align: center; font-weight: bold;">% de <br />Ejecución</td>
             </tr>
-            <tr style="font-size: 12px;">
-                <td style="width: 40%; text-align: center; ">Convenio 01-2024 NDA+MEDIDAS</td>
-                <td style="width: 10%; text-align: center; ">52,308</td>
-                <td style="width: 10%; text-align: center; ">52,308</td>
-                <td style="width: 10%; text-align: center; ">0</td>
-                <td style="width: 10%; text-align: center; ">52,308</td>
-                <td style="width: 10%; text-align: center; ">0</td>
-                <td style="width: 10%; text-align: center; ">100</td>
-            </tr>
-            <tr style="font-size: 12px;">
-                <td style="width: 40%; text-align: center; ">Convenio 02-2024 INSAN+APA</td>
-                <td style="width: 10%; text-align: center; ">256,410</td>
-                <td style="width: 10%; text-align: center; ">256,410</td>
-                <td style="width: 10%; text-align: center; ">0</td>
-                <td style="width: 10%; text-align: center; ">256,410</td>
-                <td style="width: 10%; text-align: center; ">0</td>
-                <td style="width: 10%; text-align: center; ">100</td>
-            </tr>
-            <tr style="font-size: 12px;">
-                <td style="width: 40%; text-align: center; ">Convenio 03-2024 INSAN+APA</td>
-                <td style="width: 10%; text-align: center; ">256,410</td>
-                <td style="width: 10%; text-align: center; ">256,410</td>
-                <td style="width: 10%; text-align: center; ">0</td>
-                <td style="width: 10%; text-align: center; ">244,915</td>
-                <td style="width: 10%; text-align: center; ">11,495</td>
-                <td style="width: 10%; text-align: center; ">95.52</td>
-            </tr>
-            <tr style="font-size: 12px;">
-                <td style="width: 40%; text-align: center; ">Convenio 04-2024 NDA+MEDIDAS</td>
-                <td style="width: 10%; text-align: center; ">52,308</td>
-                <td style="width: 10%; text-align: center; ">52,308</td>
-                <td style="width: 10%; text-align: center; ">0</td>
-                <td style="width: 10%; text-align: center; ">52,308</td>
-                <td style="width: 10%; text-align: center; ">0</td>
-                <td style="width: 10%; text-align: center; ">100</td>
-            </tr>
-            <tr style="font-size: 12px;">
-                <td style="width: 40%; text-align: center; ">Convenio 20-2024 INSAN+APA</td>
-                <td style="width: 10%; text-align: center; ">268,112</td>
-                <td style="width: 10%; text-align: center; ">268,112</td>
-                <td style="width: 10%; text-align: center; ">0</td>
-                <td style="width: 10%; text-align: center; ">151,831</td>
-                <td style="width: 10%; text-align: center; ">139,738</td>
-                <td style="width: 10%; text-align: center; ">56.63</td>
-            </tr>
-            <tr style="font-size: 12px;">
-                <td style="width: 40%; text-align: center; ">Convenio 21-2024 NDA+MEDIDAS</td>
-                <td style="width: 10%; text-align: center; ">49,347</td>
-                <td style="width: 10%; text-align: center; ">49,347</td>
-                <td style="width: 10%; text-align: center; ">0</td>
-                <td style="width: 10%; text-align: center; ">558</td>
-                <td style="width: 10%; text-align: center; ">48,789</td>
-                <td style="width: 10%; text-align: center; ">1.13</td>
-            </tr>
-            <tr style="font-size: 12px;">
-                <td style="width: 40%; text-align: center; ">Conv 5-2024,20-2023,18-2024 <br /> Reservas Estratégicas</td>
-                <td style="width: 10%; text-align: center; ">345,103</td>
-                <td style="width: 10%; text-align: center; ">345,103</td>
-                <td style="width: 10%; text-align: center; ">0</td>
-                <td style="width: 10%; text-align: center; ">112,413</td>
-                <td style="width: 10%; text-align: center; ">232,690</td>
-                <td style="width: 10%; text-align: center; ">32.57</td>
-            </tr>
+            @foreach (var item in Model.raciones_avance)
+            {
+                <tr style="font-size: 12px;">
+                    <td style="width: 40%; text-align: center; ">@item.Convenio @item.Descripcion</td>
+                    <td style="width: 10%; text-align: center; ">@item.TotalConvenio.ToString("N0")</td>
+                    <td style="width: 10%; text-align: center; ">@item.RacionesRecibidas.ToString("N0")</td>
+                    <td style="width: 10%; text-align: center; ">@item.RacionesPendientesRecibir.ToString("N0")</td>
+                    <td style="width: 10%; text-align: center; ">@item.RacionesEntregadas.ToString("N0")</td>
+                    <td style="width: 10%; text-align: center; ">@item.RacionesPendientesEntregar.ToString("N0")</td>
+                    <td style="width: 10%; text-align: center; ">@item.PorcentajeEjecucion.ToString("N2")</td>
+                </tr>
+            }
+
             <tr style="font-size: 14px;">
                 <td style="width: 40%; text-align: center; font-weight: bold; ">TOTALES</td>
-                <td style="width: 10%; text-align: center; font-weight: bold;">1,279,998</td>
-                <td style="width: 10%; text-align: center; font-weight: bold;">1,279,998</td>
-                <td style="width: 10%; text-align: center; font-weight: bold;">0</td>
-                <td style="width: 10%; text-align: center; font-weight: bold;">870,743</td>
-                <td style="width: 10%; text-align: center; font-weight: bold;">402,712</td>
-                <td style="width: 10%; text-align: center; font-weight: bold;">68.03</td>
+                <td style="width: 10%; text-align: center; font-weight: bold;">@Model.totalConvenio.ToString("N0")</td>
+                <td style="width: 10%; text-align: center; font-weight: bold;">
+                    @Model.totalRacionesRecibidas.ToString("N0")</td>
+                <td style="width: 10%; text-align: center; font-weight: bold;">
+                    @Model.totalRacionesPendientesRecibir.ToString("N0")</td>
+                <td style="width: 10%; text-align: center; font-weight: bold;">
+                    @Model.totalRacionesEntregadas.ToString("N0")</td>
+                <td style="width: 10%; text-align: center; font-weight: bold;">
+                    @Model.totalRacionesPendientesEntregar.ToString("N0")</td>
+                <td style="width: 10%; text-align: center; font-weight: bold;">
+                    @Model.totalporcentaje.ToString("N2")</td>
             </tr>
-            
-            
+
+
         </tbody>
     </table>
 </div>
@@ -187,8 +180,8 @@
 
 @section Scripts {
     <script>
-        $(document).ready(function() {
-            google.charts.load('current', {'packages':['corechart']});
+        $(document).ready(function () {
+            google.charts.load('current', { 'packages': ['corechart'] });
             google.charts.setOnLoadCallback(ChartBodegasProductos);
             google.charts.setOnLoadCallback(ChartRaciones);
 
@@ -208,13 +201,13 @@
                 .then(datos => {
                     // Crear DataTable con el formato correcto
                     var data = new google.visualization.DataTable();
-                    
+
                     // Agregar columnas
                     data.addColumn('string', 'Bodega');
-                    datos.encabezados.slice(1).forEach(function(producto) {
+                    datos.encabezados.slice(1).forEach(function (producto) {
                         data.addColumn('number', producto);
                     });
-                    
+
                     // Agregar filas
                     data.addRows(datos.filas);
 

@@ -12,12 +12,20 @@ namespace PROY.Services
             _tableroRepository = tableroRepository;
         }
 
-        public List<BodegaProducto> ChartBodegasExistenciaProductos()
+        public List<TableroConvenio> ChartRacionesDisponibles()
+        {
+            return _tableroRepository.ChartRacionesDisponibles();
+        }
+        public List<TableroConvenioAvance> ChartRacionesAvance()
+        {
+            return _tableroRepository.ChartRacionesAvance();
+        }
+        public List<TableroBodegaProducto> ChartBodegasExistenciaProductos()
         {
             return _tableroRepository.ChartBodegasExistenciaProductos();
         }
 
-        public List<Racion> ChartRaciones()
+        public List<TableroRacion> ChartRaciones()
         {
             return _tableroRepository.ChartRaciones();
         }

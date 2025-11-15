@@ -412,7 +412,7 @@ namespace PROY.Repositories
 
             if (tipoReporte == (int)TipoReporteEnum.ConstanciaSalidaAlimentos)
             {
-                
+
             }
 
             return tabla;
@@ -891,19 +891,20 @@ namespace PROY.Repositories
 
                     tbody += @" 
                                 <tr>
-                                    <th style='font-size: 10px;' colspan='7'>&nbsp</th>
+                                    <th style='font-size: 3px;' colspan='7'>&nbsp</th>
                                 </tr>
                                 <tr>
                                     <th style='width: 150px; color: black; text-align:center color: black; font-weight: bold;' rowspan='4'>" + magaLogoRepoEgreHtml + @"</th>
                                     <th style='text-align:center' colspan='3'><h2>MINISTERIO DE AGRICULTURA GANADERÍA Y ALIMENTACIÓN</h2></th>
-                                    <th style='color: black; text-align:center color: black; text-align:left'></th>
+                                    <th style='color: black; font-weight: bold; text-align:right;' colspan='2' rowspan='2'>" + cgcImageHtml + @"</th>
                                 </tr>
                                 <tr>
                                     <th style='color: black; text-align:center' colspan='3'><h3>VICEMINISTERIO DE SEGURIDAD ALIMENTARIA Y NUTRICIONAL</h3></th>
-                                    <th style='color: black; text-align:center' colspan='3' rowspan='3'><h4 style='text-align: center; color: red;'> Nº.     " + noConstancia + @"</h4></th>
+                                    
                                 </tr>
                                 <tr>
                                     <th style='color: black; text-align:center' colspan='3'><h3>DIRECCIÓN DE ASISTENCIA ALIMENTARIA NUTRICIONAL</h3><th>
+                                    <th style='color: black; text-align:center' colspan='2' rowspan='3'><h4 style='text-align: center; color: red;'> Nº.     " + noConstancia + @"</h4></th>
                                 </tr>
                                 <tr>
                                     <th style='color: black; text-align:center' colspan='3'><h3>ASISTENCIA ALIMENTARIA/ALIMENTOS POR ACCIONES</h3><th>
@@ -1077,7 +1078,7 @@ namespace PROY.Repositories
 
 
                     tbody += "<tr>";
-                    tbody += "<td style='color: white; font-size: 10px' colspan='7'> Autorizado por la Contraloría General de Cuentas Según Resolución No. Fb/ 2662 Clas.: 365-12-8-1-4-97 del 01-4-1997 No. Correlativo 1052-2022 de fecha 08-12-2022 Envío Fiscal 4-ASCC 20754 de fecha 08-12-2022 del 001 al 5.000 (5.000) Sin Serie Ediciones Santillana Nit.: 763296-3 Libro 4-ASCC Folio 37 No de Cuenta 2022-100-101-18-329 </td>";
+                    tbody += "<td style='color: black; font-size: 10px' colspan='7'> Autorizado por la Contraloría General de Cuentas Según Resolución No. Fb/ 2662 Clas.: 365-12-8-1-4-97 del 01-4-1997 No. Correlativo 1052-2022 de fecha 08-12-2022 Envío Fiscal 4-ASCC 20754 de fecha 08-12-2022 del 001 al 5.000 (5.000) Sin Serie Ediciones Santillana Nit.: 763296-3 Libro 4-ASCC Folio 37 No de Cuenta 2022-100-101-18-329 </td>";
                     tbody += "</tr>";
 
                     body = string.Format(body, tbody);
