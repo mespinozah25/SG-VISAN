@@ -1,4 +1,4 @@
-﻿using PROY.Models;
+﻿using PROY.Models.TableroDeDatos;
 using PROY.Repositories;
 
 namespace PROY.Services
@@ -12,18 +12,14 @@ namespace PROY.Services
             _tableroRepository = tableroRepository;
         }
 
-        public List<dynamic> ChartBodegasExistenciaProductos()
+        public List<BodegaProducto> ChartBodegasExistenciaProductos()
         {
-            var query = _tableroRepository.ChartBodegasExistenciaProductos();
-
-            return query;
+            return _tableroRepository.ChartBodegasExistenciaProductos();
         }
 
-        public List<dynamic> ChartRaciones()
+        public List<Racion> ChartRaciones()
         {
-            var query = _tableroRepository.ChartRaciones();
-
-            return query;
+            return _tableroRepository.ChartRaciones();
         }
     }
 }

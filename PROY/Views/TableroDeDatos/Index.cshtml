@@ -186,11 +186,8 @@
 
 
 @section Scripts {
-
     <script>
-
-        $( document ).ready(function() {
-
+        $(document).ready(function() {
             google.charts.load('current', {'packages':['corechart']});
             google.charts.setOnLoadCallback(ChartBodegasProductos);
             google.charts.setOnLoadCallback(ChartRaciones);
@@ -205,70 +202,58 @@
             $('#fechaActual').text(fechaFormateada);
         });
 
-        
-
         function ChartBodegasProductos() {
             fetch('/TableroDeDatos/ObtenerDatosGraficaBodegasProductos')
                 .then(response => response.json())
                 .then(datos => {
-                    let encabezados = ['Bodega'];
-                    let bodegasMap = new Map();
-
-                    datos.forEach(bodega => {
-                        bodega.productos.forEach(producto => {
-                            if (!encabezados.includes(producto.nombrePA)) {
-                                encabezados.push(producto.nombrePA);
-                            }
-                        });
+                    // Crear DataTable con el formato correcto
+                    var data = new google.visualization.DataTable();
+                    
+                    // Agregar columnas
+                    data.addColumn('string', 'Bodega');
+                    datos.encabezados.slice(1).forEach(function(producto) {
+                        data.addColumn('number', producto);
                     });
+                    
+                    // Agregar filas
+                    data.addRows(datos.filas);
 
-                    let filas = [];
-
-                    datos.forEach(bodega => {
-                        let fila = [bodega.nombreBodega];
-
-                        encabezados.slice(1).forEach(nombreProducto => {
-                            let producto = bodega.productos.find(p => p.nombrePA === nombreProducto);
-                            fila.push(producto ? producto.existencias : 0);
-                        });
-
-                        filas.push(fila);
-                    });
-
-                    let data = google.visualization.arrayToDataTable([encabezados, ...filas]);
-
-                    let options = {
+                    var options = {
                         title: 'Existencias por Bodega y Producto',
-                        vAxis: { title: 'Existencias' },
-                        hAxis: { title: 'Bodega' },
-                        seriesType: 'bars'
+                        vAxis: { title: 'Bodegas' },
+                        hAxis: { title: 'Existencias' },
+                        seriesType: 'bars',
+                        isStacked: true,
+                        height: 500,
+                        legend: { position: 'top' },
+                        chartArea: { width: '80%', height: '70%' }
                     };
 
-                    let chart = new google.visualization.ComboChart(document.getElementById('chart_bod'));
+                    var chart = new google.visualization.BarChart(document.getElementById('chart_bod'));
                     chart.draw(data, options);
                 })
                 .catch(error => console.error('Error al obtener los datos:', error));
         }
 
         function ChartRaciones() {
-          var data = google.visualization.arrayToDataTable([
-            ['Task', 'Hours per Day'],
-            ['Work',     11],
-            ['Eat',      2],
-            ['Commute',  2],
-            ['Watch TV', 2],
-            ['Sleep',    7]
-          ]);
+            fetch('/TableroDeDatos/ObtenerDatosGraficaRaciones')
+                .then(response => response.json())
+                .then(datos => {
+                    var data = google.visualization.arrayToDataTable(datos);
 
-          var options = {
-            title: 'Raciones',
-            pieHole: 0.4,
-          };
+                    var options = {
+                        title: 'Distribución de Raciones por Programa',
+                        pieHole: 0.4,
+                        height: 500,
+                        legend: { position: 'labeled' },
+                        chartArea: { width: '90%', height: '80%' }
+                    };
 
-          var chart = new google.visualization.PieChart(document.getElementById('chart_raciones'));
-          chart.draw(data, options);
+                    var chart = new google.visualization.PieChart(document.getElementById('chart_raciones'));
+                    chart.draw(data, options);
+                })
+                .catch(error => console.error('Error al obtener los datos de raciones:', error));
         }
-
     </script>
 }
 

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.StaticFiles;
@@ -94,7 +94,7 @@ namespace PROY.Controllers
                                                     //Solicitudes = await _solicitudService.GetAllSolicitudes(),
                         Solicitudes = await _evaluacionService.GetAllEvaluaciones(),
                         SolicitudesRechazadas = await _evaluacionService.GetAllEvaluacionesRechazadas(),
-                        AnulacionDict =anulacionDict,
+                        AnulacionDict = anulacionDict,
                         UnidadDict = unidadDict,
                         IntervencionDict = intervencionDict,
                         InstitucionDict = institucionDict,
@@ -116,7 +116,7 @@ namespace PROY.Controllers
                         SolicitudesRechazadas = await _evaluacionService.GetAllEvaluacionesRechazadas(),
                         UnidadDict = unidadDict,
                         IntervencionDict = intervencionDict,
-                        AnulacionDict= anulacionDict,
+                        AnulacionDict = anulacionDict,
                         InstitucionDict = institucionDict,
                         ValidacionDict = validacionDict
                     };
@@ -235,7 +235,7 @@ namespace PROY.Controllers
         {
             //var filePath = Path.Combine(Server.MapPath("~/Archivos"), fileName);
             //var filePath = Path.Combine(_webHostEnvironment.WebRootPath, "evaluaciones", fileName);
-            var filePath = Path.Combine(Directory.GetCurrentDirectory(),"wwwroot", "evaluaciones", fileName);
+            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "evaluaciones", fileName);
 
             if (!System.IO.File.Exists(filePath))
             {
@@ -255,7 +255,7 @@ namespace PROY.Controllers
             {
                 case ".xls":
                     return "application/vnd.ms-excel";
-                case ".xlsx":                    
+                case ".xlsx":
                     return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
                 case ".doc":
                 case ".docx":
@@ -350,9 +350,9 @@ namespace PROY.Controllers
                         ValidacionDict = validacionDict
                     };
 
-                }                
+                }
 
-                ViewBag.AbrirModalEditar = "new";                
+                ViewBag.AbrirModalEditar = "new";
                 return View(solicitudVM);
             }
             else
@@ -433,13 +433,13 @@ namespace PROY.Controllers
                         //Solicitud = new Solicitud(),//await _solicitudService.GetSolicitud(1),
                         Solicitud = await _solicitudService.GetSolicitud((long)idEvaluacion),
                         //Solicitudes = await _solicitudService.GetAllSolicitudes(),
-                        DetalleSolicitudAPA=await _solicitudService.GetDetalleSolicitudAPA((long)idDetalleEvaluacion),
+                        DetalleSolicitudAPA = await _solicitudService.GetDetalleSolicitudAPA((long)idDetalleEvaluacion),
                         DetalleEvaluacionAPA = await _evaluacionService.GetDetalleEvaluacionIDAPA((long)idDetalleEvaluacion),
                         /*DetalleSolicitud = new DetalleSolicitud()
                         {
                             IdSolicitud=(long)idSolicitud
                         },*/
-                        listaDetallesSolicitudAPA=await _solicitudService.GetAllDetalleSolicitudAPA((long)idEvaluacion),
+                        listaDetallesSolicitudAPA = await _solicitudService.GetAllDetalleSolicitudAPA((long)idEvaluacion),
                         listaDetallesEvaluacionAPA = await _evaluacionService.GetAllDetalleEvaluacionAPA((long)idEvaluacion),
                         ///IntervencionDict = intervencionDict,
                         DepartamentoDict = departamentoDict,
@@ -460,7 +460,7 @@ namespace PROY.Controllers
         {
             // Datos de ejemplo
             var datos = (await _solicitudService.GetAllDetalleSolicitud((long)idSolicitud))
-                        .Where(d => d.IdAnulacion==67 || d.IdAnulacion==0 || d.IdAnulacion is null);
+                        .Where(d => d.IdAnulacion == 67 || d.IdAnulacion == 0 || d.IdAnulacion is null);
 
             // Configuración para EPPlus
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
@@ -692,7 +692,7 @@ namespace PROY.Controllers
                     UsuarioRegistro = User.FindFirst("Usuario")?.Value //modeloVM.DetalleEvaluacion.UsuarioRegistro
                 };
             }
-            else if (condicion == "2") 
+            else if (condicion == "2")
             {
                 modelo2 = new DetalleEvaluacionAPA()
                 {
@@ -707,12 +707,12 @@ namespace PROY.Controllers
                     UsuarioRegistro = User.FindFirst("Usuario")?.Value //modeloVM.DetalleEvaluacion.UsuarioRegistro
                 };
             }
-            
+
             //if (ModelState.IsValid)
-            if (condicion=="1")
+            if (condicion == "1")
             {
                 if (modelo1.IdDetalleEvaluacion == 0)
-                {                  
+                {
                     var result = await _evaluacionService.SaveDetalleEvaluacion(modelo1, varProceso);
 
                     if (result.Success && result.Data != null)
@@ -752,10 +752,10 @@ namespace PROY.Controllers
                             TempData["Mensaje"] = result.Message;
                             return RedirectToAction("ListaDetalle", "Programacion", new { idProgramacion = idEvaluacion, k = condicion });
                         }*/
-                        
+
                         TempData["Mensaje"] = result.Message;
                         //return View(modeloVM);
-                        return RedirectToAction("IndexDetalle", "Evaluacion", new { idEvaluacion = idEvaluacion, k=condicion, returnController=varRetorno });
+                        return RedirectToAction("IndexDetalle", "Evaluacion", new { idEvaluacion = idEvaluacion, k = condicion, returnController = varRetorno });
                     }
                     else
                     {
@@ -780,9 +780,9 @@ namespace PROY.Controllers
                         {
                             //----------------------------Renombrar archivo viejo---------------------------------
                             var pathActual = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/evaluaciones");
-                            string oldArchivo="";
-                            if (modelo1.Archivo!="")
-                                oldArchivo= modelo1.Archivo.Insert(modelo1.Archivo.IndexOf("."), "_" + DateTime.Now.Date.ToString("dd-MM-yyyy") + "_" + DateTime.Now.Hour.ToString() + DateTime.Now.Minute.ToString() + DateTime.Now.Second.ToString());
+                            string oldArchivo = "";
+                            if (modelo1.Archivo != "")
+                                oldArchivo = modelo1.Archivo.Insert(modelo1.Archivo.IndexOf("."), "_" + DateTime.Now.Date.ToString("dd-MM-yyyy") + "_" + DateTime.Now.Hour.ToString() + DateTime.Now.Minute.ToString() + DateTime.Now.Second.ToString());
 
                             if (System.IO.File.Exists(pathActual + "/" + modelo1.Archivo))
                                 System.IO.File.Move(pathActual + "/" + modelo1.Archivo, pathActual + "/" + oldArchivo);
@@ -819,7 +819,7 @@ namespace PROY.Controllers
                         }*/
 
                         TempData["Mensaje"] = result.Message;
-                        return RedirectToAction("IndexDetalle", "Evaluacion", new { idEvaluacion = idEvaluacion, k=condicion, returnController=varRetorno });
+                        return RedirectToAction("IndexDetalle", "Evaluacion", new { idEvaluacion = idEvaluacion, k = condicion, returnController = varRetorno });
                     }
                 }
                 return View(modelo1);
@@ -934,7 +934,7 @@ namespace PROY.Controllers
                         }*/
 
                         TempData["Mensaje"] = result.Message;
-                        return RedirectToAction("IndexDetalle", "Evaluacion", new { idEvaluacion = idEvaluacion, k = condicion, returnController=varRetorno });
+                        return RedirectToAction("IndexDetalle", "Evaluacion", new { idEvaluacion = idEvaluacion, k = condicion, returnController = varRetorno });
                     }
                 }
                 return View(modelo2);
@@ -963,7 +963,7 @@ namespace PROY.Controllers
                 observaciones = detalleEvaluacion.Observaciones, // Proporciona un valor por defecto si es null                
                 Archivo = detalleEvaluacion.Archivo,
                 fechaRegistro = detalleEvaluacion.FechaRegistro,
-                usuarioRegistro=detalleEvaluacion.UsuarioRegistro
+                usuarioRegistro = detalleEvaluacion.UsuarioRegistro
             });
         }
 
@@ -989,6 +989,7 @@ namespace PROY.Controllers
             });
         }
 
+        [HttpGet]
         public async Task<IActionResult> EliminarDetalleEvaluacion(Int64 idEvaluacion, Int64 idDetalleEvaluacion)
         {
             var result = await _evaluacionService.DeleteDetalleEvaluacion(idDetalleEvaluacion);
@@ -1051,17 +1052,17 @@ namespace PROY.Controllers
                 if (condicion == "1")
                 {
                     solicitudVM = new SolicitudesVM()
-                    { 
+                    {
                         Solicitud = await _solicitudService.GetSolicitud((long)idEvaluacion),
                         Solicitudes = await _solicitudService.GetAllSolicitudes(),
                         listaDetallesSolicitud = await _solicitudService.GetAllDetalleSolicitud((long)idEvaluacion),
-                        DetalleSolicitud = new DetalleSolicitud(), 
+                        DetalleSolicitud = new DetalleSolicitud(),
                         //IntervencionDict = intervencionDict,
                         DepartamentoDict = departamentoDict,
                         MunicipioDict = municipioDict,
                         EstadoCivilDict = estadocivilDict,
                         GrupoEtnicoDict = grupoetnicoDict,
-                        AnulacionDict= anulacionDict
+                        AnulacionDict = anulacionDict
                     };
 
                 }
@@ -1073,7 +1074,7 @@ namespace PROY.Controllers
                         Solicitudes = await _solicitudService.GetAllSolicitudesAPA(),
                         listaDetallesSolicitudAPA = await _solicitudService.GetAllDetalleSolicitudAPA((long)idEvaluacion),
                         DetalleSolicitudAPA = new DetalleSolicitudAPA(),
-                        
+
                         //IntervencionDict = intervencionDict,
                         DepartamentoDict = departamentoDict,
                         MunicipioDict = municipioDict,
@@ -1151,9 +1152,9 @@ namespace PROY.Controllers
                         ///IntervencionDict = intervencionDict,
                         DepartamentoDict = departamentoDict,
                         MunicipioDict = municipioDict,
-                        EstadoCivilDict=estadocivilDict,
-                        GrupoEtnicoDict=grupoetnicoDict,
-                        AnulacionDict=anulacionDict
+                        EstadoCivilDict = estadocivilDict,
+                        GrupoEtnicoDict = grupoetnicoDict,
+                        AnulacionDict = anulacionDict
                     };
                 }
                 else if (condicion == "2")
@@ -1264,6 +1265,54 @@ namespace PROY.Controllers
                 return View(solicitud);
             }
 
+        }
+
+        public async Task<IActionResult> EliminarDetalleSolicitud(Int64 idSolicitud, Int64 idDetalle, string condicion)
+        {
+            
+
+            if (condicion == "1")
+            {
+                var result = await _solicitudService.DeleteDetalleSolicitud(idDetalle);
+
+                if (result.Success && result.Data != null)
+                {
+                    TempData["Mensaje"] = result.Message;
+                    return RedirectToAction("ListaDetalle", "Evaluacion", new
+                    {
+                        idEvaluacion = idSolicitud,
+                        k = condicion
+                    });
+                }
+                else
+                {
+                    TempData["Mensaje"] = result.Message;
+                    return RedirectToAction("IndexDetalle", "Evaluacion");
+                }
+            }
+            else if (condicion == "2")
+            {
+                var result = await _solicitudService.DeleteDetalleSolicitudAPA(idDetalle);
+
+                if (result.Success && result.Data != null)
+                {
+                    TempData["Mensaje"] = result.Message;
+                    return RedirectToAction("ListaDetalle", "Evaluacion", new
+                    {
+                        idEvaluacion = idSolicitud,
+                        k = condicion
+                    });
+                }
+                else
+                {
+                    TempData["Mensaje"] = result.Message;
+                    return RedirectToAction("IndexDetalle", "Evaluacion");
+                }
+            }
+            else
+            {
+                return Unauthorized(); // Si el claim no existe o el valor no coincide
+            }
         }
 
     }

@@ -19,9 +19,6 @@ namespace PROY.Repositories
             List<Solicitud> listado = await _dbContext.Solicitudes.Where(s => s.Restrictiva == 0 && s.Estado=="EVALUACION" && s.Depto == "1")
                                                                   .Include(d => d.DetallesSolicitud)
                                                                   .Include(e => e.DetallesEvaluacion)
-                                                                  
-                                                                  .Where(s => s.DetallesSolicitud.All(d => d.Restrictiva == 0))
-                                                                  .Where(s=>s.DetallesEvaluacion.All(e => e.Restrictiva==0))
                                                                   .ToListAsync();
             return listado;
         }
@@ -32,8 +29,6 @@ namespace PROY.Repositories
             List<Solicitud> listado = await _dbContext.Solicitudes.Where(s => s.Restrictiva == 0 && s.Estado == "EVALUACION" && s.Depto=="2")
                                                                   .Include(d => d.DetallesSolicitudAPA)
                                                                   .Include(e => e.DetallesEvaluacionAPA)
-                                                                  .Where(s => s.DetallesSolicitudAPA.All(d => d.Restrictiva == 0))
-                                                                  .Where(s => s.DetallesEvaluacionAPA.All(e => e.Restrictiva == 0))
                                                                   .ToListAsync();            
 
             return listado;
@@ -45,9 +40,6 @@ namespace PROY.Repositories
             List<Solicitud> listado = await _dbContext.Solicitudes.Where(s => s.Restrictiva == 0 && s.Estado == "RECHAZADA" && s.Depto == "1")
                                                                   .Include(d => d.DetallesSolicitud)
                                                                   .Include(e => e.DetallesEvaluacion)
-
-                                                                  .Where(s => s.DetallesSolicitud.All(d => d.Restrictiva == 0))
-                                                                  .Where(s => s.DetallesEvaluacion.All(e => e.Restrictiva == 0))
                                                                   .ToListAsync();
             return listado;
         }
@@ -58,8 +50,6 @@ namespace PROY.Repositories
             List<Solicitud> listado = await _dbContext.Solicitudes.Where(s => s.Restrictiva == 0 && s.Estado == "RECHAZADA" && s.Depto == "2")
                                                                   .Include(d => d.DetallesSolicitudAPA)
                                                                   .Include(e => e.DetallesEvaluacionAPA)
-                                                                  .Where(s => s.DetallesSolicitudAPA.All(d => d.Restrictiva == 0))
-                                                                  .Where(s => s.DetallesEvaluacionAPA.All(e => e.Restrictiva == 0))
                                                                   .ToListAsync();
 
             return listado;
