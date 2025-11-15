@@ -1,0 +1,126 @@
+@inject IHttpContextAccessor HttpContextAccessor
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
+
+@model PROY.ViewModels.SolicitudesVM
+
+@{
+    ViewData["Title"] = "Index";
+    ViewData["rutaApp"] = @Model.rutaApp;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Mensaje"]
+    </div>
+}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="display-6">Formulario Solicitud de Alimentos Por Acciones</h1>
+        </div>
+    </div>
+    <form asp-action="GuardarSolicitud" asp-controller="Solicitud" asp-route-k="2" enctype="multipart/form-data" method="post">
+        <input type="hidden" id="solicitudId" asp-for="Solicitud.IdSolicitud"/>
+        <div class="row m-3">
+            <div class="col-md-12">
+                <label for="cbTipoAsistAlim" class="control-label">Departamento</label>
+                <select class="form-select" id="cbTipoAsistAlim" name="Solicitud.Depto" required disabled>
+                    <option value="2" selected>Alimentos por acciones</option>
+                </select>
+            </div>
+        </div>
+        <div class="row m-3">
+            <div class="col-md-4">
+                <label for="txtNoSolicitud" class="control-label">No. Solicitud</label>
+                <input asp-for="@Model.Solicitud!.Correlativo" type="text" id="txtNoSolicitud" class="form-control" />
+                <span asp-validation-for="@Model.Solicitud!.Correlativo" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label for="cbIntervencion" class="control-label">Intervención</label>
+                <select class="form-select" id="cbIntervencion" asp-for="@Model.Solicitud!.IdIntervencion" asp-items="ViewBag.Intervenciones" required></select>
+                <span asp-validation-for="@Model.Solicitud!.IdIntervencion" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label for="cbProyecto" class="control-label">Proyectos</label>
+                <select class="form-select" id="cbProyecto" asp-for="@Model.Solicitud!.IdProyecto" asp-items="ViewBag.Proyectos" required></select>
+                <span asp-validation-for="@Model.Solicitud!.IdProyecto" class="text-danger"></span>
+            </div>
+        </div>
+        <div class="row m-3">
+            <div class="col-md-4">
+                <label for="cbDepartamento" class="control-label">Departamento</label>
+                <select class="form-select" id="cbDepartamento" asp-for="@Model.Solicitud!.Departamento" asp-items="ViewBag.Departamentos" onchange="cambio()" required></select>
+                <span asp-validation-for="@Model.Solicitud!.Departamento" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label for="cbMunicipio" class="control-label">Municipio</label>
+                <select class="form-select" id="cbMunicipio" asp-for="@Model.Solicitud!.Municipio" asp-items="ViewBag.Municipios" required></select>
+                <span asp-validation-for="@Model.Solicitud!.Municipio" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label for="txtComunidad" class="control-label">Comunidad</label>
+                <input type="text" class="form-control" id="txtComunidad" asp-for="@Model.Solicitud!.Comunidad" required></input>
+                <span asp-validation-for="@Model.Solicitud!.Comunidad" class="text-danger"></span>
+            </div>
+        </div>
+        <div class="row m-3">
+            <div class="col-md-3">
+                <label for="fdespacho" class="control-label">Fecha Ingreso a Despacho</label>
+                <input asp-for="@Model.Solicitud!.FechaIngresoDespacho" id="fdespacho" class="form-control" type="date" value="@DateTime.Now.ToString("yyyy-MM-dd")" required />
+                <span asp-validation-for="@Model.Solicitud!.FechaIngresoDespacho" class="text-danger"></span>
+            </div>
+            <div class="col-md-3">
+                <label for="fdireccion" class="control-label">Fecha Ingreso a Dirección</label>
+                <input asp-for="@Model.Solicitud!.FechaIngresoDireccion" id="fdireccion" class="form-control" type="date" value="@DateTime.Now.ToString("yyyy-MM-dd")" required />
+                <span asp-validation-for="@Model.Solicitud!.FechaIngresoDireccion" class="text-danger"></span>
+            </div>
+            <div class="col-md-3">
+                <label for="funidad" class="control-label">Fecha Ingreso a Departamento</label>
+                <input asp-for="@Model.Solicitud!.FechaIngresoUnidad" id="funidad" class="form-control" type="date" value="@DateTime.Now.ToString("yyyy-MM-dd")" required />
+                <span asp-validation-for="@Model.Solicitud!.FechaIngresoUnidad" class="text-danger"></span>
+            </div>
+            <div class="col-md-3">
+                <label for="txtraciones" class="control-label">No. de raciones</label>
+                <input asp-for="@Model.Solicitud!.Raciones" id="txtraciones" class="form-control" type="number" required />
+                <span asp-validation-for="@Model.Solicitud!.Raciones" class="text-danger"></span>
+            </div>
+        </div>
+        <div class="row m-3">
+            <div class="col-md-4">
+                <label for="txtNombreCocode" class="control-label">Nombre COCODE</label>
+                <input type="text" class="form-control" id="txtNombreCocode" asp-for="@Model.Solicitud!.NombreCocode" required maxlength="100"></input>
+                <span asp-validation-for="@Model.Solicitud!.NombreCocode" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label for="txtComunidadCocode" class="control-label">Comunidad COCODE</label>
+                <input type="text" class="form-control" id="txtComunidadCocode" asp-for="@Model.Solicitud!.ComunidadCocode" required maxlength="150"></input>
+                <span asp-validation-for="@Model.Solicitud!.ComunidadCocode" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label for="txtTelefonoCocode" class="control-label">Teléfono COCODE</label>
+                <input type="text" class="form-control" id="txtTelefonoCocode" asp-for="@Model.Solicitud!.TelefonoCocode" required maxlength="10"></input>
+                <span asp-validation-for="@Model.Solicitud!.TelefonoCocode" class="text-danger"></span>
+            </div>
+        </div>
+        <div class="row m-3">
+            <div class="col-md-6">
+                <a class="btn btn-secondary w-100" asp-controller="SolicitudV2" asp-action="Index">
+                    Cancelar
+                </a>
+            </div>
+            <div class="col-md-6">
+                <input type="submit" value="Guardar" class="btn btn-primary w-100" />
+            </div>
+        </div>
+    </form>
+</div>
+
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.StaticFiles;
@@ -870,7 +870,7 @@ namespace PROY.Controllers
 
                         TempData["Mensaje"] = result.Message;
                         //return View(modeloVM);
-                        return RedirectToAction("IndexDetalle", "Evaluacion", new { idEvaluacion = idEvaluacion, k = condicion, returnController = varRetorno });
+                        return RedirectToAction("IndexDetalle", "Evaluacion", new { idEvaluacion = idEvaluacion, k = condicion, proceso=varProceso });
                     }
                     else
                     {
