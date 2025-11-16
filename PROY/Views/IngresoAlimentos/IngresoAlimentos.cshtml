@@ -1,4 +1,5 @@
 ﻿@inject IHttpContextAccessor HttpContextAccessor
+
 <head>
     <!-- CSS -->
     @* <link rel="stylesheet" href="https://cdn.datatables.net/2.2.1/css/dataTables.dataTables.min.css"> *@
@@ -7,7 +8,8 @@
 
 <style>
     table thead th {
-        pointer-events: none; /* Desactiva la interacción con los títulos */
+        pointer-events: none;
+        /* Desactiva la interacción con los títulos */
     }
 </style>
 
@@ -29,22 +31,26 @@
         <div class="row">
             <div class="col">
                 <label for="cbIdPrograma" class="control-label">Programa</label>
-                <select class="form-select" id="cbIdPrograma" asp-for="@Model.IngresoAlimentos.IdPrograma" asp-items="ViewBag.Programas" required></select>
+                <select class="form-select" id="cbIdPrograma" asp-for="@Model.IngresoAlimentos.IdPrograma"
+                    asp-items="ViewBag.Programas" required></select>
                 <span asp-validation-for="@Model.IngresoAlimentos.IdPrograma" class="text-danger"></span>
             </div>
             <div class="col">
                 <label for="cbIdConvenio" class="control-label">Convenio</label>
-                <select class="form-select" id="cbIdConvenio" asp-for="@Model.IngresoAlimentos.IdConvenio" asp-items="ViewBag.Convenios" required></select>
+                <select class="form-select" id="cbIdConvenio" asp-for="@Model.IngresoAlimentos.IdConvenio"
+                    asp-items="ViewBag.Convenios" required></select>
                 <span asp-validation-for="@Model.IngresoAlimentos.IdConvenio" class="text-danger"></span>
             </div>
             <div class="col">
                 <label for="cbIdBodega" class="control-label">Bodega que recibe</label>
-                <select class="form-select" id="cbIdBodega" asp-for="@Model.IngresoAlimentos.IdBodegaRecibe" asp-items="ViewBag.Bodegas" required></select>
+                <select class="form-select" id="cbIdBodega" asp-for="@Model.IngresoAlimentos.IdBodegaRecibe"
+                    asp-items="ViewBag.Bodegas" required></select>
                 <span asp-validation-for="@Model.IngresoAlimentos.IdBodegaRecibe" class="text-danger"></span>
             </div>
             <div class="col">
                 <label for="cbIdJuntaReceptora" class="control-label">Junta de Recepción</label>
-                <select class="form-select" id="cbIdJuntaReceptora" asp-for="@Model.IngresoAlimentos.IdJuntaReceptora" asp-items="ViewBag.JuntaReceptora" required></select>
+                <select class="form-select" id="cbIdJuntaReceptora" asp-for="@Model.IngresoAlimentos.IdJuntaReceptora"
+                    asp-items="ViewBag.JuntaReceptora" required></select>
                 <span asp-validation-for="@Model.IngresoAlimentos.IdJuntaReceptora" class="text-danger"></span>
             </div>
         </div>
@@ -59,7 +65,8 @@
         <div class="row camposAlmacenamiento">
             <div class="col">
                 <label for="cbIdProductoAlimenticio" class="control-label">Producto Alimenticio</label>
-                <select class="form-select" id="cbIdProductoAlimenticio" asp-items="ViewBag.ProductoAlimenticio"></select>
+                <select class="form-select" id="cbIdProductoAlimenticio"
+                    asp-items="ViewBag.ProductoAlimenticio"></select>
             </div>
             <div class="col">
                 <label for="cbIdPresentacionPA" class="control-label">Presentación</label>
@@ -116,11 +123,118 @@
                 <a type="button" class="btn btn-secondary" asp-action="Index">Regresar</a>
             </div>
             <div class="col">
-                <input type="button" value="Guardar" class="btn btn-primary camposAlmacenamiento" onclick="return ConfirmSave();" />
+                <input type="button" value="Guardar" class="btn btn-primary camposAlmacenamiento"
+                    onclick="return ConfirmSave();" />
             </div>
         </div>
 
     </form>
+</div>
+
+<!-- Modal para Editar Detalle -->
+<div class="modal fade" id="modalEditarDetalle" tabindex="-1" aria-labelledby="modalEditarDetalleLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalEditarDetalleLabel">Editar Producto y Presentación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="frmEditarDetalle">
+                    <input type="hidden" id="editIdProductosIngreso" value="0">
+                    <input type="hidden" id="editFilaIndex" value="-1">
+
+                    <!-- Campos Editables -->
+                    <div class="mb-3">
+                        <label for="editCbIdProductoAlimenticio" class="form-label">
+                            <i class="fas fa-edit text-primary me-1"></i>Producto Alimenticio *
+                        </label>
+                        <select class="form-select editable-field" id="editCbIdProductoAlimenticio"
+                            asp-items="ViewBag.ProductoAlimenticio" required>
+                            <option value="">Seleccionar Producto</option>
+                        </select>
+                        <div class="form-text text-primary">
+                            <small><i class="fas fa-info-circle me-1"></i>Campo editable</small>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="editCbIdPresentacionPA" class="form-label">
+                            <i class="fas fa-edit text-primary me-1"></i>Presentación *
+                        </label>
+                        <select class="form-select editable-field" id="editCbIdPresentacionPA"
+                            asp-items="ViewBag.PresentacionPA" required>
+                            <option value="">Seleccionar Presentación</option>
+                        </select>
+                        <div class="form-text text-primary">
+                            <small><i class="fas fa-info-circle me-1"></i>Campo editable</small>
+                        </div>
+                    </div>
+
+                    <!-- Línea divisoria -->
+                    <hr class="my-4">
+
+                    <!-- Campos Bloqueados -->
+                    <div class="mb-3">
+                        <label class="form-label text-muted">
+                            <i class="fas fa-lock text-muted me-1"></i>Cantidad Unidad
+                        </label>
+                        <div class="input-group">
+                            <input type="number" class="form-control locked-field" id="editTxtCantidadUnidad" readonly>
+                            <span class="input-group-text bg-light">
+                                <i class="fas fa-ban text-danger"></i>
+                            </span>
+                        </div>
+                        <div class="form-text text-muted">
+                            <small><i class="fas fa-lock me-1"></i>Campo bloqueado</small>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted">
+                            <i class="fas fa-lock text-muted me-1"></i>Unidad de Medida
+                        </label>
+                        <div class="input-group">
+                            <input type="text" class="form-control locked-field" id="editTxtUnidadMedida" readonly>
+                            <span class="input-group-text bg-light">
+                                <i class="fas fa-ban text-danger"></i>
+                            </span>
+                        </div>
+                        <div class="form-text text-muted">
+                            <small><i class="fas fa-lock me-1"></i>Campo bloqueado</small>
+                        </div>
+                    </div>
+                    <input type="hidden" id="editTxtIdUnidadMedida">
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted">
+                            <i class="fas fa-lock text-muted me-1"></i>Cantidad a recibir
+                        </label>
+                        <div class="input-group">
+                            <input type="number" class="form-control locked-field" id="editTxtCantidadARecibir"
+                                readonly>
+                            <span class="input-group-text bg-light">
+                                <i class="fas fa-ban text-danger"></i>
+                            </span>
+                        </div>
+                        <div class="form-text text-muted">
+                            <small><i class="fas fa-lock me-1"></i>Campo bloqueado</small>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancelar
+                </button>
+                <button type="button" class="btn btn-primary" onclick="GuardarEdicion()">
+                    <i class="fas fa-save me-1"></i>Guardar Cambios
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 
 
@@ -128,7 +242,7 @@
     <partial name="_ValidationScriptsPartial" />
 
     <script>
-        $( document ).ready(function() {
+        $(document).ready(function () {
 
             $("#tableDetalle tbody").empty();
             $('#tableDetalle_paginate').hide();
@@ -145,7 +259,7 @@
             // Oculta las flechas de ordenamiento
             $('table.dataTable thead th').removeClass('sorting sorting_asc sorting_desc');
 
-            if (parseInt(id) != 0){
+            if (parseInt(id) != 0) {
                 abrirYActualizarUrl(id, type);
             }
 
@@ -155,15 +269,15 @@
         function abrirYActualizarUrl(id, tipoApertura) {
 
             // Se inicia reiniciando la tabla
-             $("#tableDetalle tbody").empty();
+            $("#tableDetalle tbody").empty();
 
             // El tipo de apertura 1 indica que se var almacenar o editar un registro
             // El tipo de apertura 2 indica solo de observación
-            if(tipoApertura == 1){
+            if (tipoApertura == 1) {
                 $('.camposAlmacenamiento').show();
                 $("#frmIngresoAlimentos input").attr("readonly", false);  // Hace los inputs solo lectura
                 $("#frmIngresoAlimentos select").prop("disabled", false); // Deshabilita los selects
-            }else{
+            } else {
                 $('.camposAlmacenamiento').hide();
                 $("#frmIngresoAlimentos input").attr("readonly", true);  // Hace los inputs solo lectura
                 $("#frmIngresoAlimentos select").prop("disabled", true); // Deshabilita los selects
@@ -200,7 +314,7 @@
                         $('#cbIdJuntaReceptora').val(ia.idJuntaReceptora);
 
                         // Agregar Detalle
-                        if (data.productosIngreso.length > 0){
+                        if (data.productosIngreso.length > 0) {
 
                             let tabla = document.getElementById("tableDetalle");
                             let tbody = tabla.getElementsByTagName("tbody")[0];
@@ -219,23 +333,28 @@
                                     ? `<button type="button" class="btn btn-danger btn-sm camposAlmacenamiento" onclick="EliminarFila(this, ${detalle.idProductosIngreso})">Eliminar</button>`
                                     : '';
 
+                                var botonEditar = tipoApertura == 1
+                                    ? `<button type="button" class="btn btn-info btn-sm camposAlmacenamiento" onclick="EditarFila(this, ${detalle.idProductosIngreso})">Editar</button>`
+                                    : '';
+
                                 fila.innerHTML = `
-                                    <td>${index + 1}</td>
-                                    <td>${txtProducto}</td>
-                                    <td>${txtpresentacion}</td>
-                                    <td>${cantidadUnidad}</td>
-                                    <td>${txtUnidad}</td>
-                                    <td>${cantidadRecibir}</td>
-                                    <td>
-                                        ${botonEliminar}
-                                        <input type="hidden" name="IdProductosIngreso" value="${detalle.idProductosIngreso}">
-                                        <input type="hidden" name="IdProductoAlimenticio" value="${detalle.idProductoAlimenticio}">
-                                        <input type="hidden" name="IdPresentacion" value="${detalle.idPresentacion}">
-                                        <input type="hidden" name="CantidadUnidad" value="${cantidadUnidad}">
-                                        <input type="hidden" name="IdUnidadMedida" value="${detalle.idUnidadMedida}">
-                                        <input type="hidden" name="CantidadRecibir" value="${cantidadRecibir}">
-                                    </td>
-                                `;
+                                                        <td>${index + 1}</td>
+                                                        <td>${txtProducto}</td>
+                                                        <td>${txtpresentacion}</td>
+                                                        <td>${cantidadUnidad}</td>
+                                                        <td>${txtUnidad}</td>
+                                                        <td>${cantidadRecibir}</td>
+                                                        <td>
+                                                            ${botonEditar}
+                                                            ${botonEliminar}
+                                                            <input type="hidden" name="IdProductosIngreso" value="${detalle.idProductosIngreso}">
+                                                            <input type="hidden" name="IdProductoAlimenticio" value="${detalle.idProductoAlimenticio}">
+                                                            <input type="hidden" name="IdPresentacion" value="${detalle.idPresentacion}">
+                                                            <input type="hidden" name="CantidadUnidad" value="${cantidadUnidad}">
+                                                            <input type="hidden" name="IdUnidadMedida" value="${detalle.idUnidadMedida}">
+                                                            <input type="hidden" name="CantidadRecibir" value="${cantidadRecibir}">
+                                                        </td>
+                                                    `;
 
                                 tbody.appendChild(fila);
                             });
@@ -281,23 +400,23 @@
             let fila = document.createElement("tr");
 
             fila.innerHTML = `
-                <td></td>
-                <td>${txtProductoAlimenticio}</td>
-                <td>${txtpresentacion}</td>
-                <td>${cantidadUnidad}</td>
-                <td>${txtUnidad}</td>
-                <td>${cantidadRecibir}</td>
-                <td>
-                    <button type="button" class="btn btn-danger btn-sm" onclick="EliminarFila(this, 0)">Eliminar</button>
+                                    <td></td>
+                                    <td>${txtProductoAlimenticio}</td>
+                                    <td>${txtpresentacion}</td>
+                                    <td>${cantidadUnidad}</td>
+                                    <td>${txtUnidad}</td>
+                                    <td>${cantidadRecibir}</td>
+                                    <td>
+                                        <button type="button" class="btn btn-danger btn-sm" onclick="EliminarFila(this, 0)">Eliminar</button>
 
-                    <input type="hidden" name="IdProductosIngreso" value="0">
-                    <input type="hidden" name="IdProductoAlimenticio" value="${productoAlimenticio}">
-                    <input type="hidden" name="IdPresentacion" value="${presentacion}">
-                    <input type="hidden" name="CantidadUnidad" value="${cantidadUnidad}">
-                    <input type="hidden" name="IdUnidadMedida" value="${unidadMedida}">
-                    <input type="hidden" name="CantidadRecibir" value="${cantidadRecibir}">
-                </td>
-            `;
+                                        <input type="hidden" name="IdProductosIngreso" value="0">
+                                        <input type="hidden" name="IdProductoAlimenticio" value="${productoAlimenticio}">
+                                        <input type="hidden" name="IdPresentacion" value="${presentacion}">
+                                        <input type="hidden" name="CantidadUnidad" value="${cantidadUnidad}">
+                                        <input type="hidden" name="IdUnidadMedida" value="${unidadMedida}">
+                                        <input type="hidden" name="CantidadRecibir" value="${cantidadRecibir}">
+                                    </td>
+                                `;
 
             tbody.appendChild(fila);
             ActualizarContador();
@@ -309,23 +428,23 @@
         function EliminarFila(boton, idDetalle) {
 
             // En el escenario en donde el ID de es diferente de cero, se elimina en la BD
-            if (idDetalle != 0){
+            if (idDetalle != 0) {
 
                 if (!confirm("¿Estás seguro de que deseas eliminar este Producto Alimenticio?")) {
                     return;
                 }
 
                 $.ajax({
-                url: `@ViewData["rutaApp"]/IngresoAlimentos/EliminarProductoIngreso?id=${idDetalle}`,
-                type: "POST",
-                success: function (respuesta) {
-                    alert("Producto eliminado correctamente.");
-                },
-                error: function (xhr, status, error) {
-                    console.error("Error al eliminar:", error);
-                    alert("Ocurrió un error al eliminar el producto.");
-                }
-            });
+                    url: `@ViewData["rutaApp"]/IngresoAlimentos/EliminarProductoIngreso?id=${idDetalle}`,
+                    type: "POST",
+                    success: function (respuesta) {
+                        alert("Producto eliminado correctamente.");
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("Error al eliminar:", error);
+                        alert("Ocurrió un error al eliminar el producto.");
+                    }
+                });
             }
 
             let fila = boton.closest("tr");
@@ -334,7 +453,7 @@
             ActualizarContador();
         }
 
-        function LimpiarDetalles(){
+        function LimpiarDetalles() {
             $('#cbIdProductoAlimenticio').val();
             $('#cbIdPresentacionPA').val();
             $('#cbIdUnidadMedida').val();
@@ -342,16 +461,16 @@
             $('#txtCantidadARecibir').val('');
         }
 
-        function ConfirmSave(){
+        function ConfirmSave() {
             Swal.fire({
-              title: "Está seguro de almacenar el Ingreso de Alimentos?",
-              showCancelButton: true,
-              confirmButtonText: "Guardar",
-              icon: "question"
+                title: "Está seguro de almacenar el Ingreso de Alimentos?",
+                showCancelButton: true,
+                confirmButtonText: "Guardar",
+                icon: "question"
             }).then((result) => {
-              if (result.isConfirmed) {
-                  GuardarIngresoAlimentos();
-              } 
+                if (result.isConfirmed) {
+                    GuardarIngresoAlimentos();
+                }
             });
         }
 
@@ -381,7 +500,7 @@
                     CantidadRecibir: fila.find("input[name='CantidadRecibir']").val()
                 };
 
-                    detalles.push(detalle);
+                detalles.push(detalle);
             });
 
             if (detalles.length === 0) {
@@ -413,13 +532,171 @@
             });
         }
 
-        function confirmar(e){
-            var res=confirm("Esta seguro de eliminar el Ingreso de Alimentos");
+        function confirmar(e) {
+            var res = confirm("Esta seguro de eliminar el Ingreso de Alimentos");
             if (res) return true;
-            if (res==false) e.preventDefault();
+            if (res == false) e.preventDefault();
 
             //return false;
         }
+
+        function EditarFila(boton, idDetalle) {
+            let fila = boton.closest("tr");
+            let filaIndex = Array.from(fila.parentNode.children).indexOf(fila);
+
+            // Obtener datos actuales de la fila
+            let idIngresoAlimentos = $('#idIngresoAlimentos').val();
+            let idProductosIngreso = fila.querySelector("input[name='IdProductosIngreso']").value;
+            let idProductoAlimenticio = fila.querySelector("input[name='IdProductoAlimenticio']").value;
+            let idPresentacion = fila.querySelector("input[name='IdPresentacion']").value;
+            let cantidadUnidad = fila.querySelector("input[name='CantidadUnidad']").value;
+            let idUnidadMedida = fila.querySelector("input[name='IdUnidadMedida']").value;
+            let cantidadRecibir = fila.querySelector("input[name='CantidadRecibir']").value;
+
+            let txtUnidad = $("#cbIdUnidadMedida option[value='" + idUnidadMedida + "']").text();
+
+            // Llenar el modal con los datos actuales
+            $('#editIdProductosIngreso').val(idProductosIngreso);
+            $('#editFilaIndex').val(filaIndex);
+            $('#editCbIdProductoAlimenticio').val(idProductoAlimenticio);
+            $('#editCbIdPresentacionPA').val(idPresentacion);
+            $('#editTxtCantidadUnidad').val(cantidadUnidad);
+            $('#editTxtUnidadMedida').val(txtUnidad);
+            $('#editTxtIdUnidadMedida').val(idUnidadMedida);
+            $('#editTxtCantidadARecibir').val(cantidadRecibir);
+
+            // Mostrar el modal
+            var modal = new bootstrap.Modal(document.getElementById('modalEditarDetalle'));
+            modal.show();
+        }
+
+        function GuardarEdicion() {
+            let filaIndex = $('#editFilaIndex').val();
+            let idProductosIngreso = $('#editIdProductosIngreso').val();
+            let idIngresoAlimentos = $('#idIngresoAlimentos').val();
+
+            // Validar campos
+            let productoAlimenticio = $("#editCbIdProductoAlimenticio").val();
+            let presentacion = $("#editCbIdPresentacionPA").val();
+            let cantidadUnidad = $("#editTxtCantidadUnidad").val();
+            let idUnidadMedida = $("#editTxtIdUnidadMedida").val();
+            let cantidadRecibir = $("#editTxtCantidadARecibir").val();
+
+            if (!productoAlimenticio || !cantidadUnidad || !presentacion || !cantidadRecibir || !idUnidadMedida) {
+                Swal.fire("Error", "Todos los campos son obligatorios.", "error");
+                return false;
+            }
+
+            // Obtener textos de las opciones seleccionadas
+            let txtProductoAlimenticio = $("#editCbIdProductoAlimenticio option:selected").text();
+            let txtPresentacion = $("#editCbIdPresentacionPA option:selected").text();
+            let txtUnidad = $("#editTxtUnidadMedida").val();
+
+            // Si es un producto existente (id > 0), llamar al controlador para actualizar en BD
+            if (idProductosIngreso > 0) {
+                // Mostrar loading
+                Swal.fire({
+                    title: 'Actualizando...',
+                    text: 'Por favor espere',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                // Preparar datos para enviar al servidor
+                let datosProducto = {
+                    IdIngresoAlimentos: parseInt(idIngresoAlimentos),
+                    IdProductosIngreso: parseInt(idProductosIngreso),
+                    IdProductoAlimenticio: parseInt(productoAlimenticio),
+                    IdPresentacion: parseInt(presentacion),
+                    CantidadUnidad: parseFloat(cantidadUnidad),
+                    IdUnidadMedida: parseInt(idUnidadMedida),
+                    CantidadRecibir: parseFloat(cantidadRecibir)
+                };
+
+                // Llamar al controlador para actualizar en BD
+                $.ajax({
+                    url: `@ViewData["rutaApp"]/IngresoAlimentos/ActualizarProductoIngreso`,
+                    type: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify(datosProducto),
+                    success: function (respuesta) {
+                        Swal.close();
+
+                        if (respuesta.success) {
+                            // Actualizar la fila en la tabla localmente
+                            ActualizarFilaLocal(filaIndex, datosProducto, txtProductoAlimenticio, txtPresentacion, txtUnidad);
+
+                            Swal.fire({
+                                title: "¡Actualizado!",
+                                text: respuesta.message,
+                                icon: "success",
+                                timer: 1500,
+                                showConfirmButton: false
+                            }).then(() => {
+                                // Cerrar el modal
+                                var modal = bootstrap.Modal.getInstance(document.getElementById('modalEditarDetalle'));
+                                modal.hide();
+                            });
+                        } else {
+                            Swal.fire("Error", respuesta.message, "error");
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        Swal.close();
+                        console.error("Error al actualizar:", error);
+                        Swal.fire("Error", "Ocurrió un error al actualizar el producto.", "error");
+                    }
+                });
+            } else {
+                // Para productos nuevos (id = 0), solo actualizar localmente
+                ActualizarFilaLocal(filaIndex, {
+                    IdProductosIngreso: 0,
+                    IdProductoAlimenticio: productoAlimenticio,
+                    IdPresentacion: presentacion,
+                    CantidadUnidad: cantidadUnidad,
+                    IdUnidadMedida: idUnidadMedida,
+                    CantidadRecibir: cantidadRecibir
+                }, txtProductoAlimenticio, txtPresentacion, txtUnidad);
+
+                // Cerrar el modal
+                var modal = bootstrap.Modal.getInstance(document.getElementById('modalEditarDetalle'));
+                modal.hide();
+
+                Swal.fire({
+                    title: "¡Actualizado!",
+                    text: "El producto ha sido actualizado correctamente.",
+                    icon: "success",
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+            }
+        }
+
+        // Función auxiliar para actualizar la fila localmente
+        function ActualizarFilaLocal(filaIndex, datos, txtProducto, txtPresentacion, txtUnidad) {
+            // Actualizar la fila en la tabla
+            let tabla = document.getElementById("tableDetalle");
+            let tbody = tabla.getElementsByTagName("tbody")[0];
+            let fila = tbody.children[filaIndex];
+
+            if (fila) {
+                fila.cells[1].innerHTML = txtProducto;
+                fila.cells[2].innerHTML = txtPresentacion;
+                fila.cells[3].innerHTML = datos.CantidadUnidad;
+                fila.cells[4].innerHTML = txtUnidad;
+                fila.cells[5].innerHTML = datos.CantidadRecibir;
+
+                // Actualizar los hidden inputs
+                fila.querySelector("input[name='IdProductosIngreso']").value = datos.IdProductosIngreso;
+                fila.querySelector("input[name='IdProductoAlimenticio']").value = datos.IdProductoAlimenticio;
+                fila.querySelector("input[name='IdPresentacion']").value = datos.IdPresentacion;
+                fila.querySelector("input[name='CantidadUnidad']").value = datos.CantidadUnidad;
+                fila.querySelector("input[name='IdUnidadMedida']").value = datos.IdUnidadMedida;
+                fila.querySelector("input[name='CantidadRecibir']").value = datos.CantidadRecibir;
+            }
+        } 
     </script>
 }
 

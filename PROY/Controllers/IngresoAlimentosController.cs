@@ -30,8 +30,8 @@ namespace PROY.Controllers
         private readonly IUsuarioService _usuarioService;
         private readonly IProveedorService _proveedorService;
 
-        public IngresoAlimentosController(IIngresoAlimentosService ingresoAlimentosService, 
-                                          IBodegaService bodegaService, 
+        public IngresoAlimentosController(IIngresoAlimentosService ingresoAlimentosService,
+                                          IBodegaService bodegaService,
                                           ICatalogoService catalogoService,
                                           IJuntaDeRecepcionService juntaDeRecepcionsService,
                                           IProductoAlimenticioService productoAlimenticio,
@@ -144,7 +144,7 @@ namespace PROY.Controllers
         {
             List<IngresoAlimentos> listado = await _ingresoAlimentosService.GetAllIngresoAlimentos();
             IngresoAlimentos? ingreso = new();
-            
+
             if (id != null && id != decimal.Zero)
                 ingreso = await _ingresoAlimentosService.GetIngresoAlimentos((Int64)id);
 
@@ -192,7 +192,7 @@ namespace PROY.Controllers
             var UnidadMedida = await _unidadmedidaService.GetAll();
             ViewBag.UnidadMedida = new SelectList(UnidadMedida, "IdUnidadMedida", "NombreUnidadMedida");
             var UnidadMedidaDict = UnidadMedida.ToDictionary(i => i.IdUnidadMedida, i => i.NombreUnidadMedida);
-            
+
 
             #endregion
 
@@ -769,7 +769,7 @@ namespace PROY.Controllers
 
             var listDetalles = _ingresoAlimentosService.GetAllProductosIngreso((Int64)salidas.IdIngresoAlimentos).Result.Where(o => o.IdBoletaWaybill == id).ToList();
 
-            
+
             return Json(new
             {
                 detalleWaybill = salidas,
@@ -917,7 +917,7 @@ namespace PROY.Controllers
                 else
                     resultDetBoleta = await _ingresoAlimentosService.UpdateDetalleBoletaAnalisis(nuevoDetalle);
             }
-            
+
             // Almacenamiento de los detalles de Junta Receptora
             foreach (var detalle in ingresoAlimentosVM.listaDetalleJuntaReceptora)
             {
@@ -929,7 +929,7 @@ namespace PROY.Controllers
 
                 resultDetJunta = await _ingresoAlimentosService.UpdateDetalleJuntaReceptoraEstado2(nuevoDetalle);
             }
-            
+
 
             // Almacenamiento de los detalles de productos
             foreach (var detalle in ingresoAlimentosVM.listaProductosIngreso)
@@ -969,7 +969,7 @@ namespace PROY.Controllers
                     mensaje = result.Message,
                     codigo = result.Success,
                     listaDetallesWaybill = _ingresoAlimentosService.GetAllProductosIngreso(id).Result.Where(o => o.IdBoletaWaybill == id).ToList()
-            });
+                });
             }
             else
             {
@@ -1098,7 +1098,7 @@ namespace PROY.Controllers
             // Deserializar el modelo
 
             var ingresoAlimentosVM = JsonConvert.DeserializeObject<IngresoAlimentosVM>(modelo);
-            
+
 
             IngresoAlimentos modelIngreso = new IngresoAlimentos()
             {
@@ -1362,7 +1362,7 @@ namespace PROY.Controllers
             var detalleBoletaAnalisis = await _ingresoAlimentosService.GetAllDetalleBoletaAnalisis(id);
             var BitacoraEstado1 = _ingresoAlimentosService.GetAllBitacora(id).Result.Where(o => o.Accion == (int)EstadosIngresoEnum.Inicio).FirstOrDefault();
             var usuarioEstado1 = _usuarioService.GetAll().Result.Where(o => o.IdUsuario == BitacoraEstado1.IdUsuario).FirstOrDefault();
-            
+
             var BitacoraEstado2 = _ingresoAlimentosService.GetAllBitacora(id).Result.Where(o => o.Accion == (int)EstadosIngresoEnum.EnRecepcionDeAlimentos).FirstOrDefault();
             var usuarioEstado2 = new Usuario();
             if (BitacoraEstado2 != null)
@@ -1553,6 +1553,96 @@ namespace PROY.Controllers
             }
 
             return nombreDoc;
+        }
+
+        #endregion
+
+        #region Métodos para Edición de Productos en Modal
+
+        [HttpPost]
+        public async Task<IActionResult> ActualizarProductoIngreso([FromBody] ProductosIngreso modelo)
+        {
+            try
+            {
+                // Validar que el modelo sea válido
+                if (modelo == null)
+                {
+                    return Json(new { success = false, message = "Datos inválidos" });
+                }
+
+                // Llamar al servicio para actualizar
+                var result = await _ingresoAlimentosService.UpdateProductosIngreso(modelo);
+
+                if (result.Success && result.Data != null)
+                {
+                    return Json(new
+                    {
+                        success = true,
+                        message = result.Message,
+                        producto = new
+                        {
+                            IdProductosIngreso = result.Data.IdProductosIngreso,
+                            IdProductoAlimenticio = result.Data.IdProductoAlimenticio,
+                            IdPresentacion = result.Data.IdPresentacion,
+                            CantidadUnidad = result.Data.CantidadUnidad,
+                            IdUnidadMedida = result.Data.IdUnidadMedida,
+                            CantidadRecibir = result.Data.CantidadRecibir
+                        }
+                    });
+                }
+                else
+                {
+                    return Json(new
+                    {
+                        success = false,
+                        message = result.Message ?? "Error al actualizar el producto"
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = $"Error interno: {ex.Message}"
+                });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ObtenerProductoIngreso(int id)
+        {
+            try
+            {
+                var producto = await _ingresoAlimentosService.GetProductosIngreso(id);
+
+                if (producto == null)
+                {
+                    return Json(new { success = false, message = "Producto no encontrado" });
+                }
+
+                return Json(new
+                {
+                    success = true,
+                    producto = new
+                    {
+                        IdProductosIngreso = producto.IdProductosIngreso,
+                        IdProductoAlimenticio = producto.IdProductoAlimenticio,
+                        IdPresentacion = producto.IdPresentacion,
+                        CantidadUnidad = producto.CantidadUnidad,
+                        IdUnidadMedida = producto.IdUnidadMedida,
+                        CantidadRecibir = producto.CantidadRecibir
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = $"Error al obtener el producto: {ex.Message}"
+                });
+            }
         }
 
         #endregion
