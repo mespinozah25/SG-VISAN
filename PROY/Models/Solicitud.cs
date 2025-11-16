@@ -62,6 +62,12 @@ namespace PROY.Models
         public bool MostrarContinuidadVerificacionCampo { get; set; } = false;
 
         [NotMapped]
+        public bool MostrarContinuidadValidacionBeneficiarios { get; set; } = false;
+
+        [NotMapped]
+        public bool MostrarContinuidadRevisionLiquidacion { get; set; } = false;
+
+        [NotMapped]
         public bool MostrarDespachoEnProgramacion { get; set; } = false;
 
         [NotMapped]

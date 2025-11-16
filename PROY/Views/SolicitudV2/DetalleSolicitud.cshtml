@@ -210,6 +210,25 @@
                                                 </a>
                                             }
                                         }
+                                        @if ($"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:VALIDACION_DE_BENEFICIARIOS"]}"){
+                                            <a class="dropdown-item" asp-controller="Evaluacion" asp-action="IndexDetalle"
+                                                asp-route-idEvaluacion="@Model.Solicitud!.IdSolicitud" asp-route-k="2" asp-route-proceso="VALIDACION_BENEFI">
+                                                Medios de Verificación
+                                            </a>
+                                            @if(Model.Solicitud!.MostrarContinuidadValidacionBeneficiarios){    
+                                                <a class="dropdown-item" asp-controller="SolicitudV2"
+                                                    asp-action="CambioEtapaSolicitud" asp-route-IdSolicitud="@Model.Solicitud!.IdSolicitud"
+                                                    onclick="confirmarOperacion(event, this,`¿Desea enviar la solicitud @Model.Solicitud!.Codigo a @Model.Solicitud!.EstadoSolicitud.EstadoSolicitudSiguiente!.Nombre?`)">
+                                                    Enviar a etapa: @Model.Solicitud!.EstadoSolicitud.EstadoSolicitudSiguiente!.Nombre
+                                                </a>
+                                            }
+                                            else
+                                            {
+                                                <a class="dropdown-item text-danger">
+                                                    debe ingresar un medio de verificación para envíar a siguiente etapa
+                                                </a>
+                                            }
+                                        }
                                         @if ($"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:PROGRAMACION"]}"){
                                             <a class="dropdown-item" asp-controller="Programacion" asp-action="ListaDetalle"
                                                 asp-route-idProgramacion="@Model.Solicitud!.IdSolicitud" asp-route-k="2">
@@ -264,6 +283,25 @@
                                                 Medios de Verificación
                                             </a>
                                         }
+                                        @if ($"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:REVISION_PARA_LIQUIDACION"]}"){
+                                            <a class="dropdown-item" asp-controller="Evaluacion" asp-action="IndexDetalle"
+                                                asp-route-idEvaluacion="@Model.Solicitud!.IdSolicitud" asp-route-k="2" asp-route-proceso="REVISION_LIQUIDACION">
+                                                Medios de Verificación
+                                            </a>
+                                            @if(Model.Solicitud!.MostrarContinuidadRevisionLiquidacion){    
+                                                <a class="dropdown-item" asp-controller="SolicitudV2"
+                                                    asp-action="CambioEtapaSolicitud" asp-route-IdSolicitud="@Model.Solicitud!.IdSolicitud"
+                                                    onclick="confirmarOperacion(event, this,`¿Desea enviar la solicitud @Model.Solicitud!.Codigo a @Model.Solicitud!.EstadoSolicitud.EstadoSolicitudSiguiente!.Nombre?`)">
+                                                    Enviar a etapa: @Model.Solicitud!.EstadoSolicitud.EstadoSolicitudSiguiente!.Nombre
+                                                </a>
+                                            }
+                                            else
+                                            {
+                                                <a class="dropdown-item text-danger">
+                                                    debe ingresar un medio de verificación para envíar a siguiente etapa
+                                                </a>
+                                            }
+                                        }
                                         @if ($"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:PREVIO_A_LIQUIDACION"]}"){
                                             <a class="dropdown-item" asp-controller="Evaluacion" asp-action="IndexDetalle"
                                                 asp-route-idEvaluacion="@Model.Solicitud!.IdSolicitud" asp-route-k="2" asp-route-proceso="PREVIO_LIQUIDACION">
@@ -272,6 +310,8 @@
                                         }
                                         @if(Model.Solicitud!.EstadoSolicitud.EstadoSolicitudSiguiente != null &&
                                             $"{Model.Solicitud!.IdEstadoSolicitud}" != $"{@Configuration["EtapasSolicitud:APA:VERIFICACION_DE_CAMPO"]}" &&
+                                            $"{Model.Solicitud!.IdEstadoSolicitud}" != $"{@Configuration["EtapasSolicitud:APA:VALIDACION_DE_BENEFICIARIOS"]}" &&
+                                            $"{Model.Solicitud!.IdEstadoSolicitud}" != $"{@Configuration["EtapasSolicitud:APA:REVISION_PARA_LIQUIDACION"]}" &&
                                             $"{Model.Solicitud!.IdEstadoSolicitud}" != $"{@Configuration["EtapasSolicitud:APA:PROGRAMACION"]}"){
                                             <a class="dropdown-item" asp-controller="SolicitudV2"
                                                 asp-action="CambioEtapaSolicitud" asp-route-IdSolicitud="@Model.Solicitud!.IdSolicitud"

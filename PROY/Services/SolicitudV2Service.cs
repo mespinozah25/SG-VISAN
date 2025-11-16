@@ -45,6 +45,10 @@ namespace PROY.Services
 
             solicitud.MostrarContinuidadVerificacionCampo = await _detalleEvaluacionAPARepository.ExisteRegistroSegunProceso(IdSolicitud, _configuration["Procesos:APA:VERIFICACION_CAMPO"]!);
 
+            solicitud.MostrarContinuidadValidacionBeneficiarios = await _detalleEvaluacionAPARepository.ExisteRegistroSegunProceso(IdSolicitud, _configuration["Procesos:APA:VALIDACION_BENEFI"]!);
+
+            solicitud.MostrarContinuidadRevisionLiquidacion = await _detalleEvaluacionAPARepository.ExisteRegistroSegunProceso(IdSolicitud, _configuration["Procesos:APA:REVISION_LIQUIDACION"]!);
+
             solicitud.MostrarDespachoEnProgramacion = await _detalleEvaluacionAPARepository.ExisteRegistroSegunProceso(IdSolicitud, _configuration["Procesos:APA:PROGRAMACION"]!);
 
             solicitud.MostrarDespachoEnEjecucion = await _detalleEvaluacionAPARepository.ExisteRegistroSegunProceso(IdSolicitud, _configuration["Procesos:APA:EJECUCION"]!);
