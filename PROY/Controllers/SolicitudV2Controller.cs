@@ -18,7 +18,9 @@ namespace PROY.Controllers
         private readonly IAsignaTecnicoService _asignaTecnicoService;
         private readonly ITecnicoService _tecnicoService;
 
-        public SolicitudV2Controller(ICatalogoService catalogoService, ISolicitudV2Service solicitudV2Service, IEstadoSolicitudService estadoSolicitudService, IAsignaRacionService AsignaRacionService, IAsignaTecnicoService AsignaTecnicoService, ITecnicoService TecnicoService)
+        private readonly ISolicitudService _solicitudService;
+
+        public SolicitudV2Controller(ICatalogoService catalogoService, ISolicitudV2Service solicitudV2Service, IEstadoSolicitudService estadoSolicitudService, IAsignaRacionService AsignaRacionService, IAsignaTecnicoService AsignaTecnicoService, ITecnicoService TecnicoService, ISolicitudService solicitudService)
         {
             _catalogoService = catalogoService;
             _solicitudV2Service = solicitudV2Service;
@@ -26,6 +28,7 @@ namespace PROY.Controllers
             _asignaRacionService = AsignaRacionService;
             _asignaTecnicoService = AsignaTecnicoService;
             _tecnicoService = TecnicoService;
+            _solicitudService = solicitudService;
         }
 
         public async Task<IActionResult> Index(int? IdEstado, int Rechazada = 0)
@@ -274,6 +277,13 @@ namespace PROY.Controllers
             TempData["Mensaje"] = await _asignaTecnicoService.EliminarAsignacionTecnico(IdAsignaTecnico); ;
 
             return RedirectToAction("FormularioTecnicos", "SolicitudV2", new { IdSolicitud });
+        }
+
+        public async Task<IActionResult> GeneracionPlantillas(int IdSolicitud)
+        {
+            List<DetalleSolicitudAPA> listaDetalleSolicitudAPA = await _solicitudService.GetAllDetalleSolicitudAPA((long)IdSolicitud);
+
+            return Ok(listaDetalleSolicitudAPA);
         }
     }
 }
