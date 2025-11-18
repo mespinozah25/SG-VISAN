@@ -8,6 +8,8 @@ using PROY.Models;
 using PROY.Services;
 using PROY.ViewModels;
 using System.Security.Claims;
+using System.Text;
+using System.IO;
 
 namespace PROY.Controllers
 {
@@ -870,7 +872,7 @@ namespace PROY.Controllers
 
                         TempData["Mensaje"] = result.Message;
                         //return View(modeloVM);
-                        return RedirectToAction("IndexDetalle", "Evaluacion", new { idEvaluacion = idEvaluacion, k = condicion, proceso=varProceso });
+                        return RedirectToAction("IndexDetalle", "Evaluacion", new { idEvaluacion = idEvaluacion, k = condicion, proceso = varProceso });
                     }
                     else
                     {
@@ -1269,7 +1271,7 @@ namespace PROY.Controllers
 
         public async Task<IActionResult> EliminarDetalleSolicitud(Int64 idSolicitud, Int64 idDetalle, string condicion)
         {
-            
+
 
             if (condicion == "1")
             {
@@ -1315,5 +1317,90 @@ namespace PROY.Controllers
             }
         }
 
+        public async Task<IActionResult> ExportarExcelRENAP(Int64? idSolicitud)
+        {
+            // Datos de ejemplo
+            var datos = (await _solicitudService.GetAllDetalleSolicitudAPA((long)idSolicitud))
+                        .Where(d => d.IdAnulacion == 67 || d.IdAnulacion == 0 || d.IdAnulacion is null);
+
+            // Configuración para EPPlus
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
+            using (var package = new ExcelPackage())
+            {
+                var hoja = package.Workbook.Worksheets.Add("CONSULTAS");
+
+                // Encabezados                                
+                hoja.Cells[1, 1].Value = "CUI";
+                hoja.Cells[1, 2].Value = "Referencia";
+
+                // Aplicar estilo al encabezado
+                using (var rango = hoja.Cells[1, 1, 1, 2])
+                {
+                    rango.Style.Font.Bold = true;
+                    rango.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    rango.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.White);
+                }
+
+                // Llenar datos
+                int fila = 2;
+                foreach (var ii in datos)
+                {
+                    //var paramDepto = await _catalogoService.GetCatalogo(ii.IdDepartamento);
+                    //var paramMuni = await _catalogoService.GetCatalogo(ii.IdMunicipio);
+                    //var paramEstadoCivil = await _catalogoService.GetCatalogo(ii.EstadoCivil);
+                    var paramGrupoEtnico = await _catalogoService.GetCatalogo(ii.GrupoEtnico);
+
+                    hoja.Cells[fila, 1].Value = ii.CuiEsposa;
+                    hoja.Cells[fila, 2].Value = "";
+
+                    fila++;
+                }
+
+                // Autoajustar columnas
+                hoja.Cells[hoja.Dimension.Address].AutoFitColumns();
+
+                // Generar archivo Excel
+                var stream = new MemoryStream();
+                package.SaveAs(stream);
+                stream.Position = 0;
+
+                // Descargar archivo
+                var nombreArchivo = "ConsultaCUIRenap.xlsx";
+                return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", nombreArchivo);
+            }
+        }
+
+        public async Task<IActionResult> ExportarGuatenominas(Int64? idSolicitud)
+        {
+            // Datos de ejemplo
+            var datos = (await _solicitudService.GetAllDetalleSolicitudAPA((long)idSolicitud))
+                        .Where(d => d.IdAnulacion == 67 || d.IdAnulacion == 0 || d.IdAnulacion is null);
+
+            // Crear contenido del archivo TXT
+            var contenidoTxt = new StringBuilder();
+
+            // Llenar datos
+            foreach (var ii in datos)
+            {
+                var paramGrupoEtnico = await _catalogoService.GetCatalogo(ii.GrupoEtnico);
+
+                contenidoTxt.AppendLine($"{ii.CuiEsposa}|\t");
+            }
+
+            // Convertir a array de bytes
+            var stream = new MemoryStream();
+            var writer = new StreamWriter(stream, Encoding.UTF8);
+            await writer.WriteAsync(contenidoTxt.ToString());
+            await writer.FlushAsync();
+            stream.Position = 0;
+
+            // Descargar archivo
+            var nombreArchivo = "ConsultaCUIGuatenominas.txt";
+            return File(stream, "text/plain", nombreArchivo);
+        }
+
     }
+
+
 }

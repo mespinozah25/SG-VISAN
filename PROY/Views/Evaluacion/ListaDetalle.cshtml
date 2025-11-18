@@ -381,9 +381,18 @@ else if (condicion == "2")
     <a class="btn btn-primary btn-sm btn-fixed-end" style="margin-right:270px; position:absolute; z-index:1;" onclick="abrirModalYActualizarUrlAPA(@Model.Solicitud.IdSolicitud,0,'@Model.Solicitud.Codigo')"><i class="fas fa-plus-square"></i> Beneficiario</a>
     <a class="btn btn-info btn-sm btn-fixed-end" style="margin-right:135px; position:absolute; z-index:1;" asp-action="ExportarExcelDAPA" asp-controller="Evaluacion" asp-route-idSolicitud="@Model.Solicitud.IdSolicitud">Exportar datos</a>
     <a class="btn btn-danger btn-sm btn-fixed-end" style="margin-right:15px; position:absolute; z-index:1;" data-bs-toggle="modal" data-bs-target="#wAnulacionMasivaAPA" onclick="limpiarAnulacionINFOAPA()"><i class="fas fa-plus-square"></i> Anulacion</a>
+    
+    
+    
     //<a class="btn btn-success btn-sm btn-fixed-end" style="margin-right:160px;" data-bs-toggle="modal" data-bs-target="#wCargaExcel" onclick="limpiarINFO()"><i class="fas fa-plus-square"></i> Cargar Excel</a>
     //<a class="btn btn-primary btn-sm btn-fixed-end" style="margin-right:60px;" onclick="abrirModalYActualizarUrlAPA(@Model.Solicitud.IdSolicitud,0)"><i class="fas fa-plus-square"></i> Nuevo</a>
     <p><br /></p>
+    <div>
+        <a class="btn btn-info btn-sm btn-fixed-end" style="margin-right:280px; position:absolute; z-index:1;" asp-action="ExportarExcelRENAP" asp-controller="Evaluacion" asp-route-idSolicitud="@Model.Solicitud.IdSolicitud">Descarga BD para RENAP</a>
+        <a class="btn btn-info btn-sm btn-fixed-end" style="margin-right:15px; position:absolute; z-index:1;" asp-action="ExportarGuatenominas" asp-controller="Evaluacion" asp-route-idSolicitud="@Model.Solicitud.IdSolicitud">Descarga BD para Guatenominas</a>
+    </div>
+    <br />
+    <br />
     <div>
         <table class="table" style="width:100%; position:relative; z-index:2;">
             <thead>                

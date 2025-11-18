@@ -169,7 +169,7 @@ namespace PROY.Services
                 return $"Error al habilitar solicitud: {ex}";
             }
         }
-        
+
         public async Task<string> ActualizarFechasEntregaSolicitud(int IdSolicitud, DateTime FechaInicio, DateTime FechaFin, string? Observaciones)
         {
             try
@@ -183,6 +183,26 @@ namespace PROY.Services
                 solicitud.FFinEntrega = FechaFin;
 
                 solicitud.TecnicoObservaciones = Observaciones;
+
+                await _solicitudV2Repository.ActualizarSolicitud(solicitud);
+
+                return "Solicitud actualizada exitosamente";
+            }
+            catch (Exception ex)
+            {
+                return $"Error al actualizada solicitud: {ex}";
+            }
+        }
+
+        public async Task<string> ActualizarRaciones(int idSolicitud, int nuevasRaciones)
+        {
+            try
+            {
+                Solicitud? solicitud = await _solicitudV2Repository.ObtenerSolicitudSegunIdSolicitud(idSolicitud);
+
+                if (solicitud == null) return "No se encontro la solicitud";
+
+                solicitud.Raciones = nuevasRaciones;
 
                 await _solicitudV2Repository.ActualizarSolicitud(solicitud);
 

@@ -256,7 +256,7 @@ namespace PROY.Controllers
 
             return RedirectToAction("FormularioTecnicos", "SolicitudV2", new { modeloVM.Solicitud!.IdSolicitud, });
         }
-        
+
         [HttpPost]
         public async Task<IActionResult> AgregarAsignacionTecnico(SolicitudesVM modeloVM)
         {
@@ -274,6 +274,42 @@ namespace PROY.Controllers
             TempData["Mensaje"] = await _asignaTecnicoService.EliminarAsignacionTecnico(IdAsignaTecnico); ;
 
             return RedirectToAction("FormularioTecnicos", "SolicitudV2", new { IdSolicitud });
+        }
+
+
+        [HttpPost]
+        public async Task<JsonResult> ActualizarRaciones([FromBody] ActualizarRacionesModel model)
+        {
+            try
+            {
+                string? departamento = User.FindFirst("depto")?.Value;
+                string? rol = User.FindFirst(ClaimTypes.Role)?.Value;
+
+                if (rol != "Admin" && (departamento == "DAAN" || string.IsNullOrEmpty(departamento)))
+                    return Json(new { success = false, message = "No autorizado" });
+
+                // Validar que el estado sea VALIDACION_DE_BENEFICIARIOS
+                var solicitud = await _solicitudV2Service.ObtenerSolicitudSegunIdSolicitud(model.IdSolicitud);
+
+                if (solicitud == null)
+                    return Json(new { success = false, message = "Solicitud no encontrada" });
+
+                // Actualizar las raciones
+                var resultado = await _solicitudV2Service.ActualizarRaciones(model.IdSolicitud, model.Raciones);
+
+                return Json(new { success = true, message = resultado });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"Error: {ex.Message}" });
+            }
+        }
+
+        // Modelo para recibir los datos
+        public class ActualizarRacionesModel
+        {
+            public int IdSolicitud { get; set; }
+            public int Raciones { get; set; }
         }
     }
 }
