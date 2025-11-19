@@ -392,6 +392,59 @@ namespace PROY.Repositories
             return listado;
         }
 
+        public List<dynamic> ReporteAPA(FiltrosReportesDTO filtros, int id_estado)
+        {
+            var query = from s in _dbContext.Solicitudes
+                        join d in _dbContext.Catalogos on s.Departamento equals (int?)d.IdCatalogo into departamentoJoin
+                        from departamento in departamentoJoin.DefaultIfEmpty()
+                        join m in _dbContext.Catalogos on s.Municipio equals (int?)m.IdCatalogo into municipioJoin
+                        from municipio in municipioJoin.DefaultIfEmpty()
+                        where s.Restrictiva == 0 &&
+                              s.IdEstadoSolicitud == id_estado &&
+                              s.Depto == "2" &&
+                              s.Rechazada == 0
+                        select new
+                        {
+                            // Propiedades de Solicitud
+                            s.IdSolicitud,
+                            s.Codigo,
+                            s.Correlativo,
+                            s.Comunidad,
+                            s.FechaRegistro,
+                            s.Raciones,
+                            s.Departamento,
+                            s.Municipio,
+
+                            // Nombres de los catálogos
+                            DepartamentoNombre = departamento.Descripcion,
+                            MunicipioNombre = municipio.Descripcion
+                        };
+
+            // Aplicar filtros opcionales
+            if (filtros.IdDepartamento.HasValue)
+            {
+                query = query.Where(x => x.Departamento == filtros.IdDepartamento.Value);
+            }
+
+            if (filtros.IdMunicipio.HasValue)
+            {
+                query = query.Where(x => x.Municipio == filtros.IdMunicipio.Value);
+            }
+
+            if (filtros.FechaInicio.HasValue)
+            {
+                query = query.Where(x => x.FechaRegistro >= filtros.FechaInicio.Value);
+            }
+
+            if (filtros.FechaFin.HasValue)
+            {
+                query = query.Where(x => x.FechaRegistro <= filtros.FechaFin.Value);
+            }
+
+            var listado = query.ToList<object>();
+            return listado;
+        }
+
         #endregion
 
         #region MÉTODOS DE CREACIÓN DE DOCUMENTOS
@@ -523,6 +576,44 @@ namespace PROY.Repositories
                 case (int)TipoReporteEnum.ConstanciaSalidaAlimentos:
                     header = @" <tr></tr>";
 
+                    break;
+                case (int)TipoReporteEnum.Programacion_APA:
+                    header = @" <tr>
+                                      <td colspan='5'><h2>Reporte de Programaciones</h2></td>
+                                </tr>
+                                <tr>
+                                      <td style='text-align:center' colspan='5'>Documento generado el: " + date.ToShortDateString() + @" a las: " + date.ToShortTimeString() + @" horas </td>
+                                </tr>
+                                <tr></tr>
+                                <tr>
+                                    <th style='border: 1px solid black; color: black; font-weight: bold'>No.</th>
+                                    <th style='border: 1px solid black; color: black; font-weight: bold'>Código</th>
+                                    <th style='border: 1px solid black; color: black; font-weight: bold'>Correlativo</th>
+                                    <th style='border: 1px solid black; color: black; font-weight: bold'>Departamento</th>
+                                    <th style='border: 1px solid black; color: black; font-weight: bold'>Municipio</th>
+                                    <th style='border: 1px solid black; color: black; font-weight: bold'>Comunidad</th>
+                                    <th style='border: 1px solid black; color: black; font-weight: bold'>Fecha Registro</th>
+                                    <th style='border: 1px solid black; color: black; font-weight: bold'>Raciones</th>
+                                </tr>";
+                    break;
+                case (int)TipoReporteEnum.Ejecuciones_APA:
+                    header = @" <tr>
+                                      <td colspan='5'><h2>Reporte de Ejecuciones</h2></td>
+                                </tr>
+                                <tr>
+                                      <td style='text-align:center' colspan='5'>Documento generado el: " + date.ToShortDateString() + @" a las: " + date.ToShortTimeString() + @" horas </td>
+                                </tr>
+                                <tr></tr>
+                                <tr>
+                                    <th style='border: 1px solid black; color: black; font-weight: bold'>No.</th>
+                                    <th style='border: 1px solid black; color: black; font-weight: bold'>Código</th>
+                                    <th style='border: 1px solid black; color: black; font-weight: bold'>Correlativo</th>
+                                    <th style='border: 1px solid black; color: black; font-weight: bold'>Departamento</th>
+                                    <th style='border: 1px solid black; color: black; font-weight: bold'>Municipio</th>
+                                    <th style='border: 1px solid black; color: black; font-weight: bold'>Comunidad</th>
+                                    <th style='border: 1px solid black; color: black; font-weight: bold'>Fecha Registro</th>
+                                    <th style='border: 1px solid black; color: black; font-weight: bold'>Raciones</th>
+                                </tr>";
                     break;
                 default:
                     break;
@@ -1080,6 +1171,123 @@ namespace PROY.Repositories
                     tbody += "<tr>";
                     tbody += "<td style='color: black; font-size: 10px' colspan='7'> Autorizado por la Contraloría General de Cuentas Según Resolución No. Fb/ 2662 Clas.: 365-12-8-1-4-97 del 01-4-1997 No. Correlativo 1052-2022 de fecha 08-12-2022 Envío Fiscal 4-ASCC 20754 de fecha 08-12-2022 del 001 al 5.000 (5.000) Sin Serie Ediciones Santillana Nit.: 763296-3 Libro 4-ASCC Folio 37 No de Cuenta 2022-100-101-18-329 </td>";
                     tbody += "</tr>";
+
+                    body = string.Format(body, tbody);
+
+                    break;
+                case (int)TipoReporteEnum.Programacion_APA:
+                    datos = ReporteAPA(filtros, 6);
+
+                    foreach (var obj in datos)
+                    {
+                        tbody += "<tr>";
+
+                        var fechaValue = obj.GetType().GetProperty("FechaRegistro").GetValue(obj, null);
+                        string fechaFormateada = "";
+
+                        if (fechaValue != null)
+                        {
+                            if (fechaValue is DateTime fecha)
+                            {
+                                fechaFormateada = fecha.ToString("dd/MM/yyyy");
+                            }
+                            else
+                            {
+                                fechaFormateada = fechaValue.ToString();
+                            }
+                        }
+
+                        tbody += "<td style='border: 1px solid black; color: black;'>" + nInicial + "</td>";
+                        tbody += "<td style='border: 1px solid black; color: black;'>" + (string)obj.GetType().GetProperty("Codigo").GetValue(obj, null) + "</td>";
+                        tbody += "<td style='border: 1px solid black; color: black;'>" + (string)obj.GetType().GetProperty("Correlativo").GetValue(obj, null) + "</td>";
+                        tbody += "<td style='border: 1px solid black; color: black;'>" + (string)obj.GetType().GetProperty("DepartamentoNombre").GetValue(obj, null) + "</td>";
+                        tbody += "<td style='border: 1px solid black; color: black;'>" + (string)obj.GetType().GetProperty("MunicipioNombre").GetValue(obj, null) + "</td>";
+                        tbody += "<td style='border: 1px solid black; color: black;'>" + (string)obj.GetType().GetProperty("Comunidad").GetValue(obj, null) + "</td>";
+                        tbody += "<td style='border: 1px solid black; color: black;'>" + fechaFormateada + "</td>";
+                        tbody += "<td style='border: 1px solid black; color: black;'>" + obj.GetType().GetProperty("Raciones").GetValue(obj, null) + "</td>";
+
+                        tbody += "</tr>";
+
+                        nInicial++;
+                    }
+
+                    body = string.Format(body, tbody);
+
+                    break;
+                case (int)TipoReporteEnum.Ejecuciones_APA:
+                    datos = ReporteAPA(filtros, 9);
+
+                    foreach (var obj in datos)
+                    {
+                        tbody += "<tr>";
+
+                        var fechaValue = obj.GetType().GetProperty("FechaRegistro").GetValue(obj, null);
+                        string fechaFormateada = "";
+
+                        if (fechaValue != null)
+                        {
+                            if (fechaValue is DateTime fecha)
+                            {
+                                fechaFormateada = fecha.ToString("dd/MM/yyyy");
+                            }
+                            else
+                            {
+                                fechaFormateada = fechaValue.ToString();
+                            }
+                        }
+
+                        tbody += "<td style='border: 1px solid black; color: black;'>" + nInicial + "</td>";
+                        tbody += "<td style='border: 1px solid black; color: black;'>" + (string)obj.GetType().GetProperty("Codigo").GetValue(obj, null) + "</td>";
+                        tbody += "<td style='border: 1px solid black; color: black;'>" + (string)obj.GetType().GetProperty("Correlativo").GetValue(obj, null) + "</td>";
+                        tbody += "<td style='border: 1px solid black; color: black;'>" + (string)obj.GetType().GetProperty("DepartamentoNombre").GetValue(obj, null) + "</td>";
+                        tbody += "<td style='border: 1px solid black; color: black;'>" + (string)obj.GetType().GetProperty("MunicipioNombre").GetValue(obj, null) + "</td>";
+                        tbody += "<td style='border: 1px solid black; color: black;'>" + (string)obj.GetType().GetProperty("Comunidad").GetValue(obj, null) + "</td>";
+                        tbody += "<td style='border: 1px solid black; color: black;'>" + fechaFormateada + "</td>";
+                        tbody += "<td style='border: 1px solid black; color: black;'>" + obj.GetType().GetProperty("Raciones").GetValue(obj, null) + "</td>";
+
+                        tbody += "</tr>";
+
+                        nInicial++;
+                    }
+
+                    body = string.Format(body, tbody);
+
+                    break;
+                case (int)TipoReporteEnum.Despachos_APA:
+                    datos = ReporteAPA(filtros, 6);
+
+                    foreach (var obj in datos)
+                    {
+                        tbody += "<tr>";
+
+                        var fechaValue = obj.GetType().GetProperty("FechaRegistro").GetValue(obj, null);
+                        string fechaFormateada = "";
+
+                        if (fechaValue != null)
+                        {
+                            if (fechaValue is DateTime fecha)
+                            {
+                                fechaFormateada = fecha.ToString("dd/MM/yyyy");
+                            }
+                            else
+                            {
+                                fechaFormateada = fechaValue.ToString();
+                            }
+                        }
+
+                        tbody += "<td style='border: 1px solid black; color: black;'>" + nInicial + "</td>";
+                        tbody += "<td style='border: 1px solid black; color: black;'>" + (string)obj.GetType().GetProperty("Codigo").GetValue(obj, null) + "</td>";
+                        tbody += "<td style='border: 1px solid black; color: black;'>" + (string)obj.GetType().GetProperty("Correlativo").GetValue(obj, null) + "</td>";
+                        tbody += "<td style='border: 1px solid black; color: black;'>" + (string)obj.GetType().GetProperty("DepartamentoNombre").GetValue(obj, null) + "</td>";
+                        tbody += "<td style='border: 1px solid black; color: black;'>" + (string)obj.GetType().GetProperty("MunicipioNombre").GetValue(obj, null) + "</td>";
+                        tbody += "<td style='border: 1px solid black; color: black;'>" + (string)obj.GetType().GetProperty("Comunidad").GetValue(obj, null) + "</td>";
+                        tbody += "<td style='border: 1px solid black; color: black;'>" + fechaFormateada + "</td>";
+                        tbody += "<td style='border: 1px solid black; color: black;'>" + obj.GetType().GetProperty("Raciones").GetValue(obj, null) + "</td>";
+
+                        tbody += "</tr>";
+
+                        nInicial++;
+                    }
 
                     body = string.Format(body, tbody);
 

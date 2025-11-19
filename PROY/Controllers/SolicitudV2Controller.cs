@@ -305,11 +305,6 @@ namespace PROY.Controllers
             }
         }
 
-        // Modelo para recibir los datos
-        public class ActualizarRacionesModel
-        {
-            public int IdSolicitud { get; set; }
-            public int Raciones { get; set; }
-        }
+        
     }
 }

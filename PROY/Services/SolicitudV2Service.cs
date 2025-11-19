@@ -213,5 +213,18 @@ namespace PROY.Services
                 return $"Error al actualizada solicitud: {ex}";
             }
         }
+
+        public async Task<List<Solicitud>> ObtenerSolicitudesConFiltros(int idEstado, int idDepto, int? idDepartamento = null, int? idMunicipio = null, DateTime? fechaInicio = null, DateTime? fechaFin = null, int rechazada = 0)
+        {
+            return await _solicitudV2Repository.ObtenerSolicitudesConFiltros(
+                idEstado,
+                idDepto,
+                rechazada,
+                idDepartamento,
+                idMunicipio,
+                fechaInicio,
+                fechaFin);
+        }
     }
+
 }

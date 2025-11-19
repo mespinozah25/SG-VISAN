@@ -30,10 +30,12 @@ namespace PROY.Controllers
         private readonly IPuestoService _puestoService;
         private readonly IRacionService _racionService;
         private readonly IEgresoAlimentosService _egresoAlimentosService;
+        private readonly ISolicitudV2Service _solicitudV2Service;
 
-        public ReportesController(IReporteService reporteService, 
-                                  IBodegaService bodegaService, 
-                                  ICatalogoService catalogoService, 
+
+        public ReportesController(IReporteService reporteService,
+                                  IBodegaService bodegaService,
+                                  ICatalogoService catalogoService,
                                   ITipoBodegaService tipoBodegaService,
                                   IProductoAlimenticioService productoAlimenticio,
                                   IConvenioService convenioService,
@@ -47,7 +49,8 @@ namespace PROY.Controllers
                                   IRenglonPresupuestarioService renglonPresupuestarioService,
                                   IPuestoService puestoService,
                                   IRacionService racionService,
-                                  IEgresoAlimentosService egresoAlimentosService)
+                                  IEgresoAlimentosService egresoAlimentosService,
+                                  ISolicitudV2Service solicitudV2Service)
         {
             _reporteService = reporteService;
             _bodegaService = bodegaService;
@@ -66,6 +69,7 @@ namespace PROY.Controllers
             _puestoService = puestoService;
             _racionService = racionService;
             _egresoAlimentosService = egresoAlimentosService;
+            _solicitudV2Service = solicitudV2Service;
         }
 
         #endregion
@@ -191,7 +195,7 @@ namespace PROY.Controllers
                     Bodega = await _bodegaService.GetBodega((int)idBodega),
                     listaBodegas = await _bodegaService.GetAll(),
                 };
-                
+
                 return View(bodegaVM);
             }
         }
@@ -572,5 +576,155 @@ namespace PROY.Controllers
         }
 
         #endregion
+
+
+        public async Task<IActionResult> ProgramacionesAPA()
+        {
+
+            // Obtener catálogos
+            var departamentos = await _catalogoService.GetCatalogo("DEPARTAMENTO");
+            var municipios = await _catalogoService.GetCatalogo("MUNICIPIO");
+
+            // Preparar SelectLists para la vista
+            ViewBag.Departamentos = new SelectList(departamentos, "IdCatalogo", "Descripcion");
+
+            ViewBag.Municipios = new SelectList(municipios, "IdCatalogo", "Descripcion");
+
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> BuscarProgramacionesAPA([FromBody] FiltrosReportesDTO filtros)
+        {
+            try
+            {
+                var configuration = HttpContext.RequestServices.GetRequiredService<IConfiguration>();
+                var id_estado_str = configuration["EtapasSolicitud:APA:PROGRAMACION"];
+
+                if (!int.TryParse(id_estado_str, out int id_estado))
+                {
+                    id_estado = 0;
+                }
+
+                // Aquí implementas la lógica de búsqueda con los filtros
+                var resultados = await _solicitudV2Service.ObtenerSolicitudesConFiltros(
+                    idEstado: id_estado,
+                    idDepto: 2, // Este es el parámetro fijo
+                    idDepartamento: filtros.IdDepartamento, // Este es el filtro opcional
+                    idMunicipio: filtros.IdMunicipio,
+                    fechaInicio: filtros.FechaInicio,
+                    fechaFin: filtros.FechaFin,
+                    rechazada: 0
+                );
+
+                // Obtener catálogos para mapear IDs a nombres
+                var departamentos = await _catalogoService.GetCatalogo("DEPARTAMENTO");
+                var municipios = await _catalogoService.GetCatalogo("MUNICIPIO");
+
+                // Crear objetos anónimos con nombres en lugar de IDs
+                var resultadosConNombres = resultados.Select(s => new
+                {
+                    s.IdSolicitud,
+                    s.Codigo,
+                    s.Correlativo,
+                    DepartamentoNombre = departamentos.FirstOrDefault(d => d.IdCatalogo == s.Departamento)?.Descripcion ?? "No especificado",
+                    MunicipioNombre = municipios.FirstOrDefault(m => m.IdCatalogo == s.Municipio)?.Descripcion ?? "No especificado",
+                    s.Comunidad,
+                    FechaRegistro = s.FechaRegistro.ToString("dd/MM/yyyy"),
+                    s.Raciones,
+                    s.Descripcion,
+                    s.Estado,
+                    // Mantener los IDs originales por si los necesitas
+                    DepartamentoId = s.Departamento,
+                    MunicipioId = s.Municipio
+                }).ToList();
+
+
+                return Json(new { success = true, data = resultadosConNombres });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        public async Task<IActionResult> EjecucionesAPA()
+        {
+            // Obtener catálogos
+            var departamentos = await _catalogoService.GetCatalogo("DEPARTAMENTO");
+            var municipios = await _catalogoService.GetCatalogo("MUNICIPIO");
+
+            // Preparar SelectLists para la vista
+            ViewBag.Departamentos = new SelectList(departamentos, "IdCatalogo", "Descripcion");
+
+            ViewBag.Municipios = new SelectList(municipios, "IdCatalogo", "Descripcion");
+
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> BuscarEjecucionesAPA([FromBody] FiltrosReportesDTO filtros)
+        {
+            try
+            {
+                var configuration = HttpContext.RequestServices.GetRequiredService<IConfiguration>();
+                var id_estado_str = configuration["EtapasSolicitud:APA:EJECUCION"];
+
+                if (!int.TryParse(id_estado_str, out int id_estado))
+                {
+                    id_estado = 0;
+                }
+
+                // Aquí implementas la lógica de búsqueda con los filtros
+                var resultados = await _solicitudV2Service.ObtenerSolicitudesConFiltros(
+                    idEstado: id_estado,
+                    idDepto: 2, // Este es el parámetro fijo
+                    idDepartamento: filtros.IdDepartamento, // Este es el filtro opcional
+                    idMunicipio: filtros.IdMunicipio,
+                    fechaInicio: filtros.FechaInicio,
+                    fechaFin: filtros.FechaFin,
+                    rechazada: 0
+                );
+
+                // Obtener catálogos para mapear IDs a nombres
+                var departamentos = await _catalogoService.GetCatalogo("DEPARTAMENTO");
+                var municipios = await _catalogoService.GetCatalogo("MUNICIPIO");
+
+                // Crear objetos anónimos con nombres en lugar de IDs
+                var resultadosConNombres = resultados.Select(s => new
+                {
+                    s.IdSolicitud,
+                    s.Codigo,
+                    s.Correlativo,
+                    DepartamentoNombre = departamentos.FirstOrDefault(d => d.IdCatalogo == s.Departamento)?.Descripcion ?? "No especificado",
+                    MunicipioNombre = municipios.FirstOrDefault(m => m.IdCatalogo == s.Municipio)?.Descripcion ?? "No especificado",
+                    s.Comunidad,
+                    FechaRegistro = s.FechaRegistro.ToString("dd/MM/yyyy"),
+                    s.Raciones,
+                    s.Descripcion,
+                    s.Estado,
+                    // Mantener los IDs originales por si los necesitas
+                    DepartamentoId = s.Departamento,
+                    MunicipioId = s.Municipio
+                }).ToList();
+
+
+                return Json(new { success = true, data = resultadosConNombres });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        public async Task<IActionResult> DespachosAPA()
+        {
+            return View();
+        }
+
+        public async Task<IActionResult> ProcesosAPA()
+        {
+            return View();
+        }
     }
 }
