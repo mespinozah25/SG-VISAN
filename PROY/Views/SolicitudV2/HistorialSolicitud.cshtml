@@ -1,0 +1,70 @@
+@model PROY.ViewModels.HistorialSolicitudVM
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
+
+<head>
+</head>
+@{
+    var usuarios = ViewBag.Usuarios as List<Usuario>;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@{
+    ViewData["Title"] = "Reporte de Ejecuciones APA";
+}
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Mensaje"]
+    </div>
+}
+
+@functions {
+    public string ObtenerTextoAccion(int? accion)
+    {
+        if (!accion.HasValue) return "Sin acción";
+
+        return accion.Value switch
+        {
+            1 => "Crear",
+            2 => "Actualizar",
+            3 => "Eliminar",
+            _ => $"Acción {accion.Value}"
+        };
+    }
+}
+
+<h2 class="float-start">Historial de la Solicitud @Model.Solicitud.Codigo </h2>
+<p><br /></p>
+
+<br />
+
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-md-11">
+            <div class="table-responsive">
+                <table class="table" style="width:100%; position:relative; z-index:2;">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Acción</th>
+                            <th>Usuario</th>
+                            <th>Descripción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (Bitacora item in Model.Historial)
+                        {
+
+                            var usuario = usuarios?.FirstOrDefault(u => u.IdUsuario == item.IdUsuario);
+                            <tr>
+                                <td>@item.FechaHora</td>
+                                <td>@ObtenerTextoAccion(item.Accion)</td>
+                                <td>@(usuario != null ? $"{usuario.Nombre} {usuario.Apellidos}" : $"Usuario {item.IdUsuario}")</td>
+                                <td>@item.Comentario</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

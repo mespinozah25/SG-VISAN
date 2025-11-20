@@ -18,5 +18,11 @@
         public int? IdKardex { get; set; }
         public DateTime? Fecha { get; set; }
         public string? NoConstancia { get; set; }
+
+        public int? IdEstado { get; set; }
+        public int? IdEstadoSolicitud { get; set; }
+        public int? IdDepto { get; set; }
+        public DateTime? FechaInicio { get; set; }
+        public DateTime? FechaFin { get; set; }
     }
 }

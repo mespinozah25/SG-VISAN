@@ -381,9 +381,20 @@ else if (condicion == "2")
     <a class="btn btn-primary btn-sm btn-fixed-end" style="margin-right:270px; position:absolute; z-index:1;" onclick="abrirModalYActualizarUrlAPA(@Model.Solicitud.IdSolicitud,0,'@Model.Solicitud.Codigo')"><i class="fas fa-plus-square"></i> Beneficiario</a>
     <a class="btn btn-info btn-sm btn-fixed-end" style="margin-right:135px; position:absolute; z-index:1;" asp-action="ExportarExcelDAPA" asp-controller="Evaluacion" asp-route-idSolicitud="@Model.Solicitud.IdSolicitud">Exportar datos</a>
     <a class="btn btn-danger btn-sm btn-fixed-end" style="margin-right:15px; position:absolute; z-index:1;" data-bs-toggle="modal" data-bs-target="#wAnulacionMasivaAPA" onclick="limpiarAnulacionINFOAPA()"><i class="fas fa-plus-square"></i> Anulacion</a>
+    
+    
+    
     //<a class="btn btn-success btn-sm btn-fixed-end" style="margin-right:160px;" data-bs-toggle="modal" data-bs-target="#wCargaExcel" onclick="limpiarINFO()"><i class="fas fa-plus-square"></i> Cargar Excel</a>
     //<a class="btn btn-primary btn-sm btn-fixed-end" style="margin-right:60px;" onclick="abrirModalYActualizarUrlAPA(@Model.Solicitud.IdSolicitud,0)"><i class="fas fa-plus-square"></i> Nuevo</a>
     <p><br /></p>
+    <div>
+        <a class="btn btn-primary btn-sm btn-fixed-end" style="margin-right:580px; position:absolute; z-index:1;" asp-action="ExportarExcelRENAP" asp-controller="Evaluacion" asp-route-idSolicitud="@Model.Solicitud.IdSolicitud">Descarga RENAP</a>
+        <a class="btn btn-primary btn-sm btn-fixed-end" style="margin-right:380px; position:absolute; z-index:1;" asp-action="ExportarGuatenominas" asp-controller="Evaluacion" asp-route-idSolicitud="@Model.Solicitud.IdSolicitud">Descarga Guatenominas</a>
+        <a class="btn btn-success btn-sm btn-fixed-end" style="margin-right:220px; position:absolute; z-index:1;" data-bs-toggle="modal" data-bs-target="#wValidacionRenapAPA">Validación RENAP</a>
+        <a class="btn btn-success btn-sm btn-fixed-end" style="margin-right:15px; position:absolute; z-index:1;" data-bs-toggle="modal" data-bs-target="#wValidacionGuatenominasAPA">Validación Guatenominas</a>
+    </div>
+    <br />
+    <br />
     <div>
         <table class="table" style="width:100%; position:relative; z-index:2;">
             <thead>                
@@ -1687,6 +1698,80 @@ else if (condicion == "2")
             </div>
         </div>
     </div>
+
+    <!-- Modal Validación RENAP-->
+    <div class="modal fade" id="wValidacionRenapAPA" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+             <div class="modal-content">
+                <form id="uploadValidacionRenapAPAForm" enctype="multipart/form-data">
+                    <div class="modal-header bg-secondary">
+                        <h5 class="modal-title text-white" id="lblModalTitle">Validación Renap @Model.Solicitud.Codigo</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <input type="hidden" id="hiddenSolicitudId" name="idSolicitud" asp-for="@Model.Solicitud.IdSolicitud" />
+
+                        <div class="form-group">
+                            <label for="file">Selecciona archivo excel:</label>
+                            <div class="row">
+                                <div class="col-10">
+                                    <input type="file" name="fileExcelRenap" id="fileExcelRenap" class="form-control" />
+                                </div>
+                                <div class="col-2">
+                                    <button type="button" class="btn btn-primary" onclick="cargarValidacionRenapAPA(document.getElementById('hiddenSolicitudId').value)">Depurar Renap</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                    </div>
+                </form>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Validación Guatenominas-->
+    <div class="modal fade" id="wValidacionGuatenominasAPA" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <form id="uploadAnulacionForm" enctype="multipart/form-data">
+                    <div class="modal-header bg-secondary">
+                        <h5 class="modal-title text-white" id="lblModalTitle">Validación Guatenominas @Model.Solicitud.Codigo</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <input type="hidden" id="hiddenSolicitudId" name="idSolicitud" asp-for="@Model.Solicitud.IdSolicitud" />
+
+                        <div class="form-group">
+                            <label for="file">Selecciona archivo txt:</label>
+                            <div class="row">
+                                <div class="col-10">
+                                    <input type="file" name="fileExcelAnulacion" id="fileExcelAnulacion" class="form-control" />
+                                </div>
+                                <div class="col-2">
+                                    <button type="button" class="btn btn-primary" onclick="cargarValidacionGuatenominasAPA(document.getElementById('hiddenSolicitudId').value)">Depurar Renap</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                    </div>
+                </form>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
 }
 
 
@@ -2593,6 +2678,30 @@ else if (condicion == "2")
         //return false;
     }
 
+    function cargarValidacionRenapAPA(paramID) {
+
+        event.preventDefault();
+        // Crear un FormData con el archivo seleccionado
+        var formData = new FormData();
+        var fileInput = $("#fileExcelRenap")[0].files[0];
+        formData.append("fileExcel", fileInput);
+
+        // Enviar el archivo al servidor mediante AJAX
+        $.ajax({
+            url: `@ViewData["rutaApp"]/Evaluacion/cargarValidacionRenapAPA?k=2&id=${paramID}`, // Ruta al controlador que maneja la carga
+            type: "POST",
+            data: formData,
+            contentType: false,
+            processData: false,
+            success: function (data) {
+                // Limpiar la tabla
+                location.reload();
+            },
+            error: function () {
+                alert("Error al cargar el archivo Excel.");
+            }
+        });
+    }
 </script>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>

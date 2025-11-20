@@ -5,8 +5,10 @@ namespace PROY.Services
     public interface ITableroDeDatosService
     {
         #region Consultas Charts
-        List<BodegaProducto> ChartBodegasExistenciaProductos();
-        List<Racion> ChartRaciones();
+        List<TableroConvenio> ChartRacionesDisponibles();
+        List<TableroConvenioAvance> ChartRacionesAvance();
+        List<TableroBodegaProducto> ChartBodegasExistenciaProductos();
+        List<TableroRacion> ChartRaciones();
 
         #endregion
     }

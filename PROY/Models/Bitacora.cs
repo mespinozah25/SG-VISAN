@@ -9,5 +9,6 @@
         public int? IdUsuario { get; set; }
         public DateTime FechaHora { get; set; }
         public int? Estado { get; set; }
+        public string? Comentario { get; set; }
     }
 }

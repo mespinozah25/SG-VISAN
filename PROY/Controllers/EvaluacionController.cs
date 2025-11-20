@@ -8,6 +8,9 @@ using PROY.Models;
 using PROY.Services;
 using PROY.ViewModels;
 using System.Security.Claims;
+using System.Text;
+using System.IO;
+using ExcelRow = PROY.Models.ExcelRow;
 
 namespace PROY.Controllers
 {
@@ -870,7 +873,7 @@ namespace PROY.Controllers
 
                         TempData["Mensaje"] = result.Message;
                         //return View(modeloVM);
-                        return RedirectToAction("IndexDetalle", "Evaluacion", new { idEvaluacion = idEvaluacion, k = condicion, proceso=varProceso });
+                        return RedirectToAction("IndexDetalle", "Evaluacion", new { idEvaluacion = idEvaluacion, k = condicion, proceso = varProceso });
                     }
                     else
                     {
@@ -1269,7 +1272,7 @@ namespace PROY.Controllers
 
         public async Task<IActionResult> EliminarDetalleSolicitud(Int64 idSolicitud, Int64 idDetalle, string condicion)
         {
-            
+
 
             if (condicion == "1")
             {
@@ -1315,5 +1318,186 @@ namespace PROY.Controllers
             }
         }
 
+        public async Task<IActionResult> ExportarExcelRENAP(Int64? idSolicitud)
+        {
+            // Datos de ejemplo
+
+            Solicitud solicitud = new Solicitud();
+            solicitud = await _solicitudService.GetSolicitud((long)idSolicitud);
+
+            var datos = (await _solicitudService.GetAllDetalleSolicitudAPA((long)idSolicitud))
+                        .Where(d => d.IdAnulacion == 67 || d.IdAnulacion == 0 || d.IdAnulacion is null);
+
+            // Configuración para EPPlus
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
+            using (var package = new ExcelPackage())
+            {
+                var hoja = package.Workbook.Worksheets.Add("CONSULTAS");
+
+                // Encabezados                                
+                hoja.Cells[1, 1].Value = "CUI";
+                hoja.Cells[1, 2].Value = "Referencia";
+
+                // Aplicar estilo al encabezado
+                using (var rango = hoja.Cells[1, 1, 1, 2])
+                {
+                    rango.Style.Font.Bold = true;
+                    rango.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    rango.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.White);
+                }
+
+                // Llenar datos
+                int fila = 2;
+                foreach (var ii in datos)
+                {
+                    //var paramDepto = await _catalogoService.GetCatalogo(ii.IdDepartamento);
+                    //var paramMuni = await _catalogoService.GetCatalogo(ii.IdMunicipio);
+                    //var paramEstadoCivil = await _catalogoService.GetCatalogo(ii.EstadoCivil);
+                    var paramGrupoEtnico = await _catalogoService.GetCatalogo(ii.GrupoEtnico);
+
+                    hoja.Cells[fila, 1].Value = ii.CuiEsposa;
+                    hoja.Cells[fila, 2].Value = "EXP-APA-" + solicitud.Codigo;
+
+                    fila++;
+                }
+
+                // Autoajustar columnas
+                hoja.Cells[hoja.Dimension.Address].AutoFitColumns();
+
+                // Generar archivo Excel
+                var stream = new MemoryStream();
+                package.SaveAs(stream);
+                stream.Position = 0;
+
+                // Descargar archivo
+                var nombreArchivo = "ConsultaCUIRenap.xlsx";
+                return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", nombreArchivo);
+            }
+        }
+
+        public async Task<IActionResult> ExportarGuatenominas(Int64? idSolicitud)
+        {
+            // Datos de ejemplo
+            var datos = (await _solicitudService.GetAllDetalleSolicitudAPA((long)idSolicitud))
+                        .Where(d => d.IdAnulacion == 67 || d.IdAnulacion == 0 || d.IdAnulacion is null);
+
+            // Crear contenido del archivo TXT
+            var contenidoTxt = new StringBuilder();
+
+            // Llenar datos
+            foreach (var ii in datos)
+            {
+                var paramGrupoEtnico = await _catalogoService.GetCatalogo(ii.GrupoEtnico);
+
+                contenidoTxt.AppendLine($"{ii.CuiEsposa}|\t");
+            }
+
+            // Convertir a array de bytes
+            var stream = new MemoryStream();
+            var writer = new StreamWriter(stream, Encoding.UTF8);
+            await writer.WriteAsync(contenidoTxt.ToString());
+            await writer.FlushAsync();
+            stream.Position = 0;
+
+            // Descargar archivo
+            var nombreArchivo = "ConsultaCUIGuatenominas.txt";
+            return File(stream, "text/plain", nombreArchivo);
+        }
+
+        //Carga Masiva Anulacion
+        [HttpPost]
+        public async Task<IActionResult> cargarValidacionRenapAPA(IFormFile fileExcel, Int64 id)
+        {
+            //SolicitudesVM nuevo = new SolicitudesVM();
+            //List<DetalleSolicitud> listDet = new List<DetalleSolicitud>();
+            var depto = User.FindFirst("depto")?.Value;
+            var rol = User.FindFirst(ClaimTypes.Role)?.Value;
+
+            var valorK = HttpContext?.Request.Query["k"].ToString();
+            bool tieneValorK = !string.IsNullOrEmpty(valorK);
+            var condicion = "";
+
+            if ((depto == "DAAN" && rol != "Admin") || (tieneValorK && valorK == "1" && rol == "Admin"))
+                condicion = "1";
+            else if ((depto == "DAPA" && rol != "Admin") || (tieneValorK && valorK == "2" && rol == "Admin"))
+                condicion = "2";
+
+            if (condicion == "2")
+            {
+                if (fileExcel != null && fileExcel.Length > 0)
+                {
+                    // Lista para almacenar los datos leídos
+                    var excelData = new List<Models.ExcelRowAPA>();
+
+                    using (var stream = new MemoryStream())
+                    {
+                        fileExcel.CopyTo(stream);
+                        // Establecer el contexto de la licencia antes de usar EPPlus
+                        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
+                        // Usar EPPlus para leer el archivo Excel
+                        using (var package = new ExcelPackage(stream))
+                        {
+                            var worksheet = package.Workbook.Worksheets[0]; // Tomamos la primera hoja
+                            var rowCount = worksheet.Dimension.Rows;        // Número de filas
+                            var colCount = worksheet.Dimension.Columns;     // Número de columnas
+
+                            // Leer filas y columnas de la hoja de cálculo
+                            for (int row = 2; row <= rowCount; row++) // Empezar en la fila 2 si hay encabezados
+                            {
+                                DetalleSolicitudAPA detInfo = _solicitudService.GetDetalleSolicitudByCUIAPA(id, worksheet.Cells[row, 2].Text).Result;
+                                if (detInfo != null)
+                                {
+                                    var rowData = new ExcelRowAPA();
+                                    try
+                                    {
+                                        var difunto = worksheet.Cells[row, 10].Text;
+                                        if (difunto == "SI")
+                                        {
+                                            detInfo.IdAnulacion = 63;
+                                            await _solicitudService.UpdateDetalleSolicitudAPA(detInfo);
+                                            rowData = new ExcelRowAPA
+                                            {
+                                                Columna1 = detInfo.IdDetalleSolicitud.ToString(), // Columna 1                                                                      
+                                                Columna2 = detInfo.Nombre1Esposa, //worksheet.Cells[row, 2].Text, // Columna 2
+                                                Columna3 = detInfo.Nombre2Esposa, //worksheet.Cells[row, 3].Text, // Columna 3
+                                                Columna4 = detInfo.Nombre3Esposa, //worksheet.Cells[row, 4].Text, // Columna 3
+                                                Columna5 = detInfo.Apellido1Esposa, //worksheet.Cells[row, 5].Text,
+                                                Columna6 = detInfo.Apellido2Esposa, //worksheet.Cells[row, 6].Text,                                    
+                                                Columna7 = detInfo.ApellidoCasada, //worksheet.Cells[row, 6].Text,                                    
+                                                Columna8 = detInfo.CuiEsposa, // Columna 1
+                                                Columna9 = _catalogoService.GetCatalogo(detInfo.GrupoEtnico).Result.Descripcion, // Columna 1                                    
+                                                Columna10 = worksheet.Cells[row, 10].Text
+                                            };
+                                            excelData.Add(rowData);
+
+                                        }
+                                    }
+                                    catch
+                                    {
+
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Pasar los datos al modelo para mostrarlos en la vista
+                    return Json(excelData);
+                }
+                //return RedirectToAction("IndexDetalle", "Solicitud",nuevo);
+                //return View("IndexDetalle",listDet);
+                //return View();
+                //return BadRequest("Archivo no válido");
+                return Ok("Archivo cargado");
+            }
+            else
+            {
+                return Unauthorized(); // Si el claim no existe o el valor no coincide
+            }
+        }
     }
+
+
 }

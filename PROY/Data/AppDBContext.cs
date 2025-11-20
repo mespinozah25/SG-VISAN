@@ -1018,6 +1018,7 @@ namespace PROY.Data
                 tb.Property(col => col.IdUsuario).HasColumnName("USUARIO_ID");
                 tb.Property(col => col.FechaHora).HasColumnName("FECHA_HORA");
                 tb.Property(col => col.Estado).HasColumnName("ESTADO");
+                tb.Property(col => col.Comentario).HasColumnName("COMENTARIO");
             });
 
             // SGI.INGRESO_ALIMENTOS

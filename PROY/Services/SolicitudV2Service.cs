@@ -11,13 +11,16 @@ namespace PROY.Services
         private readonly IAsignaRacionService _asignaRacionService;
         private readonly IConfiguration _configuration;
 
-        public SolicitudV2Service(ISolicitudV2Repository SolicitudV2Repository, IDetalleSolicitudAPARepository DetalleSolicitudAPARepository, IDetalleEvaluacionAPARepository DetalleEvaluacionAPARepository, IAsignaRacionService AsignaRacionService, IConfiguration Configuration)
+        private readonly IUsuarioService _usuarioService;
+
+        public SolicitudV2Service(ISolicitudV2Repository SolicitudV2Repository, IDetalleSolicitudAPARepository DetalleSolicitudAPARepository, IDetalleEvaluacionAPARepository DetalleEvaluacionAPARepository, IAsignaRacionService AsignaRacionService, IConfiguration Configuration, IUsuarioService usuarioService)
         {
             _solicitudV2Repository = SolicitudV2Repository;
             _detalleSolicitudAPARepository = DetalleSolicitudAPARepository;
             _detalleEvaluacionAPARepository = DetalleEvaluacionAPARepository;
             _asignaRacionService = AsignaRacionService;
             _configuration = Configuration;
+            _usuarioService = usuarioService;
         }
 
         public async Task<List<Solicitud>> ObtenerSolicitudesSegunEstado(int IdEstado, int IdDepartamento, int Rechazada)
@@ -173,7 +176,7 @@ namespace PROY.Services
                 return $"Error al habilitar solicitud: {ex}";
             }
         }
-        
+
         public async Task<string> ActualizarFechasEntregaSolicitud(int IdSolicitud, DateTime FechaInicio, DateTime FechaFin, string? Observaciones)
         {
             try
@@ -197,5 +200,59 @@ namespace PROY.Services
                 return $"Error al actualizada solicitud: {ex}";
             }
         }
+
+        public async Task<string> ActualizarRaciones(int idSolicitud, int nuevasRaciones)
+        {
+            try
+            {
+                Solicitud? solicitud = await _solicitudV2Repository.ObtenerSolicitudSegunIdSolicitud(idSolicitud);
+
+                if (solicitud == null) return "No se encontro la solicitud";
+
+                solicitud.Raciones = nuevasRaciones;
+
+                await _solicitudV2Repository.ActualizarSolicitud(solicitud);
+
+                return "Solicitud actualizada exitosamente";
+            }
+            catch (Exception ex)
+            {
+                return $"Error al actualizada solicitud: {ex}";
+            }
+        }
+
+        public async Task<List<Solicitud>> ObtenerSolicitudesConFiltros(int idEstado, int idDepto, int? idDepartamento = null, int? idMunicipio = null, DateTime? fechaInicio = null, DateTime? fechaFin = null, int rechazada = 0)
+        {
+            return await _solicitudV2Repository.ObtenerSolicitudesConFiltros(
+                idEstado,
+                idDepto,
+                rechazada,
+                idDepartamento,
+                idMunicipio,
+                fechaInicio,
+                fechaFin);
+        }
+
+
+        #region Bitacora - SIN ServiceResponse
+
+        public async Task<List<Bitacora>> GetAllBitacora(long id)
+        {
+            return await _solicitudV2Repository.GetAllBitacora(id);
+        }
+
+        public async Task<Bitacora> GetBitacoraEstado(int idEstado, int idReingreso)
+        {
+            return await _solicitudV2Repository.GetBitacoraEstado(idEstado, idReingreso);
+        }
+
+        public async Task<Bitacora> SaveBitacora(Bitacora modelo)
+        {
+            // Si necesitas lógica adicional antes de guardar, la pones aquí
+            return await _solicitudV2Repository.SaveBitacora(modelo);
+        }
+
+        #endregion         
     }
+
 }

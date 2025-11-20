@@ -12,5 +12,15 @@ namespace PROY.Services
         Task<string> RechazarSolicitud(int IdSolicitud);
         Task<string> HabilitarSolicitud(int IdSolicitud);
         Task<string> ActualizarFechasEntregaSolicitud(int IdSolicitud, DateTime FechaInicio, DateTime FechaFin, string? Observaciones);
+        Task<string> ActualizarRaciones(int idSolicitud, int nuevasRaciones);
+
+        Task<List<Solicitud>> ObtenerSolicitudesConFiltros(int idEstado, int idDepto, int? idDepartamento = null, int? idMunicipio = null, DateTime? fechaInicio = null, DateTime? fechaFin = null, int rechazada = 0);
+
+        #region Bitacora
+        Task<List<Bitacora>> GetAllBitacora(Int64 id);
+        Task<Bitacora> GetBitacoraEstado(int idEstado, int idReingreso);
+        Task<Bitacora> SaveBitacora(Bitacora modelo);
+
+        #endregion
     }
 }

@@ -1,4 +1,4 @@
-﻿@inject IHttpContextAccessor HttpContextAccessor
+@inject IHttpContextAccessor HttpContextAccessor
 @inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
 
@@ -144,6 +144,10 @@
                             <ul class="dropdown-menu" aria-labelledby="dropdownOpcionesSolicitud">
                                 <li>
                                     @if (rol == "Admin" || usuario == Model.Solicitud!.UsuarioRegistro){
+                                        <a class="dropdown-item" asp-controller="SolicitudV2"
+                                            asp-action="HistorialSolicitud" asp-route-IdSolicitud="@Model.Solicitud!.IdSolicitud">
+                                            Ver Historial
+                                        </a>
                                         @if ($"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:CREADA"]}"){
                                             <a class="dropdown-item" asp-controller="SolicitudV2"
                                                 asp-action="FormularioSolicitud" asp-route-IdSolicitud="@Model.Solicitud!.IdSolicitud">
@@ -215,6 +219,13 @@
                                                 asp-route-idEvaluacion="@Model.Solicitud!.IdSolicitud" asp-route-k="2" asp-route-proceso="VALIDACION_BENEFI">
                                                 Medios de Verificación
                                             </a>
+                                            <a class="dropdown-item" asp-controller="Evaluacion" asp-action="ListaDetalle" 
+                                                asp-route-idEvaluacion="@Model.Solicitud!.IdSolicitud" asp-route-k="2">
+                                                Gestionar Beneficiarios
+                                            </a>
+                                            <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#modalActualizarRaciones">
+                                                Actualizar Número de Raciones
+                                            </a>
                                             @if(Model.Solicitud!.MostrarContinuidadValidacionBeneficiarios){    
                                                 <a class="dropdown-item" asp-controller="SolicitudV2"
                                                     asp-action="CambioEtapaSolicitud" asp-route-IdSolicitud="@Model.Solicitud!.IdSolicitud"
@@ -230,6 +241,7 @@
                                             }
                                         }
                                         @if ($"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:PROGRAMACION"]}"){
+                                            
                                             <a class="dropdown-item" asp-controller="Programacion" asp-action="ListaDetalle"
                                                 asp-route-idProgramacion="@Model.Solicitud!.IdSolicitud" asp-route-k="2">
                                                 Gestionar Beneficiarios
@@ -267,7 +279,6 @@
                                                     debe asignar todas las raciones
                                                 </a>
                                             }
-                                            
                                         }
                                         @if ($"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:GENERACION_DE_PLANILLAS"]}"){
                                             <a class="dropdown-item" onclick="generacionPlantillasPDF('@Model.Solicitud!.IdSolicitud', `plantillas-sol-@Model.Solicitud!.Codigo`, '@descripcionDepartamento', '@descripcionMunicipio', '@Model.Solicitud!.Comunidad')">
@@ -275,6 +286,10 @@
                                             </a>
                                         }
                                         @if ($"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:EJECUCION"]}"){
+                                            <a class="dropdown-item" asp-controller="SolicitudV2" asp-action="FormularioDespacho"
+                                                asp-route-IdSolicitud="@Model.Solicitud!.IdSolicitud">
+                                                Despacho
+                                            </a>
                                             <a class="dropdown-item" asp-controller="Ejecucion" asp-action="IndexDetalle"
                                                 asp-route-idEjecucion="@Model.Solicitud!.IdSolicitud" asp-route-k="2" asp-route-proceso="EJECUCION">
                                                 Gestionar Liquidación
@@ -313,6 +328,7 @@
                                                 Medios de Verificación
                                             </a>
                                         }
+                                        
                                         @if(Model.Solicitud!.EstadoSolicitud.EstadoSolicitudSiguiente != null &&
                                             $"{Model.Solicitud!.IdEstadoSolicitud}" != $"{@Configuration["EtapasSolicitud:APA:VERIFICACION_DE_CAMPO"]}" &&
                                             $"{Model.Solicitud!.IdEstadoSolicitud}" != $"{@Configuration["EtapasSolicitud:APA:VALIDACION_DE_BENEFICIARIOS"]}" &&
@@ -468,6 +484,59 @@
     </div>
 </div>
 
+<!-- Modal para actualizar raciones -->
+<div class="modal fade" id="modalActualizarRaciones" tabindex="-1" aria-labelledby="modalActualizarRacionesLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header header-bg text-white">
+                <h5 class="modal-title" id="modalActualizarRacionesLabel">Actualizar Número de Raciones</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="formActualizarRaciones" method="post">
+                <div class="modal-body">
+                    <input type="hidden" id="IdSolicitud" name="IdSolicitud" value="@Model.Solicitud!.IdSolicitud" />
+                    <div class="mb-3">
+                        <label for="nuevasRaciones" class="form-label">Nuevo número de raciones:</label>
+                        <input type="number" class="form-control" id="nuevasRaciones" name="nuevasRaciones" 
+                               value="@Model.Solicitud!.Raciones" min="1" required />
+                        <div class="form-text">Raciones actuales: @Model.Solicitud!.Raciones</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Actualizar Raciones</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para actualizar raciones -->
+<div class="modal fade" id="modalActualizarRaciones" tabindex="-1" aria-labelledby="modalActualizarRacionesLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header header-bg text-white">
+                <h5 class="modal-title" id="modalActualizarRacionesLabel">Actualizar Número de Raciones</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="formActualizarRaciones" method="post">
+                <div class="modal-body">
+                    <input type="hidden" id="IdSolicitud" name="IdSolicitud" value="@Model.Solicitud!.IdSolicitud" />
+                    <div class="mb-3">
+                        <label for="nuevasRaciones" class="form-label">Nuevo número de raciones:</label>
+                        <input type="number" class="form-control" id="nuevasRaciones" name="nuevasRaciones" 
+                               value="@Model.Solicitud!.Raciones" min="1" required />
+                        <div class="form-text">Raciones actuales: @Model.Solicitud!.Raciones</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Actualizar Raciones</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
 
 @section Scripts {
@@ -788,5 +857,81 @@
         }
 
         pdfMake.createPdf(docDefinition).download(`${nombre}.pdf`);
+    }
+
+    document.getElementById('formActualizarRaciones').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const idSolicitud = formData.get('IdSolicitud');
+        const nuevasRaciones = formData.get('nuevasRaciones');
+        
+        // Mostrar confirmación
+        Swal.fire({
+            title: "¿Confirmar actualización?",
+            text: `¿Desea actualizar el número de raciones a ${nuevasRaciones}?`,
+            icon: "question",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Sí, actualizar",
+            cancelButtonText: "Cancelar"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Llamar al método del controlador
+                actualizarRaciones(idSolicitud, nuevasRaciones);
+            }
+        });
+    });
+
+    function actualizarRaciones(idSolicitud, nuevasRaciones) {
+        fetch('@Url.Action("ActualizarRaciones", "SolicitudV2")', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+            },
+            body: JSON.stringify({
+                IdSolicitud: parseInt(idSolicitud),
+                Raciones: parseInt(nuevasRaciones)
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Error en la respuesta del servidor');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                Swal.fire({
+                    title: "¡Éxito!",
+                    text: data.message,
+                    icon: "success",
+                    confirmButtonColor: "#3085d6"
+                }).then(() => {
+                    // Cerrar modal y recargar la página
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('modalActualizarRaciones'));
+                    modal.hide();
+                    location.reload();
+                });
+            } else {
+                Swal.fire({
+                    title: "Error",
+                    text: data.message,
+                    icon: "error",
+                    confirmButtonColor: "#d33"
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Swal.fire({
+                title: "Error",
+                text: "Ocurrió un error al actualizar las raciones",
+                icon: "error",
+                confirmButtonColor: "#d33"
+            });
+        });
     }
 </script>

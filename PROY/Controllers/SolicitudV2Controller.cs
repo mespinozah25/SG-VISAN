@@ -1,9 +1,10 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using PROY.Models;
 using PROY.Services;
 using PROY.ViewModels;
+
 using System.Security.Claims;
 
 namespace PROY.Controllers
@@ -17,10 +18,11 @@ namespace PROY.Controllers
         private readonly IAsignaRacionService _asignaRacionService;
         private readonly IAsignaTecnicoService _asignaTecnicoService;
         private readonly ITecnicoService _tecnicoService;
+        private readonly IUsuarioService _usuarioService;
 
         private readonly ISolicitudService _solicitudService;
 
-        public SolicitudV2Controller(ICatalogoService catalogoService, ISolicitudV2Service solicitudV2Service, IEstadoSolicitudService estadoSolicitudService, IAsignaRacionService AsignaRacionService, IAsignaTecnicoService AsignaTecnicoService, ITecnicoService TecnicoService, ISolicitudService solicitudService)
+        public SolicitudV2Controller(ICatalogoService catalogoService, ISolicitudV2Service solicitudV2Service, IEstadoSolicitudService estadoSolicitudService, IAsignaRacionService AsignaRacionService, IAsignaTecnicoService AsignaTecnicoService, ITecnicoService TecnicoService, ISolicitudService solicitudService, IUsuarioService usuarioService)
         {
             _catalogoService = catalogoService;
             _solicitudV2Service = solicitudV2Service;
@@ -29,6 +31,7 @@ namespace PROY.Controllers
             _asignaTecnicoService = AsignaTecnicoService;
             _tecnicoService = TecnicoService;
             _solicitudService = solicitudService;
+            _usuarioService = usuarioService;
         }
 
         public async Task<IActionResult> Index(int? IdEstado, int Rechazada = 0)
@@ -90,6 +93,8 @@ namespace PROY.Controllers
         {
             TempData["Mensaje"] = await _solicitudV2Service.AvanzarASiguienteEtapa(IdSolicitud); ;
 
+            await CrearBitacora(IdSolicitud, 2, "Se realiza el cambio de estado de la solicitud");
+
             return RedirectToAction("DetalleSolicitud", "SolicitudV2", new { IdSolicitud });
         }
 
@@ -135,6 +140,8 @@ namespace PROY.Controllers
         {
             TempData["Mensaje"] = await _solicitudV2Service.RechazarSolicitud(IdSolicitud); ;
 
+            await CrearBitacora(IdSolicitud, 2, "Se rechaza la solicitud");
+
             return RedirectToAction("DetalleSolicitud", "SolicitudV2", new { IdSolicitud });
         }
 
@@ -143,12 +150,16 @@ namespace PROY.Controllers
         {
             TempData["Mensaje"] = await _solicitudV2Service.RegresarAEtapaAnterior((int)modeloVM.Solicitud!.IdSolicitud, modeloVM.Solicitud!.ComentarioRechazo);
 
+            await CrearBitacora((int)modeloVM.Solicitud!.IdSolicitud, 2, "Se rechaza la solicitud" + modeloVM.Solicitud!.ComentarioRechazo);
+
             return RedirectToAction("DetalleSolicitud", "SolicitudV2", new { modeloVM.Solicitud!.IdSolicitud });
         }
 
         public async Task<ActionResult> HabilitarSolicitud(int IdSolicitud)
         {
             TempData["Mensaje"] = await _solicitudV2Service.HabilitarSolicitud(IdSolicitud); ;
+
+            await CrearBitacora(IdSolicitud, 1, "Se habilita la solicitud");
 
             return RedirectToAction("DetalleSolicitud", "SolicitudV2", new { IdSolicitud });
         }
@@ -208,12 +219,16 @@ namespace PROY.Controllers
 
             TempData["Mensaje"] = await _asignaRacionService.GuardarAsignacionRacion(modeloVM.AsignaRacionV2!); ;
 
+            await CrearBitacora((int) modeloVM.Solicitud!.IdSolicitud , 1, "Se crea la asignación de Ración");
+
             return RedirectToAction("FormularioDespacho", "SolicitudV2", new { modeloVM.Solicitud!.IdSolicitud });
         }
 
         public async Task<IActionResult> EliminarAsignacionRacion(int IdSolicitud, int IdAsignaRacion)
         {
             TempData["Mensaje"] = await _asignaRacionService.EliminarAsignacionRacion(IdAsignaRacion); ;
+
+            await CrearBitacora(IdSolicitud, 3, "Se elimina la asignación de Ración");
 
             return RedirectToAction("FormularioDespacho", "SolicitudV2", new { IdSolicitud });
         }
@@ -259,7 +274,7 @@ namespace PROY.Controllers
 
             return RedirectToAction("FormularioTecnicos", "SolicitudV2", new { modeloVM.Solicitud!.IdSolicitud, });
         }
-        
+
         [HttpPost]
         public async Task<IActionResult> AgregarAsignacionTecnico(SolicitudesVM modeloVM)
         {
@@ -269,12 +284,16 @@ namespace PROY.Controllers
 
             TempData["Mensaje"] = await _asignaTecnicoService.GuardarAsignacionTecnico(modeloVM.AsignaTecnicoV2!); ;
 
+            await CrearBitacora(modeloVM.AsignaTecnicoV2!.IdSolicitud, 1, "Se creó la asignación de Técnico");
+
             return RedirectToAction("FormularioTecnicos", "SolicitudV2", new { modeloVM.Solicitud!.IdSolicitud });
         }
 
         public async Task<IActionResult> EliminarAsignacionTecnico(int IdSolicitud, int IdAsignaTecnico)
         {
             TempData["Mensaje"] = await _asignaTecnicoService.EliminarAsignacionTecnico(IdAsignaTecnico); ;
+
+            await CrearBitacora(IdSolicitud, 3, "Se elimina la asignación de Técnico");
 
             return RedirectToAction("FormularioTecnicos", "SolicitudV2", new { IdSolicitud });
         }
@@ -284,6 +303,78 @@ namespace PROY.Controllers
             List<DetalleSolicitudAPA> listaDetalleSolicitudAPA = await _solicitudService.GetAllDetalleSolicitudAPA((long)IdSolicitud);
 
             return Ok(listaDetalleSolicitudAPA);
+        }
+
+
+        [HttpPost]
+        public async Task<JsonResult> ActualizarRaciones([FromBody] ActualizarRacionesModel model)
+        {
+            try
+            {
+                string? departamento = User.FindFirst("depto")?.Value;
+                string? rol = User.FindFirst(ClaimTypes.Role)?.Value;
+
+                if (rol != "Admin" && (departamento == "DAAN" || string.IsNullOrEmpty(departamento)))
+                    return Json(new { success = false, message = "No autorizado" });
+
+                // Validar que el estado sea VALIDACION_DE_BENEFICIARIOS
+                var solicitud = await _solicitudV2Service.ObtenerSolicitudSegunIdSolicitud(model.IdSolicitud);
+
+                if (solicitud == null)
+                    return Json(new { success = false, message = "Solicitud no encontrada" });
+
+                // Actualizar las raciones
+                var resultado = await _solicitudV2Service.ActualizarRaciones(model.IdSolicitud, model.Raciones);
+
+                await CrearBitacora(model.IdSolicitud, 2, "Se actualiza la cantidad de raciones");
+
+                return Json(new { success = true, message = resultado });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"Error: {ex.Message}" });
+            }
+        }
+
+        public async Task<IActionResult> HistorialSolicitud(Int64? idSolicitud)
+        {
+
+            var solicitud = await _solicitudV2Service.ObtenerSolicitudSegunIdSolicitud((int)idSolicitud);
+            var historial = await _solicitudV2Service.GetAllBitacora((int)idSolicitud);
+
+             ViewBag.Usuarios = await _usuarioService.GetAll();
+
+            var model = new HistorialSolicitudVM
+            {
+                Solicitud = solicitud,
+                Historial = historial
+            };
+
+            return View(model);
+        }
+
+        private async Task CrearBitacora(int idSolicitud, int estado, string? comentario)
+        {
+
+            var idUsuarioClaim = User.FindFirst("IDuser")?.Value;
+            if (string.IsNullOrEmpty(idUsuarioClaim) || !int.TryParse(idUsuarioClaim, out int idUsuario))
+            {
+                return;
+            }
+
+            Bitacora modelBitacora = new Bitacora()
+            {
+                IdBitacora = 0,
+                Accion = estado,
+                IdRegistro = idSolicitud,
+                NombreTabla = "SOLICITUD",
+                IdUsuario = idUsuario,
+                FechaHora = DateTime.Now,
+                Estado = 0,
+                Comentario = comentario
+            };
+
+            await _solicitudV2Service.SaveBitacora(modelBitacora);
         }
     }
 }

@@ -4,6 +4,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using PROY.Models;
 using PROY.Services;
+using PROY.Models.TableroDeDatos;
 
 namespace PROY.Controllers
 {
@@ -17,7 +18,28 @@ namespace PROY.Controllers
 
         public IActionResult Index()
         {
-            return View();
+            var racionesDisponibles = _homeService.ChartRacionesDisponibles();
+            var racionesAvance = _homeService.ChartRacionesAvance();
+
+            var totalConvenio = racionesAvance.Sum(r => r.TotalConvenio);
+            var totalRacionesEntregadas = racionesAvance.Sum(r => r.RacionesEntregadas);
+
+            var totalporcentaje = totalConvenio > 0 ? ((totalRacionesEntregadas / totalConvenio) * 100) : 0;
+
+            var tablero = new
+            {
+                raciones_disponibles = racionesDisponibles,
+                total_raciones = racionesDisponibles.Sum(r => r.Raciones),
+                raciones_avance = racionesAvance,
+                totalConvenio,
+                totalRacionesRecibidas = racionesAvance.Sum(r => r.RacionesRecibidas),
+                totalRacionesPendientesRecibir = racionesAvance.Sum(r => r.RacionesPendientesRecibir),
+                totalRacionesEntregadas,
+                totalRacionesPendientesEntregar = racionesAvance.Sum(r => r.RacionesPendientesEntregar),
+                totalporcentaje
+            };
+
+            return View(tablero);
         }
 
         #region CHARTS
@@ -91,69 +113,40 @@ namespace PROY.Controllers
         [HttpGet]
         public IActionResult ObtenerDatosGraficaRaciones()
         {
-            try
+            var datos = _homeService.ChartRaciones();
+            // Si no hay datos, devolver estructura vacía
+            if (datos == null || !datos.Any())
             {
-                var datos = _homeService.ChartRaciones();
-
-                // Si no hay datos, devolver estructura vacía
-                if (datos == null || !datos.Any())
-                {
-                    return Json(new List<object[]>
-            {
-                new object[] { "Programa", "Raciones" },
-                new object[] { "Sin datos", 0 }
-            });
-                }
-
-                // Formato para gráfico de pie
-                var datosFormateados = new List<object[]>
-        {
-            new object[] { "Programa", "Raciones" }
-        };
-
-                // Procesar datos - USANDO TIPOS FUERTES en lugar de dynamic
-                var programasDict = new Dictionary<string, decimal>();
-
-                foreach (var dato in datos)
-                {
-                    string programa = dato.NombrePrograma;
-                    decimal raciones = dato.TotalRaciones;
-
-                    if (programasDict.ContainsKey(programa))
-                    {
-                        programasDict[programa] += raciones;
-                    }
-                    else
-                    {
-                        programasDict[programa] = raciones;
-                    }
-                }
-
-                foreach (var programa in programasDict)
-                {
-                    datosFormateados.Add(new object[] { programa.Key, programa.Value });
-                }
-
-                return Json(datosFormateados);
-            }
-            catch (Exception ex)
-            {
-                // Log del error
-                Console.WriteLine($"Error en ObtenerDatosGraficaRaciones: {ex.Message}");
-
-                // Devolver datos de prueba en caso de error
                 return Json(new List<object[]>
-        {
-            new object[] { "Programa", "Raciones" },
-            new object[] { "PROGRAMA NDA", 52000 },
-            new object[] { "PROGRAMA INSAN", 75000 },
-            new object[] { "RESERVAS ESTRATEGICAS", 120000 },
-            new object[] { "PROGRAMA APA", 45000 },
-            new object[] { "MEDIDAS ESPECIALES", 30000 }
-        });
+                    {
+                        new object[] { "Programa", "Raciones" },
+                        new object[] { "Sin datos", 0 }
+                    });
             }
-        }
+            // Formato para gráfico de pie
+            var datosFormateados = new List<object[]> { new object[] { "Programa", "Raciones" } };
+            // Procesar datos - USANDO TIPOS FUERTES en lugar de dynamic
+            var programasDict = new Dictionary<string, decimal>();
+            foreach (var dato in datos)
+            {
+                string programa = dato.NombrePrograma;
+                decimal raciones = dato.TotalRaciones;
 
+                if (programasDict.ContainsKey(programa))
+                {
+                    programasDict[programa] += raciones;
+                }
+                else
+                {
+                    programasDict[programa] = raciones;
+                }
+            }
+            foreach (var programa in programasDict)
+            {
+                datosFormateados.Add(new object[] { programa.Key, programa.Value });
+            }
+            return Json(datosFormateados);
+        }
 
         #endregion
     }
