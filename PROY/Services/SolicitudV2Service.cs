@@ -11,13 +11,16 @@ namespace PROY.Services
         private readonly IAsignaRacionService _asignaRacionService;
         private readonly IConfiguration _configuration;
 
-        public SolicitudV2Service(ISolicitudV2Repository SolicitudV2Repository, IDetalleSolicitudAPARepository DetalleSolicitudAPARepository, IDetalleEvaluacionAPARepository DetalleEvaluacionAPARepository, IAsignaRacionService AsignaRacionService, IConfiguration Configuration)
+        private readonly IUsuarioService _usuarioService;
+
+        public SolicitudV2Service(ISolicitudV2Repository SolicitudV2Repository, IDetalleSolicitudAPARepository DetalleSolicitudAPARepository, IDetalleEvaluacionAPARepository DetalleEvaluacionAPARepository, IAsignaRacionService AsignaRacionService, IConfiguration Configuration, IUsuarioService usuarioService)
         {
             _solicitudV2Repository = SolicitudV2Repository;
             _detalleSolicitudAPARepository = DetalleSolicitudAPARepository;
             _detalleEvaluacionAPARepository = DetalleEvaluacionAPARepository;
             _asignaRacionService = AsignaRacionService;
             _configuration = Configuration;
+            _usuarioService = usuarioService;
         }
 
         public async Task<List<Solicitud>> ObtenerSolicitudesSegunEstado(int IdEstado, int IdDepartamento, int Rechazada)
@@ -225,6 +228,27 @@ namespace PROY.Services
                 fechaInicio,
                 fechaFin);
         }
+
+
+        #region Bitacora - SIN ServiceResponse
+
+        public async Task<List<Bitacora>> GetAllBitacora(long id)
+        {
+            return await _solicitudV2Repository.GetAllBitacora(id);
+        }
+
+        public async Task<Bitacora> GetBitacoraEstado(int idEstado, int idReingreso)
+        {
+            return await _solicitudV2Repository.GetBitacoraEstado(idEstado, idReingreso);
+        }
+
+        public async Task<Bitacora> SaveBitacora(Bitacora modelo)
+        {
+            // Si necesitas lógica adicional antes de guardar, la pones aquí
+            return await _solicitudV2Repository.SaveBitacora(modelo);
+        }
+
+        #endregion         
     }
 
 }

@@ -78,5 +78,44 @@ namespace PROY.Repositories
             var listado = await query.ToListAsync();
             return listado;
         }
+
+
+        #region BITACORA
+
+        public async Task<List<Bitacora>> GetAllBitacora(long id)
+        {
+            List<Bitacora> listado = await _dbContext.Bitacora
+                .Where(c => c.IdRegistro == id && c.NombreTabla == "SOLICITUD" && c.Estado == 0)
+                .ToListAsync();
+            return listado;
+        }
+
+        public async Task<Bitacora> GetBitacoraEstado(int idEstado, int idReingreso)
+        {
+            var bitacora = await _dbContext.Bitacora
+                .FirstOrDefaultAsync(b => b.Accion == idEstado && b.IdRegistro == idReingreso);
+            return bitacora;
+        }
+
+        public async Task<Bitacora> SaveBitacora(Bitacora modelo)
+        {
+            try
+            {
+                var maxId = await _dbContext.Bitacora.MaxAsync(b => (long?)b.IdBitacora) ?? 0;
+
+                modelo.IdBitacora = maxId + 1;
+
+                _dbContext.Bitacora.Add(modelo);
+                await _dbContext.SaveChangesAsync();
+            }
+            catch (Exception exc)
+            {
+                var error = exc;
+            }
+
+            return modelo;
+        }
+
+        #endregion
     }
 }

@@ -144,6 +144,10 @@
                             <ul class="dropdown-menu" aria-labelledby="dropdownOpcionesSolicitud">
                                 <li>
                                     @if (rol == "Admin" || usuario == Model.Solicitud!.UsuarioRegistro){
+                                        <a class="dropdown-item" asp-controller="SolicitudV2"
+                                            asp-action="HistorialSolicitud" asp-route-IdSolicitud="@Model.Solicitud!.IdSolicitud">
+                                            Ver Historial
+                                        </a>
                                         @if ($"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:CREADA"]}"){
                                             <a class="dropdown-item" asp-controller="SolicitudV2"
                                                 asp-action="FormularioSolicitud" asp-route-IdSolicitud="@Model.Solicitud!.IdSolicitud">
@@ -220,6 +224,7 @@
                                             </a>
                                         }
                                         @if ($"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:PROGRAMACION"]}"){
+                                            
                                             <a class="dropdown-item" asp-controller="Programacion" asp-action="ListaDetalle"
                                                 asp-route-idProgramacion="@Model.Solicitud!.IdSolicitud" asp-route-k="2">
                                                 Gestionar Beneficiarios
@@ -257,9 +262,12 @@
                                                     debe asignar todas las raciones
                                                 </a>
                                             }
-                                            
                                         }
                                         @if ($"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:EJECUCION"]}"){
+                                            <a class="dropdown-item" asp-controller="SolicitudV2" asp-action="FormularioDespacho"
+                                                asp-route-IdSolicitud="@Model.Solicitud!.IdSolicitud">
+                                                Despacho
+                                            </a>
                                             <a class="dropdown-item" asp-controller="Ejecucion" asp-action="IndexDetalle"
                                                 asp-route-idEjecucion="@Model.Solicitud!.IdSolicitud" asp-route-k="2" asp-route-proceso="EJECUCION">
                                                 Gestionar Liquidación
@@ -279,6 +287,7 @@
                                                 Medios de Verificación
                                             </a>
                                         }
+                                        
                                         @if(Model.Solicitud!.EstadoSolicitud.EstadoSolicitudSiguiente != null &&
                                             $"{Model.Solicitud!.IdEstadoSolicitud}" != $"{@Configuration["EtapasSolicitud:APA:VERIFICACION_DE_CAMPO"]}" &&
                                             $"{Model.Solicitud!.IdEstadoSolicitud}" != $"{@Configuration["EtapasSolicitud:APA:PROGRAMACION"]}"){

@@ -23,5 +23,7 @@ namespace PROY.Repositories
         Task<string> GenerarReporte(int tipoReporte, FiltrosReportesDTO filtros);
 
         #endregion
+
+       
     }
 }
