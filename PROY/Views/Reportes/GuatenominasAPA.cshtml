@@ -1,0 +1,141 @@
+@model PROY.ViewModels.ConvenioVM;
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
+
+<head>
+</head>
+@{
+
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@{
+    ViewData["Title"] = "Reporte 07 - Generación de Archivo para validar en Guatenominas";
+}
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Mensaje"]
+    </div>
+}
+
+
+<h2>Reporte 07 - Generación de Archivo para validar en Guatenominas</h2>
+<p><br /></p>
+
+<br />
+
+@await Html.PartialAsync("_CriteriosDeBusquedaAPA")
+
+
+@section Scripts {
+
+    <script>
+
+        var tipoReporte = 5;
+        var nombreReporte = "Reporte Listado de Convenios";
+
+        $(document).ready(function () {
+            HabilitarBusquedas();
+        });
+
+        function HabilitarBusquedas() {
+            $('#divCriteriosBusqueda').show();
+            $('#divNoSolicitud').show(); // Habilita los criterios
+            $('#card-footer').hide();
+        }
+
+        function Buscar() {
+            // Obtener los valores del formulario
+            var txtNoSolicitud = $('#txtNoSolicitud').val();
+
+            // Validar
+            if (!txtNoSolicitud) {
+                alert('Por favor ingrese el número de solicitud');
+                return false;
+            }
+
+            // Mostrar loading
+            $('#tablaResultados').html('<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Cargando...</span></div></div>');
+
+            var filtros = {
+                IdSolicitud: txtNoSolicitud
+            };
+
+            // Llamada AJAX para descargar archivo
+            $.ajax({
+                url: '@Url.Action("ExportarGuatenominas", "Reportes")',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(filtros),
+                xhrFields: {
+                    responseType: 'blob' // IMPORTANTE: Para manejar archivos binarios
+                },
+                success: function (data, status, xhr) {
+                    // Ocultar loading
+                    $('#tablaResultados').html('');
+
+                    // Crear blob para descarga
+                    var blob = new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+                    // Crear URL para descarga
+                    var downloadUrl = URL.createObjectURL(blob);
+
+                    // Crear enlace de descarga
+                    var a = document.createElement("a");
+                    a.href = downloadUrl;
+
+                    // Obtener nombre del archivo del header o usar uno por defecto
+                    var filename = "ConsultaCUIRenap.xlsx";
+                    var disposition = xhr.getResponseHeader('Content-Disposition');
+                    if (disposition && disposition.indexOf('attachment') !== -1) {
+                        var filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+                        var matches = filenameRegex.exec(disposition);
+                        if (matches != null && matches[1]) {
+                            filename = matches[1].replace(/['"]/g, '');
+                        }
+                    }
+
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+
+                    // Liberar URL
+                    setTimeout(function () {
+                        URL.revokeObjectURL(downloadUrl);
+                    }, 100);
+
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error en AJAX:', error);
+
+                    // Intentar leer respuesta JSON si hay error
+                    if (xhr.responseText) {
+                        try {
+                            var errorResponse = JSON.parse(xhr.responseText);
+                            
+                        } catch (e) {
+                     
+                        }
+                    } else {
+
+                    }
+
+                    $('#tablaResultados').html('<p class="text-danger">Error al generar el reporte</p>');
+                }
+            });
+
+            return false;
+        }
+    </script>
+}
+
+<script src="~/js/reportes.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+@* CDN para la creación del archivo xlsx *@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+@* CDN para la creación del archivo PDF *@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
