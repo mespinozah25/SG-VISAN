@@ -1,4 +1,4 @@
-﻿@inject IHttpContextAccessor HttpContextAccessor
+@inject IHttpContextAccessor HttpContextAccessor
 @inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
 
@@ -215,6 +215,10 @@
                                             }
                                         }
                                         @if ($"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:VALIDACION_DE_BENEFICIARIOS"]}"){
+                                            <a class="dropdown-item" asp-controller="Evaluacion" asp-action="IndexDetalle"
+                                                asp-route-idEvaluacion="@Model.Solicitud!.IdSolicitud" asp-route-k="2" asp-route-proceso="VALIDACION_BENEFI">
+                                                Medios de Verificación
+                                            </a>
                                             <a class="dropdown-item" asp-controller="Evaluacion" asp-action="ListaDetalle" 
                                                 asp-route-idEvaluacion="@Model.Solicitud!.IdSolicitud" asp-route-k="2">
                                                 Gestionar Beneficiarios
@@ -222,6 +226,19 @@
                                             <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#modalActualizarRaciones">
                                                 Actualizar Número de Raciones
                                             </a>
+                                            @if(Model.Solicitud!.MostrarContinuidadValidacionBeneficiarios){    
+                                                <a class="dropdown-item" asp-controller="SolicitudV2"
+                                                    asp-action="CambioEtapaSolicitud" asp-route-IdSolicitud="@Model.Solicitud!.IdSolicitud"
+                                                    onclick="confirmarOperacion(event, this,`¿Desea enviar la solicitud @Model.Solicitud!.Codigo a @Model.Solicitud!.EstadoSolicitud.EstadoSolicitudSiguiente!.Nombre?`)">
+                                                    Enviar a etapa: @Model.Solicitud!.EstadoSolicitud.EstadoSolicitudSiguiente!.Nombre
+                                                </a>
+                                            }
+                                            else
+                                            {
+                                                <a class="dropdown-item text-danger">
+                                                    debe ingresar un medio de verificación para envíar a siguiente etapa
+                                                </a>
+                                            }
                                         }
                                         @if ($"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:PROGRAMACION"]}"){
                                             
@@ -263,6 +280,11 @@
                                                 </a>
                                             }
                                         }
+                                        @if ($"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:GENERACION_DE_PLANILLAS"]}"){
+                                            <a class="dropdown-item" onclick="generacionPlantillasPDF('@Model.Solicitud!.IdSolicitud', `plantillas-sol-@Model.Solicitud!.Codigo`, '@descripcionDepartamento', '@descripcionMunicipio', '@Model.Solicitud!.Comunidad')">
+                                                Descargar plantillas
+                                            </a>
+                                        }
                                         @if ($"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:EJECUCION"]}"){
                                             <a class="dropdown-item" asp-controller="SolicitudV2" asp-action="FormularioDespacho"
                                                 asp-route-IdSolicitud="@Model.Solicitud!.IdSolicitud">
@@ -281,6 +303,25 @@
                                                 Medios de Verificación
                                             </a>
                                         }
+                                        @if ($"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:REVISION_PARA_LIQUIDACION"]}"){
+                                            <a class="dropdown-item" asp-controller="Evaluacion" asp-action="IndexDetalle"
+                                                asp-route-idEvaluacion="@Model.Solicitud!.IdSolicitud" asp-route-k="2" asp-route-proceso="REVISION_LIQUIDACION">
+                                                Medios de Verificación
+                                            </a>
+                                            @if(Model.Solicitud!.MostrarContinuidadRevisionLiquidacion){    
+                                                <a class="dropdown-item" asp-controller="SolicitudV2"
+                                                    asp-action="CambioEtapaSolicitud" asp-route-IdSolicitud="@Model.Solicitud!.IdSolicitud"
+                                                    onclick="confirmarOperacion(event, this,`¿Desea enviar la solicitud @Model.Solicitud!.Codigo a @Model.Solicitud!.EstadoSolicitud.EstadoSolicitudSiguiente!.Nombre?`)">
+                                                    Enviar a etapa: @Model.Solicitud!.EstadoSolicitud.EstadoSolicitudSiguiente!.Nombre
+                                                </a>
+                                            }
+                                            else
+                                            {
+                                                <a class="dropdown-item text-danger">
+                                                    debe ingresar un medio de verificación para envíar a siguiente etapa
+                                                </a>
+                                            }
+                                        }
                                         @if ($"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:PREVIO_A_LIQUIDACION"]}"){
                                             <a class="dropdown-item" asp-controller="Evaluacion" asp-action="IndexDetalle"
                                                 asp-route-idEvaluacion="@Model.Solicitud!.IdSolicitud" asp-route-k="2" asp-route-proceso="PREVIO_LIQUIDACION">
@@ -290,6 +331,8 @@
                                         
                                         @if(Model.Solicitud!.EstadoSolicitud.EstadoSolicitudSiguiente != null &&
                                             $"{Model.Solicitud!.IdEstadoSolicitud}" != $"{@Configuration["EtapasSolicitud:APA:VERIFICACION_DE_CAMPO"]}" &&
+                                            $"{Model.Solicitud!.IdEstadoSolicitud}" != $"{@Configuration["EtapasSolicitud:APA:VALIDACION_DE_BENEFICIARIOS"]}" &&
+                                            $"{Model.Solicitud!.IdEstadoSolicitud}" != $"{@Configuration["EtapasSolicitud:APA:REVISION_PARA_LIQUIDACION"]}" &&
                                             $"{Model.Solicitud!.IdEstadoSolicitud}" != $"{@Configuration["EtapasSolicitud:APA:PROGRAMACION"]}"){
                                             <a class="dropdown-item" asp-controller="SolicitudV2"
                                                 asp-action="CambioEtapaSolicitud" asp-route-IdSolicitud="@Model.Solicitud!.IdSolicitud"
@@ -500,7 +543,8 @@
     <partial name="_ValidationScriptsPartial" />
 }
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
 
 <script>
 
@@ -520,6 +564,299 @@
             if (result.isConfirmed) window.location.href = elemento.href;
             else if (result.dismiss === Swal.DismissReason.cancel) evento.preventDefault();
         });
+    }
+
+    function obtenerImagenBase64(url) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.setAttribute("crossOrigin", "anonymous");
+            img.onload = () => {
+                const canvas = document.createElement("canvas");
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext("2d");
+                ctx.drawImage(img, 0, 0);
+                const dataURL = canvas.toDataURL("image/png");
+                resolve(dataURL);
+            };
+            img.onerror = error => reject(error);
+            img.src = url;
+        });
+    }
+
+    async function generacionPlantillasPDF(idSolicitud, nombre, departamento, municipio, comunidad) {
+        const magaBase64 = await obtenerImagenBase64('/LogoMAGA.jpg');
+        const guatemalaBase64 = await obtenerImagenBase64('/LogoVISAN.png');
+
+        const date = new Date();
+        const options = {
+            day: '2-digit',
+            month: 'short',
+            year: '2-digit'
+        };
+        const formatter = new Intl.DateTimeFormat('es-ES', options);
+        const fecha = formatter.format(date).replace(/\//g, '-').replace(/\./g, '-');
+
+        const response = await fetch('/SolicitudV2/GeneracionPlantillas?IdSolicitud=' + idSolicitud);
+        
+        if (!response.ok) return;
+
+        const beneficiariosData = await response.json();
+
+        let contadorFemenino = 0
+        let contadorMasculino = 0
+
+        for(let i = 0 ; i < beneficiariosData.length ; i++){
+            if(beneficiariosData[i].genero == 'F') contadorFemenino++
+            else contadorMasculino++
+        }
+            
+
+        const docDefinition = {
+            pageSize: 'LETTER',
+            pageMargins: [40, 100, 40, 80],
+
+            header: function(currentPage, pageCount, pageSize) {
+                return {
+                    table: {
+                        widths: ['*', '*', '*', 'auto'],
+                        body: [
+                            [
+                                {
+                                    stack: [
+                                        { image: guatemalaBase64, width: 80, height: 40, alignment: 'left' },
+                                    ],
+                                    width: 'auto',
+                                    border: [false, false, false, false]
+                                },
+                                {
+                                    stack: [
+                                        { text: 'MINISTERIO DE AGRICULTURA, GANADERIA Y ALIMENTACION', fontSize: 10, bold: true, alignment: 'center' },
+                                        { text: 'Viceministerio de Seguridad Alimentaria y Nutricional', fontSize: 9, alignment: 'center' },
+                                    ],
+                                    colSpan: 2,
+                                    border: [false, false, false, false]
+                                },
+                                {},
+                                {
+                                    stack: [
+                                        { image: magaBase64, width: 40, height: 40, alignment: 'right' },
+                                        { text: `Página ${currentPage}`, fontSize: 8, alignment: 'right', margin: [0, 5, 0, 0] }
+                                    ],
+                                    width: 'auto',
+                                    border: [false, false, false, false]
+                                }
+                            ]
+                        ]
+                    },
+                    layout: 'noBorders',
+                    margin: [40, 30, 40, 0]
+                };
+            },
+            footer: function(currentPage, pageCount) {
+                return {
+                    columns: [
+                        {
+                            stack: [
+                                { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 200, y2: 0, lineWidth: 1, lineColor: '#000000' }], margin: [0, 30, 0, 5] },
+                                { text: 'NOMBRE, FIRMA Y SELLO', alignment: 'center', fontSize: 9, bold: true },
+                                { text: 'PRESIDENTE O REPRESENTANTE LEGAL DEL COCODE', alignment: 'center', fontSize: 8 }
+                            ],
+                            width: 'auto',
+                            margin: [40, 0, 0, 0]
+                        },
+                        { width: '*', text: '' },
+                        {
+                            stack: [
+                                { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 200, y2: 0, lineWidth: 1, lineColor: '#000000' }], margin: [0, 30, 0, 5] },
+                                { text: 'NOMBRE Y FIRMA', alignment: 'center', fontSize: 9, bold: true },
+                                { text: 'TÉCNICO DEL MAGA', alignment: 'center', fontSize: 8 }
+                            ],
+                            width: 'auto',
+                            margin: [0, 0, 40, 0]
+                        }
+                    ],
+                    margin: [0, 0, 0, 30]
+                };
+            },
+
+            content: [
+                { text: 'ALIMENTOS POR ACCIONES', alignment: 'center', bold: true, fontSize: 10, margin: [0, 0, 0, 5] },
+                {
+                    table: {
+                        widths: [150, '*', 150, 'auto'],
+                        body: [
+                            [
+                                { text: 'DESPACHO DE ALMACÉN No.', fontSize: 8, border: [false, false, false, false] },
+                                { text: '', border: [false, false, false, false] },
+                                { text: 'FECHA DE IMPRESIÓN:', fontSize: 8, border: [false, false, false, false] },
+                                { text: fecha, fontSize: 8, bold: true, border: [false, false, false, false] }
+                            ]
+                        ]
+                    },
+                    layout: 'noBorders',
+                    margin: [0, 0, 0, 5]
+                },
+                {
+                    table: {
+                        widths: ['*', 'auto'],
+                        body: [
+                            [
+                                { text: 'LISTADO DE BENEFICIARIOS Y CONSTANCIA DE ENTREGA DE ALIMENTOS', alignment: 'center', bold: true, fontSize: 10, colSpan: 2 }, {}
+                            ]
+                        ]
+                    },
+                    layout: 'lightHorizontalLines',
+                    margin: [0, 0, 0, 5]
+                },
+                {
+                    columns: [
+                        {
+                            width: '40%',
+                            stack: [
+                                { text: `Departamento: ${departamento}`, fontSize: 8, margin: [0, 0, 0, 5] },
+                                { text: `Municipio: ${municipio}`, fontSize: 8, margin: [0, 0, 0, 5] },
+                                { text: `Comunidad: ${comunidad}`, fontSize: 8, margin: [0, 0, 0, 5] },
+                                { text: 'Fecha de Entrega: _____ / _____ / _______', fontSize: 8, margin: [0, 10, 0, 0] }
+                            ]
+                        },
+                        {
+                            width: '25%',
+                            stack: [
+                                { text: 'TIPO DE DISCAPACIDAD:', fontSize: 8, bold: true, margin: [0, 0, 0, 5] },
+                                { text: '1. NO', fontSize: 8 },
+                                { text: '2. VER', fontSize: 8 },
+                                { text: '3. OIR', fontSize: 8 },
+                                { text: '4. CAMINAR', fontSize: 8 },
+                                { text: '5. RECORDAR O CONCENTRARSE', fontSize: 8 },
+                                { text: '6. ASEARSE O VESTIRSE', fontSize: 8 },
+                                { text: '7. COMUNICARSE', fontSize: 8 }
+                            ],
+                            margin: [10, 0, 0, 0]
+                        },
+                        {
+                            width: '35%',
+                            stack: [
+                                { text: 'RACIÓN:', fontSize: 8, bold: true, margin: [0, 0, 0, 5] },
+                                { text: '5 LIBRAS DE ARROZ', fontSize: 8 },
+                                { text: '25 LIBRAS DE MAIZ BLANCO', fontSize: 8 },
+                                { text: '1 BOTELLA DE ACEITE 800 ml', fontSize: 8 },
+                                { text: '10 LIBRAS DE FRIJOL', fontSize: 8 },
+                                { text: '1 BOLSA DE AZUCAR DE 1000 gr', fontSize: 8 },
+                                { text: '1 KILOGRAMO DE HOJUELA DE AVENA', fontSize: 8 },
+                                { text: '1 BOLSA DE SAL YODADA DE 460 gr', fontSize: 8 },
+                                { text: '1 BOLSA DE MEZCLA DE HARINA DE MAIZ Y SOYA FORTIFICADA DE 900 gr', fontSize: 8 },
+                            ],
+                            margin: [10, 0, 0, 0]
+                        }
+                    ],
+                    margin: [0, 0, 0, 10]
+                },
+                {
+                    table: {
+                        widths: ['*', 'auto'],
+                        body: [
+                            [
+                                { text: 'Hombres:', fontSize: 8, alignment: 'right', border: [false, false, true, false], padding: [0, 0, 5, 0] },
+                                { text: `${contadorMasculino}`, fontSize: 8, alignment: 'right', border: [true, true, true, true], padding: [0, 0, 5, 0] }
+                            ],
+                            [
+                                { text: 'Mujeres:', fontSize: 8, alignment: 'right', border: [false, false, true, false], padding: [0, 0, 5, 0] },
+                                { text: `${contadorFemenino}`, fontSize: 8, alignment: 'right', border: [true, true, true, true], padding: [0, 0, 5, 0] }
+                            ],
+                            [
+                                { text: 'ETNIA:', fontSize: 8, alignment: 'right', border: [false, false, true, false], padding: [0, 0, 5, 0] },
+                                { text: '', fontSize: 8, alignment: 'right', border: [true, true, true, true], padding: [0, 0, 5, 0] }
+                            ]
+                        ]
+                    },
+                    layout: 'noBorders',
+                    margin: [0, 0, 0, 0]
+                },
+                {
+                    style: 'mainTableStyle',
+                    table: {
+                        headerRows: 1,
+                        dontBreakRows: true,
+                        keepWithHeaderRows: 1,
+                        widths: [20, '*', 100, 30, 50, 50, '*'],
+                        body: buildBeneficiariesTable(beneficiariosData)
+                    },
+                    layout: {
+                        hLineWidth: function(i, node) { return (i === 0 || i === node.table.body.length) ? 1 : 0.5; },
+                        vLineWidth: function(i, node) { return (i === 0 || i === node.table.widths.length) ? 1 : 0.5; },
+                        hLineColor: function(i, node) { return (i === 0 || i === node.table.body.length) ? 'black' : 'gray'; },
+                        vLineColor: function(i, node) { return (i === 0 || i === node.table.widths.length) ? 'black' : 'gray'; },
+                        paddingLeft: function(i, node) { return 4; },
+                        paddingRight: function(i, node) { return 4; },
+                        paddingTop: function(i, node) { return 2; },
+                        paddingBottom: function(i, node) { return 2; },
+                    }
+                }
+            ],
+            styles: {
+                header: {
+                    fontSize: 18,
+                    bold: true,
+                    margin: [0, 0, 0, 10]
+                },
+                subheader: {
+                    fontSize: 12,
+                    margin: [0, 2, 0, 15]
+                },
+                mainTableStyle: {
+                    margin: [0, 0, 0, 0]
+                },
+                tableHeader: {
+                    bold: true,
+                    fontSize: 8,
+                    color: 'black',
+                    alignment: 'center',
+                    fillColor: '#EEEEEE'
+                },
+                tableCell: {
+                    fontSize: 8,
+                    color: 'black',
+                    alignment: 'left'
+                },
+                centerCell: {
+                    fontSize: 8,
+                    color: 'black',
+                    alignment: 'center'
+                }
+            },
+            defaultStyle: {}
+        };
+
+        function buildBeneficiariesTable(data) {
+            const body = [];
+
+            body.push([
+                { text: 'No.', style: 'tableHeader' },
+                { text: 'NOMBRE DEL BENEFICIARIO', style: 'tableHeader' },
+                { text: 'CUI', style: 'tableHeader' },
+                { text: 'EDAD', style: 'tableHeader' },
+                { text: 'RACIONES\nRECIBIDAS', style: 'tableHeader' },
+                { text: 'COD.\nDISCAPACIDAD', style: 'tableHeader' },
+                { text: 'FIRMA O HUELLA DIGITAL', style: 'tableHeader' }
+            ]);
+
+            data.forEach(item => {
+                body.push([
+                    { text: `${item.idDetalleSolicitud || ''}`, style: 'centerCell' },
+                    { text: `${item.nombre1Esposa || ''} ${item.nombre2Esposa || ''} ${item.nombre3Esposa || ''} ${item.apellido1Esposa || ''} ${item.apellido2Esposa || ''} ${item.apellidoCasada || ''}`, style: 'tableCell' },
+                    { text: `${item.cuiEsposa || ''}`, style: 'centerCell' },
+                    { text: ``, style: 'centerCell' },
+                    { text: `1`, style: 'centerCell' },
+                    { text: ``, style: 'centerCell' },
+                    { text: ``, style: 'centerCell' }
+                ]);
+            });
+
+            return body;
+        }
+
+        pdfMake.createPdf(docDefinition).download(`${nombre}.pdf`);
     }
 
     document.getElementById('formActualizarRaciones').addEventListener('submit', function(e) {

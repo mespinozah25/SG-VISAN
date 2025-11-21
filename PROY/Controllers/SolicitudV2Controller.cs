@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using PROY.Models;
@@ -20,7 +20,9 @@ namespace PROY.Controllers
         private readonly ITecnicoService _tecnicoService;
         private readonly IUsuarioService _usuarioService;
 
-        public SolicitudV2Controller(ICatalogoService catalogoService, ISolicitudV2Service solicitudV2Service, IEstadoSolicitudService estadoSolicitudService, IAsignaRacionService AsignaRacionService, IAsignaTecnicoService AsignaTecnicoService, ITecnicoService TecnicoService, IUsuarioService usuarioService)
+        private readonly ISolicitudService _solicitudService;
+
+        public SolicitudV2Controller(ICatalogoService catalogoService, ISolicitudV2Service solicitudV2Service, IEstadoSolicitudService estadoSolicitudService, IAsignaRacionService AsignaRacionService, IAsignaTecnicoService AsignaTecnicoService, ITecnicoService TecnicoService, ISolicitudService solicitudService, IUsuarioService usuarioService)
         {
             _catalogoService = catalogoService;
             _solicitudV2Service = solicitudV2Service;
@@ -28,6 +30,7 @@ namespace PROY.Controllers
             _asignaRacionService = AsignaRacionService;
             _asignaTecnicoService = AsignaTecnicoService;
             _tecnicoService = TecnicoService;
+            _solicitudService = solicitudService;
             _usuarioService = usuarioService;
         }
 
@@ -297,6 +300,13 @@ namespace PROY.Controllers
             await CrearBitacora(IdSolicitud, 3, "Se elimina la asignación de Técnico");
 
             return RedirectToAction("FormularioTecnicos", "SolicitudV2", new { IdSolicitud });
+        }
+
+        public async Task<IActionResult> GeneracionPlantillas(int IdSolicitud)
+        {
+            List<DetalleSolicitudAPA> listaDetalleSolicitudAPA = await _solicitudService.GetAllDetalleSolicitudAPA((long)IdSolicitud);
+
+            return Ok(listaDetalleSolicitudAPA);
         }
 
 
