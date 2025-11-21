@@ -31,4 +31,33 @@ namespace PROY.Models.TableroDeDatos
         public string NombrePrograma { get; set; }
         public decimal TotalRaciones { get; set; }
     }
+
+    public class TableroAPATotalSolicitud
+    {
+        public decimal total_solicitudes { get; set; }
+    }
+
+    public class TableroAPATotalBeneficiarios
+    {
+        public decimal total_beneficiarios { get; set; }
+    }
+
+    public class TableroAPADepartamentoSolicitud
+    {
+        public string Departamento { get; set; }
+        public decimal Total { get; set; }
+    }
+
+    public class TableroAPAMunicipioSolicitud
+    {
+        public string Municipio { get; set; }
+        public decimal Total { get; set; }
+    }
+
+    public class TableroAPADepartamentoSolicitudProyecto
+    {
+        public string Proyecto { get; set; }
+        public string Departamento { get; set; }
+        public decimal Total { get; set; }
+    }
 }

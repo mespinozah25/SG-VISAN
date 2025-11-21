@@ -24,22 +24,27 @@
 
         return accion.Value switch
         {
-            1 => "Crear",
-            2 => "Actualizar",
-            3 => "Eliminar",
+            1 => "Creación",
+            2 => "Actualización",
+            3 => "Eliminación",
             _ => $"Acción {accion.Value}"
         };
     }
 }
 
-<h2 class="float-start">Historial de la Solicitud @Model.Solicitud.Codigo </h2>
-<p><br /></p>
-
-<br />
 
 <div class="container-fluid">
-    <div class="row mb-3">
-        <div class="col-md-11">
+    <div class="row ">
+        <div class="col-md-9 mb-5">
+            <h2 class="float-start">Historial de la Solicitud @Model.Solicitud.Codigo </h2>
+        </div>
+        <div class="col-md-3">
+            <a class="btn btn-primary w-100" asp-controller="SolicitudV2" asp-action="DetalleSolicitud"
+                asp-route-IdSolicitud="@Model.Solicitud!.IdSolicitud">
+                Regresar
+            </a>
+        </div>
+        <div class="col-md-12">
             <div class="table-responsive">
                 <table class="table" style="width:100%; position:relative; z-index:2;">
                     <thead>

@@ -133,6 +133,8 @@ namespace PROY.Controllers
         {
             TempData["Mensaje"] = await _solicitudV2Service.EliminarSolicitud(IdSolicitud); ;
 
+            await CrearBitacora(IdSolicitud, 3, "Se elimina la solicitud");
+
             return RedirectToAction("Index", "SolicitudV2");
         }
 
@@ -219,7 +221,7 @@ namespace PROY.Controllers
 
             TempData["Mensaje"] = await _asignaRacionService.GuardarAsignacionRacion(modeloVM.AsignaRacionV2!); ;
 
-            await CrearBitacora((int) modeloVM.Solicitud!.IdSolicitud , 1, "Se crea la asignación de Ración");
+            await CrearBitacora((int)modeloVM.Solicitud!.IdSolicitud, 1, "Se crea la asignación de Ración");
 
             return RedirectToAction("FormularioDespacho", "SolicitudV2", new { modeloVM.Solicitud!.IdSolicitud });
         }
@@ -271,6 +273,8 @@ namespace PROY.Controllers
         public async Task<IActionResult> ActualizarFechasEntregaSolicitud(SolicitudesVM modeloVM)
         {
             TempData["Mensaje"] = await _solicitudV2Service.ActualizarFechasEntregaSolicitud((int)modeloVM.Solicitud!.IdSolicitud, (DateTime)modeloVM.Solicitud!.FInicioEntrega!, (DateTime)modeloVM.Solicitud!.FFinEntrega!, modeloVM.Solicitud!.TecnicoObservaciones); ;
+
+            await CrearBitacora((int)modeloVM.Solicitud!.IdSolicitud, 2, "Se actualiza la fecha de entrega de la solicitud");
 
             return RedirectToAction("FormularioTecnicos", "SolicitudV2", new { modeloVM.Solicitud!.IdSolicitud, });
         }
@@ -342,7 +346,7 @@ namespace PROY.Controllers
             var solicitud = await _solicitudV2Service.ObtenerSolicitudSegunIdSolicitud((int)idSolicitud);
             var historial = await _solicitudV2Service.GetAllBitacora((int)idSolicitud);
 
-             ViewBag.Usuarios = await _usuarioService.GetAll();
+            ViewBag.Usuarios = await _usuarioService.GetAll();
 
             var model = new HistorialSolicitudVM
             {
