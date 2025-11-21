@@ -17,7 +17,7 @@ namespace PROY.Repositories
         public async Task<TableroAPATotalSolicitud> ChartTotalSolicitud()
         {
             var total = await _dbContext.Solicitudes
-                .Where(c => c.Restrictiva == 0 && c.IdEstadoSolicitud == 9 && c.Depto == "2")
+                .Where(c => c.Restrictiva == 0 && c.IdEstadoSolicitud >= 9 && c.Depto == "2")
                 .CountAsync();
 
             return new TableroAPATotalSolicitud
@@ -33,7 +33,7 @@ namespace PROY.Repositories
             var total = await (from detalle in _dbContext.DetalleSolicitudAPA
                                join solicitud in _dbContext.Solicitudes
                                on detalle.IdSolicitud equals (int)solicitud.IdSolicitud
-                               where solicitud.Depto == "2" && solicitud.Restrictiva == 0 && detalle.Restrictiva == 0 && solicitud.IdEstadoSolicitud == 9
+                               where solicitud.Depto == "2" && solicitud.Restrictiva == 0 && detalle.Restrictiva == 0 && solicitud.IdEstadoSolicitud >= 9
                                select detalle).CountAsync();
 
             return new TableroAPATotalBeneficiarios
