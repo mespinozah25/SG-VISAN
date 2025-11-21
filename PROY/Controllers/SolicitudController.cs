@@ -22,14 +22,17 @@ namespace PROY.Controllers
         private readonly ISolicitudService _solicitudService;
         private readonly ICatalogoService _catalogoService;
         private readonly IWebHostEnvironment _webHostEnvironment;
+
+        private readonly ISolicitudV2Service _solicitudV2Service;
         
         //private readonly AppDBContext _dbContext;
 
-        public SolicitudController(ISolicitudService solicitudService, ICatalogoService catalogoService, IWebHostEnvironment webHostEnvironment)
+        public SolicitudController(ISolicitudService solicitudService, ICatalogoService catalogoService, IWebHostEnvironment webHostEnvironment,  ISolicitudV2Service solicitudV2Service)
         {
             _solicitudService = solicitudService;
             _catalogoService = catalogoService;
             _webHostEnvironment = webHostEnvironment;
+            _solicitudV2Service = solicitudV2Service;
         }
 
         public void verificarDEPTO(string paramRol,ref string paramDepto, string paramK)
@@ -506,9 +509,10 @@ namespace PROY.Controllers
                 if (modelo.IdSolicitud == 0)
                 {
                     var result = await _solicitudService.SaveSolicitud(modelo);
-
+                   
                     if (result.Success && result.Data != null)
                     {
+                        await CrearBitacora((int)result.Data.IdSolicitud, 1, "Se crea la solicitud");
                         //modelo.IdSolicitud=result.Data.IdSolicitud;
                         //Int64 idDevuelto = result.Data.IdSolicitud;
                         //idDevuelto = result.Data.IdSolicitud;
@@ -729,10 +733,12 @@ namespace PROY.Controllers
             if (condicion == "1")
             {
                 result = await _solicitudService.UpdateEstado(solicitud);
+                await CrearBitacora((int)solicitud.IdSolicitud, 2, "Se actualiza el estado de la solicitud");
             }
             else if (condicion == "2")
             {
                 result = await _solicitudService.UpdateEstadoARevAdministrativa(solicitud);
+                await CrearBitacora((int)solicitud.IdSolicitud, 2, "Se actualiza la solicitud");
             }
             
             if (result.Success && result.Data != null)
@@ -1700,7 +1706,7 @@ namespace PROY.Controllers
         public async Task<IActionResult> EliminarSolicitud(Int64 id)
         {
             var result = await _solicitudService.DeleteSolicitud(id);
-
+            await CrearBitacora((int)id, 3, "Se elimina la solicitud");
             if (result.Success && result.Data != null)
             {
                 TempData["Mensaje"] = result.Message;
@@ -1730,6 +1736,7 @@ namespace PROY.Controllers
             if (condicion=="1")
             {
                 var result = await _solicitudService.DeleteDetalleSolicitud(idDetalle);
+                await CrearBitacora((int)idSolicitud, 3, "Se elimina el un beneficiario");
 
                 if (result.Success && result.Data != null)
                 {
@@ -1745,7 +1752,7 @@ namespace PROY.Controllers
             else if (condicion=="2")
             {
                 var result = await _solicitudService.DeleteDetalleSolicitudAPA(idDetalle);
-
+                await CrearBitacora((int)idSolicitud, 3, "Se elimina el un beneficiario");
                 if (result.Success && result.Data != null)
                 {
                     TempData["Mensaje"] = result.Message;
@@ -2463,5 +2470,28 @@ namespace PROY.Controllers
             return Json(solicitudVM);
         }
 
+        private async Task CrearBitacora(int idSolicitud, int estado, string? comentario)
+        {
+
+            var idUsuarioClaim = User.FindFirst("IDuser")?.Value;
+            if (string.IsNullOrEmpty(idUsuarioClaim) || !int.TryParse(idUsuarioClaim, out int idUsuario))
+            {
+                return;
+            }
+
+            Bitacora modelBitacora = new Bitacora()
+            {
+                IdBitacora = 0,
+                Accion = estado,
+                IdRegistro = idSolicitud,
+                NombreTabla = "SOLICITUD",
+                IdUsuario = idUsuario,
+                FechaHora = DateTime.Now,
+                Estado = 0,
+                Comentario = comentario
+            };
+
+            await _solicitudV2Service.SaveBitacora(modelBitacora);
+        }
     }
 }

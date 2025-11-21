@@ -63,6 +63,9 @@ builder.Services.AddScoped<IDespachoService, DespachoService>();
 builder.Services.AddScoped<ITableroDeDatosRepository, TableroDeDatosRepository>();
 builder.Services.AddScoped<ITableroDeDatosService, TableroDeDatosService>();
 
+builder.Services.AddScoped<ITableroDeDatosAPARepository, TableroDeDatosAPARepository>();
+builder.Services.AddScoped<ITableroDeDatosAPAService, TableroDeDatosAPAService>();
+
 // Modulo de Catalogos
 builder.Services.AddScoped<IBodegaRepository, BodegaRepository>();
 builder.Services.AddScoped<IBodegaService, BodegaService>();

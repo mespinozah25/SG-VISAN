@@ -79,6 +79,8 @@ namespace PROY.Services
 
                 await _solicitudV2Repository.ActualizarSolicitud(solicitud);
 
+                
+
                 return "Solicitud enviada exitosamente";
             }
             catch (Exception ex)

@@ -1,0 +1,26 @@
+services:
+  sg-visan:
+    image: sg-visan
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8088:8088"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://0.0.0.0:8088
+      - DOTNET_USE_POLLING_FILE_WATCHER=1
+    volumes:
+      - .:/src  # ← Montar todo el código fuente
+      - ~/.vsdbg:/remote_debugger:rw
+    networks:
+      - red_global
+    develop:
+      watch:
+        - action: rebuild
+          path: .
+    working_dir: /src/PROY  # ← Directorio del proyecto
+
+networks:
+  red_global:
+    external: true
