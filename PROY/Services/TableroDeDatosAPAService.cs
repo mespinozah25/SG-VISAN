@@ -30,5 +30,20 @@ namespace PROY.Services
         {
             return await _tableroRepository.ChartSolicitudMunicipio(fechaInicio, fechaFin);
         }
+
+        public async Task<List<TableroAPAProyectoDepartamentoSolicitud>> ChartSolicitudProyectoDepartamento(DateTime? fechaInicio = null, DateTime? fechaFin = null)
+        {
+            return await _tableroRepository.ChartSolicitudProyectoDepartamento(fechaInicio, fechaFin);
+        }
+
+        public async Task<List<TableroAPADepartamentoBeneficiario>> ChartBeneficiarioDepartamento(DateTime? fechaInicio = null, DateTime? fechaFin = null)
+        {
+            return await _tableroRepository.ChartBeneficiarioDepartamento(fechaInicio, fechaFin);
+        }
+        public async Task<List<TableroAPAProyectoSolicitud>> ChartBeneficiarioProyecto(DateTime? fechaInicio = null, DateTime? fechaFin = null)
+        {
+            return await _tableroRepository.ChartBeneficiarioProyecto(fechaInicio, fechaFin);
+        }
+
     }
 }

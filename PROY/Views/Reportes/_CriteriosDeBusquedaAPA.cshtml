@@ -5,12 +5,16 @@
             <div class="row">
                 <form id="_frmBusqueda">
                     <div class="row">
+                        <div class="col-3" id="divNoSolicitud" style="display:none;">
+                            <label for="txtNoSolicitud" class="control-label">No. Solicitud</label>
+                            <input type="text" class="form-control" id="txtNoSolicitud" name="NoSolicitud">
+                        </div>
                         <div class="col-3" id="divFechaMovimientoInicio" style="display:none;">
-                            <label for="Fecha" class="control-label">Fecha Inicio</label>
+                            <label for="txtFechaInicio" class="control-label">Fecha Inicio</label>
                             <input type="date" class="form-control" id="txtFechaInicio" name="FechaInicio">
                         </div>
                         <div class="col-3" id="divFechaMovimientoFin" style="display:none;">
-                            <label for="Fecha" class="control-label">Fecha Fin</label>
+                            <label for="txtFechaFin" class="control-label">Fecha Fin</label>
                             <input type="date" class="form-control" id="txtFechaFin" name="FechaFin">
                         </div>
                         <div class="col-3" id="divIdDepartamento" style="display:none;">
@@ -46,7 +50,7 @@
                 </div>
             </div>
         </div>
-        <div class="card-footer">
+        <div class="card-footer" id="card-footer">
             <a class="btn btn-danger btn-sm float-end ms-3"
                 onclick="GenerarReporte('@Url.Action("GeneraReporte", "Reportes")', 'pdf')">
                 <i class="fas fa-file-pdf"></i> Descargar PDF

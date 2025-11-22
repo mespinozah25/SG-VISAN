@@ -54,10 +54,26 @@ namespace PROY.Models.TableroDeDatos
         public decimal Total { get; set; }
     }
 
-    public class TableroAPADepartamentoSolicitudProyecto
+
+    public class TableroAPADepartamentoBeneficiario
     {
-        public string Proyecto { get; set; }
         public string Departamento { get; set; }
         public decimal Total { get; set; }
     }
+
+    public class TableroAPAProyectoDepartamentoSolicitud
+    {
+        public string Proyecto { get; set; }
+        public string Departamento { get; set; }
+        public int Total { get; set; }
+    }
+
+    public class TableroAPAProyectoSolicitud
+    {
+        public string Proyecto { get; set; }
+        public decimal Total { get; set; }
+    }
+
+
+    
 }

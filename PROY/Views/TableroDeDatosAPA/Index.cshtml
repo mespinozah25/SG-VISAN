@@ -156,7 +156,7 @@
     </div>
 </div>
 
-<div class="row">
+<div class="row mb-2">
     <div class="col-6" style="width: 48%; margin-left: 15px; border: black 1px solid;">
         <div class="card">
             <div class="card-body">
@@ -173,6 +173,35 @@
     </div>
 </div>
 
+
+<div class="row mb-2">
+    <div class="col-12" style="width: 98%; margin-left: 15px; border: black 1px solid;">
+        <div class="card">
+            <div class="card-body">
+                <div id="chart_proyecto_departamento" style="width: 100%; height: 500px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="row">
+    <div class="col-6" style="width: 48%; margin-left: 25px; border: black 1px solid;">
+        <div class="card">
+            <div class="card-body">
+                <div id="chart_beneficiarios_departamento" style="width: 100%; height: 500px;"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6" style="width: 48%; margin-left: 15px; border: black 1px solid;">
+        <div class="card">
+            <div class="card-body">
+                <div id="chart_beneficiarios_proyecto" style="width: 100%; height: 500px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script src="https://www.gstatic.com/charts/loader.js"></script>
     <script>
@@ -181,17 +210,23 @@
             var fechaFin = new Date();
             var fechaInicio = new Date();
             fechaInicio.setDate(fechaInicio.getDate() - 30);
-            
+
             document.getElementById('txtFechaInicio').valueAsDate = fechaInicio;
             document.getElementById('txtFechaFin').valueAsDate = fechaFin;
 
             // Cargar Google Charts y datos iniciales
-            google.charts.load('current', { 'packages': ['corechart'] });
-            google.charts.setOnLoadCallback(function() {
+            google.charts.load('current', { 'packages': ['corechart', 'bar'] });
+            google.charts.setOnLoadCallback(function () {
                 ChartDepartamentos();
                 ChartMunicipios();
+                ChartProyectoDepartamento();
+                ChartBeneficiariosDepartamento();
+                ChartBeneficiariosProyecto();
             });
         });
+
+        // Paleta de colores azules y rojos
+
 
         // Función para buscar con filtros
         function Buscar() {
@@ -212,6 +247,9 @@
             // Recargar gráficos con los filtros
             ChartDepartamentos(fechaInicio, fechaFin);
             ChartMunicipios(fechaInicio, fechaFin);
+            ChartProyectoDepartamento(fechaInicio, fechaFin);
+            ChartBeneficiariosDepartamento(fechaInicio, fechaFin);
+            ChartBeneficiariosProyecto(fechaInicio, fechaFin);
 
             return false;
         }
@@ -219,18 +257,21 @@
         // Función para limpiar criterios
         function LimpiarCriterios() {
             document.getElementById('_frmBusqueda').reset();
-            
+
             // Establecer fechas por defecto
             var fechaFin = new Date();
             var fechaInicio = new Date();
             fechaInicio.setDate(fechaInicio.getDate() - 30);
-            
+
             document.getElementById('txtFechaInicio').valueAsDate = fechaInicio;
             document.getElementById('txtFechaFin').valueAsDate = fechaFin;
 
             // Recargar gráficos sin filtros
             ChartDepartamentos();
             ChartMunicipios();
+            ChartProyectoDepartamento();
+            ChartBeneficiariosDepartamento();
+            ChartBeneficiariosProyecto();
 
             return false;
         }
@@ -238,21 +279,20 @@
         // Función para mostrar/ocultar loading
         function mostrarLoading(mostrar = true) {
             if (mostrar) {
-                $('#chart_departamento').html('<div class="text-center"><div class="spinner-border" role="status"><span class="sr-only">Cargando...</span></div></div>');
-                $('#chart_municipio').html('<div class="text-center"><div class="spinner-border" role="status"><span class="sr-only">Cargando...</span></div></div>');
+                $('.card-body div[id^="chart_"]').html('<div class="text-center"><div class="spinner-border" role="status"><span class="sr-only">Cargando...</span></div></div>');
             }
         }
 
         function ChartDepartamentos(fechaInicio = null, fechaFin = null) {
             mostrarLoading(true);
-            
+
             // Construir URL con parámetros
             let url = '/TableroDeDatosAPA/ChartSolicitudDepartamento';
             const params = new URLSearchParams();
-            
+
             if (fechaInicio) params.append('fechaInicio', fechaInicio);
             if (fechaFin) params.append('fechaFin', fechaFin);
-            
+
             if (params.toString()) {
                 url += '?' + params.toString();
             }
@@ -271,29 +311,25 @@
                     data.addColumn('number', 'Total Solicitudes');
 
                     // Agregar datos
-                    datos.forEach(function(item) {
+                    datos.forEach(function (item) {
                         data.addRow([item.departamento, item.total]);
                     });
 
-                    // Construir título dinámico
-                    let titulo = 'Distribución de Solicitudes por Departamento';
-
                     var options = {
-                        title: titulo,
+                        title: 'Distribución de Solicitudes por Departamento',
                         pieHole: 0.4,
                         height: 500,
-                        legend: { 
+                        legend: {
                             position: 'labeled',
                             textStyle: { fontSize: 12 }
                         },
-                        chartArea: { 
-                            width: '90%', 
+                        chartArea: {
+                            width: '90%',
                             height: '80%',
                             top: 50,
                             bottom: 50
                         },
-                        colors: ['#4CAF50', '#2196F3', '#FFC107', '#FF5722', '#9C27B0', 
-                                '#00BCD4', '#795548', '#607D8B', '#E91E63', '#009688'],
+
                         pieSliceText: 'value',
                         tooltip: { text: 'percentage' }
                     };
@@ -304,21 +340,20 @@
                 })
                 .catch(error => {
                     console.error('Error al obtener datos de departamentos:', error);
-                    mostrarDatosEjemploDepartamento(fechaInicio, fechaFin);
                     mostrarLoading(false);
                 });
         }
 
         function ChartMunicipios(fechaInicio = null, fechaFin = null) {
             mostrarLoading(true);
-            
+
             // Construir URL con parámetros
             let url = '/TableroDeDatosAPA/ChartSolicitudMunicipio';
             const params = new URLSearchParams();
-            
+
             if (fechaInicio) params.append('fechaInicio', fechaInicio);
             if (fechaFin) params.append('fechaFin', fechaFin);
-            
+
             if (params.toString()) {
                 url += '?' + params.toString();
             }
@@ -346,29 +381,25 @@
                         topMunicipios.push({ municipio: 'Otros', total: otrosTotal });
                     }
 
-                    topMunicipios.forEach(function(item) {
+                    topMunicipios.forEach(function (item) {
                         data.addRow([item.municipio, item.total]);
                     });
 
-                    // Construir título dinámico
-                    let titulo = 'Distribución de Solicitudes por Municipio';
-
                     var options = {
-                        title: titulo,
+                        title: 'Distribución de Solicitudes por Municipio',
                         pieHole: 0.4,
                         height: 500,
-                        legend: { 
+                        legend: {
                             position: 'labeled',
                             textStyle: { fontSize: 11 }
                         },
-                        chartArea: { 
-                            width: '90%', 
+                        chartArea: {
+                            width: '90%',
                             height: '80%',
                             top: 50,
                             bottom: 50
                         },
-                        colors: ['#4CAF50', '#2196F3', '#FFC107', '#FF5722', '#9C27B0', 
-                                '#00BCD4', '#795548', '#607D8B', '#E91E63'],
+
                         pieSliceText: 'value',
                         tooltip: { text: 'percentage' },
                         sliceVisibilityThreshold: 0.02 // Mostrar etiquetas solo para slices > 2%
@@ -380,94 +411,173 @@
                 })
                 .catch(error => {
                     console.error('Error al obtener datos de municipios:', error);
-                    mostrarDatosEjemploMunicipio(fechaInicio, fechaFin);
                     mostrarLoading(false);
                 });
         }
 
-        // Función para formatear fecha
-        function formatearFecha(fechaString) {
-            const fecha = new Date(fechaString);
-            return fecha.toLocaleDateString('es-HN');
-        }
+        // Gráfico de Barras - Proyecto por Departamento
+        function ChartProyectoDepartamento(fechaInicio = null, fechaFin = null) {
+            mostrarLoading(true);
 
-        // Función para mostrar datos de ejemplo si hay error
-        function mostrarDatosEjemploDepartamento(fechaInicio = null, fechaFin = null) {
-            var data = new google.visualization.DataTable();
-            data.addColumn('string', 'Departamento');
-            data.addColumn('number', 'Total Solicitudes');
-            
-            data.addRows([
-                ['Francisco Morazán', 45],
-                ['Cortés', 32],
-                ['Yoro', 28],
-                ['Atlántida', 22],
-                ['Comayagua', 18],
-                ['Santa Bárbara', 15],
-                ['El Paraíso', 12],
-                ['Choluteca', 10]
-            ]);
+            let url = '/TableroDeDatosAPA/ChartSolicitudProyectoDepartamento';
+            const params = new URLSearchParams();
 
-            let titulo = 'Distribución de Solicitudes por Departamento (Datos de Ejemplo)';
-            if (fechaInicio && fechaFin) {
-                titulo += ` (${formatearFecha(fechaInicio)} - ${formatearFecha(fechaFin)})`;
+            if (fechaInicio) params.append('fechaInicio', fechaInicio);
+            if (fechaFin) params.append('fechaFin', fechaFin);
+
+            if (params.toString()) {
+                url += '?' + params.toString();
             }
 
-            var options = {
-                title: titulo,
-                pieHole: 0.4,
-                height: 500,
-                legend: { position: 'labeled' },
-                chartArea: { width: '90%', height: '80%' },
-                colors: ['#4CAF50', '#2196F3', '#FFC107', '#FF5722', '#9C27B0', '#00BCD4', '#795548', '#607D8B']
-            };
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) throw new Error('Error en la respuesta del servidor');
+                    return response.json();
+                })
+                .then(datos => {
+                    var data = new google.visualization.DataTable();
+                    data.addColumn('string', 'Proyecto/Departamento');
+                    data.addColumn('number', 'Total Solicitudes');
 
-            var chart = new google.visualization.PieChart(document.getElementById('chart_departamento'));
-            chart.draw(data, options);
+                    datos.forEach(function (item) {
+                        data.addRow([`${item.proyecto} - ${item.departamento}`, item.total]);
+                    });
+
+                    var options = {
+                        title: 'Solicitudes por Proyecto y Departamento',
+                        height: 500,
+                        legend: { position: 'none' },
+                        chartArea: { width: '80%', height: '70%' },
+                        hAxis: { title: 'Total de Solicitudes', minValue: 0 },
+                        vAxis: { title: 'Proyecto - Departamento' },
+                        colors: ['#1E40AF']
+                    };
+
+                    var chart = new google.visualization.BarChart(document.getElementById('chart_proyecto_departamento'));
+                    chart.draw(data, options);
+                    mostrarLoading(false);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    mostrarLoading(false);
+                });
         }
 
-        function mostrarDatosEjemploMunicipio(fechaInicio = null, fechaFin = null) {
-            var data = new google.visualization.DataTable();
-            data.addColumn('string', 'Municipio');
-            data.addColumn('number', 'Total Solicitudes');
-            
-            data.addRows([
-                ['Tegucigalpa', 25],
-                ['San Pedro Sula', 22],
-                ['La Ceiba', 18],
-                ['Comayagua', 15],
-                ['El Progreso', 12],
-                ['Choluteca', 10],
-                ['Santa Rosa de Copán', 8],
-                ['Juticalpa', 7],
-                ['Otros Municipios', 23]
-            ]);
+        // Gráfico de Pie - Beneficiarios por Departamento
+        function ChartBeneficiariosDepartamento(fechaInicio = null, fechaFin = null) {
+            mostrarLoading(true);
 
-            let titulo = 'Distribución de Solicitudes por Municipio (Datos de Ejemplo)';
-            if (fechaInicio && fechaFin) {
-                titulo += ` (${formatearFecha(fechaInicio)} - ${formatearFecha(fechaFin)})`;
+            let url = '/TableroDeDatosAPA/ChartBeneficiarioDepartamento';
+            const params = new URLSearchParams();
+
+            if (fechaInicio) params.append('fechaInicio', fechaInicio);
+            if (fechaFin) params.append('fechaFin', fechaFin);
+
+            if (params.toString()) {
+                url += '?' + params.toString();
             }
 
-            var options = {
-                title: titulo,
-                pieHole: 0.4,
-                height: 500,
-                legend: { position: 'labeled' },
-                chartArea: { width: '90%', height: '80%' },
-                colors: ['#4CAF50', '#2196F3', '#FFC107', '#FF5722', '#9C27B0', '#00BCD4', '#795548', '#607D8B', '#E91E63']
-            };
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) throw new Error('Error en la respuesta del servidor');
+                    return response.json();
+                })
+                .then(datos => {
+                    var data = new google.visualization.DataTable();
+                    data.addColumn('string', 'Departamento');
+                    data.addColumn('number', 'Total Beneficiarios');
 
-            var chart = new google.visualization.PieChart(document.getElementById('chart_municipio'));
-            chart.draw(data, options);
+                    datos.forEach(function (item) {
+                        data.addRow([item.departamento, item.total]);
+                    });
+
+                    var options = {
+                        title: 'Beneficiarios por Departamento',
+                        pieHole: 0.4,
+                        height: 500,
+                        legend: { position: 'labeled', textStyle: { fontSize: 11 } },
+                        chartArea: { width: '90%', height: '80%', top: 50, bottom: 50 },
+
+                        pieSliceText: 'value',
+                        tooltip: { text: 'percentage' }
+                    };
+
+                    var chart = new google.visualization.PieChart(document.getElementById('chart_beneficiarios_departamento'));
+                    chart.draw(data, options);
+                    mostrarLoading(false);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    mostrarLoading(false);
+                });
+        }
+
+        // Gráfico de Pie - Beneficiarios por Proyecto
+        function ChartBeneficiariosProyecto(fechaInicio = null, fechaFin = null) {
+            mostrarLoading(true);
+
+            let url = '/TableroDeDatosAPA/ChartBeneficiarioProyecto';
+            const params = new URLSearchParams();
+
+            if (fechaInicio) params.append('fechaInicio', fechaInicio);
+            if (fechaFin) params.append('fechaFin', fechaFin);
+
+            if (params.toString()) {
+                url += '?' + params.toString();
+            }
+
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) throw new Error('Error en la respuesta del servidor');
+                    return response.json();
+                })
+                .then(datos => {
+                    var data = new google.visualization.DataTable();
+                    data.addColumn('string', 'Proyecto');
+                    data.addColumn('number', 'Total Beneficiarios');
+
+                    // Ordenar y tomar top 10
+                    datos.sort((a, b) => b.total - a.total);
+                    var topProyectos = datos.slice(0, 10);
+
+                    if (datos.length > 10) {
+                        var otrosTotal = datos.slice(10).reduce((sum, item) => sum + item.total, 0);
+                        topProyectos.push({ proyecto: 'Otros Proyectos', total: otrosTotal });
+                    }
+
+                    topProyectos.forEach(function (item) {
+                        data.addRow([item.proyecto, item.total]);
+                    });
+
+                    var options = {
+                        title: 'Beneficiarios por Proyecto',
+                        pieHole: 0.4,
+                        height: 500,
+                        legend: { position: 'labeled', textStyle: { fontSize: 10 } },
+                        chartArea: { width: '90%', height: '80%', top: 50, bottom: 50 },
+
+                        pieSliceText: 'value',
+                        tooltip: { text: 'percentage' },
+                        sliceVisibilityThreshold: 0.02
+                    };
+
+                    var chart = new google.visualization.PieChart(document.getElementById('chart_beneficiarios_proyecto'));
+                    chart.draw(data, options);
+                    mostrarLoading(false);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    mostrarLoading(false);
+                });
         }
 
         // Redibujar gráficos cuando cambie el tamaño de la ventana
-        $(window).resize(function() {
+        $(window).resize(function () {
             ChartDepartamentos();
             ChartMunicipios();
+            ChartProyectoDepartamento();
+            ChartBeneficiariosDepartamento();
+            ChartBeneficiariosProyecto();
         });
     </script>
 }
-
-@* Charts de Google *@
-<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>

@@ -24,5 +24,7 @@
         public int? IdDepto { get; set; }
         public DateTime? FechaInicio { get; set; }
         public DateTime? FechaFin { get; set; }
+
+        public int? IdSolicitud { get; set; }
     }
 }

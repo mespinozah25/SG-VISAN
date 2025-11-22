@@ -45,6 +45,27 @@ namespace PROY.Controllers
             return Json(datos);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> ChartSolicitudProyectoDepartamento(DateTime? fechaInicio = null, DateTime? fechaFin = null)
+        {
+            var datos = await _homeService.ChartSolicitudProyectoDepartamento(fechaInicio, fechaFin);
+            return Json(datos);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ChartBeneficiarioDepartamento(DateTime? fechaInicio = null, DateTime? fechaFin = null)
+        {
+            var datos = await _homeService.ChartBeneficiarioDepartamento(fechaInicio, fechaFin);
+            return Json(datos);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ChartBeneficiarioProyecto(DateTime? fechaInicio = null, DateTime? fechaFin = null)
+        {
+            var datos = await _homeService.ChartBeneficiarioProyecto(fechaInicio, fechaFin);
+            return Json(datos);
+        }
+
 
     }
 }
