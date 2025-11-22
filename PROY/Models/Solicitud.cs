@@ -7,6 +7,7 @@ namespace PROY.Models
     {
         public Int64 IdSolicitud { get; set; }
         
+        [Required(ErrorMessage = "Esta campo es requerido")]
         public string Correlativo { get; set; }  //Correlativo interno de los memos
         public string? Codigo { get; set; }
 
@@ -47,6 +48,8 @@ namespace PROY.Models
         public int Raciones { get; set; }
         public int ? Departamento { get; set; }
         public int ? Municipio { get; set; }
+
+        [Required(ErrorMessage = "Esta campo es requerido")]
         public string ? Comunidad { get; set; }
         public DateTime FechaRegistro { get; set; }
         public string UsuarioRegistro { get; set; }
@@ -75,9 +78,14 @@ namespace PROY.Models
 
         [NotMapped]
         public bool AsignacionDeRacionesCompleta { get; set; } = false;
-        
+
+        [Required(ErrorMessage = "Esta campo es requerido")]
         public string? NombreCocode { get; set; }
+
+        [Required(ErrorMessage = "Esta campo es requerido")]
         public string? ComunidadCocode { get; set; }
+
+        [Required(ErrorMessage = "Esta campo es requerido")]
         public string? TelefonoCocode { get; set; }
         public int IdEstadoSolicitud { get; set; } = 1;
         public EstadoSolicitud EstadoSolicitud { get; set; }

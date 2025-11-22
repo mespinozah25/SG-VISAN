@@ -342,7 +342,7 @@ namespace PROY.Controllers
                     solicitudVM = new SolicitudesVM()
                     {
                         Solicitud = await _solicitudService.GetSolicitud((long)idEvaluacion),
-                        Solicitudes = await _solicitudService.GetAllSolicitudes(),
+                        Solicitudes = [],
                         listaDetallesEvaluacionAPA = await _evaluacionService.GetAllDetalleEvaluacionAPA((long)idEvaluacion),
                         DetalleEvaluacionAPA = new DetalleEvaluacionAPA(),
                         //IntervencionDict = intervencionDict,

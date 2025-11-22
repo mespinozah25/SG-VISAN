@@ -546,17 +546,15 @@ namespace PROY.Controllers
                             await _solicitudService.UpdateSolicitud(modelo);
                             //return RedirectToAction("Index"); // O a la vista que desees redirigir
                         }
+                        
+                        modelo.IdSolicitud = result.Data.IdSolicitud;
+
+                        if (unidadDict.TryGetValue(result.Data.IdUnidad, out nombreUnidad))
+                            modelo.Codigo = nombreUnidad + "-" + result.Data.IdSolicitud.ToString() + "-" + DateTime.Now.Year.ToString();
                         else
-                        {
-                            modelo.IdSolicitud = result.Data.IdSolicitud;
+                            modelo.Codigo = result.Data.IdSolicitud.ToString() + "-" + DateTime.Now.Year.ToString();
 
-                            if (unidadDict.TryGetValue(result.Data.IdUnidad, out nombreUnidad))
-                                modelo.Codigo = nombreUnidad + "-" + result.Data.IdSolicitud.ToString() + "-" + DateTime.Now.Year.ToString();
-                            else
-                                modelo.Codigo = result.Data.IdSolicitud.ToString() + "-" + DateTime.Now.Year.ToString();
-
-                            await _solicitudService.UpdateSolicitud(modelo);
-                        }
+                        await _solicitudService.UpdateSolicitud(modelo);
                         //----------------------------
 
                         /*if (rol=="Admin" && modelo.Depto == "DAPA")
@@ -1844,6 +1842,42 @@ namespace PROY.Controllers
                             var worksheet = package.Workbook.Worksheets[0]; // Tomamos la primera hoja
                             var rowCount = worksheet.Dimension.Rows;        // Número de filas
                             var colCount = worksheet.Dimension.Columns;     // Número de columnas
+
+                            List<string> encabezadosEsperados =
+                            [
+                                "PRIMER NOMBRE",
+                                "SEGUNDO NOMBRE",
+                                "TERCER NOMBRE",
+                                "PRIMER APELLIDO",
+                                "SEGUNDO APELLIDO",
+                                "APELLIDO DE CASADA",
+                                "DPI",
+                                "GÉNERO",
+                                "ETNIA"
+                            ];
+
+                            List<string> encabezadosReales = [];
+                            // El ciclo debe ir de la columna 1 hasta el número total de columnas
+                            for (int col = 1; col <= colCount; col++)
+                            {
+                                // Obtiene el valor, lo convierte a string, elimina espacios extra (trim) 
+                                // y lo convierte a mayúsculas para asegurar una comparación sin errores de caja.
+                                var headerValue = worksheet.Cells[1, col].Value?.ToString().Trim().ToUpperInvariant();
+                                
+                                if (!string.IsNullOrEmpty(headerValue))
+                                {
+                                    encabezadosReales.Add(headerValue);
+                                }
+                            }
+
+                            var esperadosMayusculas = encabezadosEsperados.Select(h => h.Trim().ToUpperInvariant()).ToList();
+                            
+                            bool encabezadosCoinciden = esperadosMayusculas.SequenceEqual(encabezadosReales);
+
+                            if (!encabezadosCoinciden)
+                            {
+                                return BadRequest("Encabezados con error");
+                            }
 
                             // Leer filas y columnas de la hoja de cálculo
                             for (int row = 2; row <= rowCount; row++) // Empezar en la fila 2 si hay encabezados

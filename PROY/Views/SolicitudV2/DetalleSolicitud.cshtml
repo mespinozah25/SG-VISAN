@@ -1,3 +1,4 @@
+@using System.Text
 @inject IHttpContextAccessor HttpContextAccessor
 @inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
@@ -79,6 +80,26 @@
     ? descMun : "Municipio no encontrado" : "Municipio no especificado";
     string? extensionMedioConfirmacion = Model.Solicitud!.Archivo != null ?
     System.IO.Path.GetExtension(Model.Solicitud.Archivo).ToLower() : null;
+
+    StringBuilder listaPrecondiciones = new StringBuilder();
+
+    if($"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:VERIFICACION_DE_CAMPO"]}" && !Model.Solicitud!.MostrarContinuidadVerificacionCampo){
+        listaPrecondiciones.Append("<li>Precondición: debe ingresar un medio de verificación para aprobación/rechazo</li>");
+    }
+    if($"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:VALIDACION_DE_BENEFICIARIOS"]}" && !Model.Solicitud!.MostrarContinuidadValidacionBeneficiarios){
+        listaPrecondiciones.Append("<li>Precondición: debe ingresar un medio de verificación para enviar a siguiente etapa</li>");
+    }
+    if($"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:PROGRAMACION"]}" && !Model.Solicitud!.MostrarDespachoEnProgramacion){
+        listaPrecondiciones.Append("<li>Precondición: debe completar los medios de verificación</li>");
+    }
+    if($"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:PROGRAMACION"]}" && !Model.Solicitud!.AsignacionDeRacionesCompleta){
+        listaPrecondiciones.Append("<li>Precondición: debe asignar todas las raciones</li>");
+    }
+    if($"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:REVISION_PARA_LIQUIDACION"]}" && !Model.Solicitud!.MostrarContinuidadRevisionLiquidacion){
+        listaPrecondiciones.Append("<li>Precondición: ebe ingresar un medio de verificación para envíar a siguiente etapa</li>");
+    }
+
+    bool mostrarPrecondicion = listaPrecondiciones.Length != 0;
 }
 <div class="container-fluid">
     <div class="row">
@@ -89,7 +110,7 @@
     <div class="row justify-content-center mt-3">
         <div class="card shadow-lg border-0 rounded-3">
             <header class="card-header p-4 p-sm-5 header-bg text-white rounded-top-3">
-                <h1 class="display-4 text-white">Solicitud @Model.Solicitud!.Codigo</h1>
+                <h1 class="display-4 text-white">Solicitud @Model.Solicitud!.Correlativo</h1>
                 @if(Model.Solicitud!.Rechazada == 0){
                     <span class="badge rounded-pill bg-primary text-white fs-5 p-3">
                         Estado: @Model.Solicitud!.EstadoSolicitud.Nombre
@@ -185,12 +206,6 @@
                                                     Enviar a etapa: @Model.Solicitud!.EstadoSolicitud.EstadoSolicitudSiguiente!.Nombre
                                                 </a>
                                             }
-                                            else
-                                            {
-                                                <a class="dropdown-item text-danger">
-                                                    debe ingresar un medio de verificación para aprobación/rechazo
-                                                </a>
-                                            }
                                         }
                                         @if ($"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:EVALUACION"]}"){
                                             <a class="dropdown-item" asp-controller="Evaluacion" asp-action="ListaDetalle"
@@ -233,12 +248,6 @@
                                                     Enviar a etapa: @Model.Solicitud!.EstadoSolicitud.EstadoSolicitudSiguiente!.Nombre
                                                 </a>
                                             }
-                                            else
-                                            {
-                                                <a class="dropdown-item text-danger">
-                                                    debe ingresar un medio de verificación para envíar a siguiente etapa
-                                                </a>
-                                            }
                                         }
                                         @if ($"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:PROGRAMACION"]}"){
                                             
@@ -260,23 +269,11 @@
                                                     Despacho
                                                 </a>
                                             }
-                                            else
-                                            {
-                                                <a class="dropdown-item text-danger">
-                                                    debe completar los medios de verificación
-                                                </a>
-                                            }
                                             @if (Model.Solicitud!.AsignacionDeRacionesCompleta){
                                                 <a class="dropdown-item" asp-controller="SolicitudV2"
                                                     asp-action="CambioEtapaSolicitud" asp-route-IdSolicitud="@Model.Solicitud!.IdSolicitud"
                                                     onclick="confirmarOperacion(event, this,`¿Desea enviar la solicitud @Model.Solicitud!.Codigo a @Model.Solicitud!.EstadoSolicitud.EstadoSolicitudSiguiente!.Nombre?`)">
                                                     Enviar a etapa: @Model.Solicitud!.EstadoSolicitud.EstadoSolicitudSiguiente!.Nombre
-                                                </a>
-                                            }
-                                            else
-                                            {
-                                                <a class="dropdown-item text-danger">
-                                                    debe asignar todas las raciones
                                                 </a>
                                             }
                                         }
@@ -313,12 +310,6 @@
                                                     asp-action="CambioEtapaSolicitud" asp-route-IdSolicitud="@Model.Solicitud!.IdSolicitud"
                                                     onclick="confirmarOperacion(event, this,`¿Desea enviar la solicitud @Model.Solicitud!.Codigo a @Model.Solicitud!.EstadoSolicitud.EstadoSolicitudSiguiente!.Nombre?`)">
                                                     Enviar a etapa: @Model.Solicitud!.EstadoSolicitud.EstadoSolicitudSiguiente!.Nombre
-                                                </a>
-                                            }
-                                            else
-                                            {
-                                                <a class="dropdown-item text-danger">
-                                                    debe ingresar un medio de verificación para envíar a siguiente etapa
                                                 </a>
                                             }
                                         }
@@ -369,6 +360,18 @@
                         <div class="card-body">
                             <h5 class="card-title text-white">Comentario de rechazo</h5>
                             <p class="card-text">@Model.Solicitud!.ComentarioRechazo</p>
+                        </div>
+                    </div>
+                }
+                @if(mostrarPrecondicion){
+                    <div class="card text-white bg-warning mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title text-white">Precondiciones de avance de estado</h5>
+                            <div class="card-text">
+                                <ul>
+                                    @Html.Raw(listaPrecondiciones)
+                                </ul>
+                            </div>
                         </div>
                     </div>
                 }
