@@ -673,57 +673,23 @@ namespace PROY.Controllers
         [HttpPost]
         public async Task<IActionResult> BuscarEjecucionesAPA([FromBody] FiltrosReportesDTO filtros)
         {
-            Solicitud solicitud = new Solicitud();
-            solicitud = await _solicitudService.GetSolicitud((long)filtros.IdSolicitud);
 
-            var datos = (await _solicitudService.GetAllDetalleSolicitudAPA((long)filtros.IdSolicitud))
-                        .Where(d => d.IdAnulacion == 67 || d.IdAnulacion == 0 || d.IdAnulacion is null);
-
-            // Configuración para EPPlus
-            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-
-            using (var package = new ExcelPackage())
+            try
             {
-                var hoja = package.Workbook.Worksheets.Add("CONSULTAS");
 
-                // Encabezados                                
-                hoja.Cells[1, 1].Value = "CUI";
-                hoja.Cells[1, 2].Value = "Referencia";
+                // Aquí implementas la lógica de búsqueda con los filtros
+                var resultados = await _solicitudV2Service.ObtenerEjecucionesAPAConFiltros(
+                    idDepartamento: filtros.IdDepartamento, // Este es el filtro opcional
+                    idMunicipio: filtros.IdMunicipio,
+                    fechaInicio: filtros.FechaInicio,
+                    fechaFin: filtros.FechaFin
+                );
 
-                // Aplicar estilo al encabezado
-                using (var rango = hoja.Cells[1, 1, 1, 2])
-                {
-                    rango.Style.Font.Bold = true;
-                    rango.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                    rango.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.White);
-                }
-
-                // Llenar datos
-                int fila = 2;
-                foreach (var ii in datos)
-                {
-                    //var paramDepto = await _catalogoService.GetCatalogo(ii.IdDepartamento);
-                    //var paramMuni = await _catalogoService.GetCatalogo(ii.IdMunicipio);
-                    //var paramEstadoCivil = await _catalogoService.GetCatalogo(ii.EstadoCivil);
-                    var paramGrupoEtnico = await _catalogoService.GetCatalogo(ii.GrupoEtnico);
-
-                    hoja.Cells[fila, 1].Value = ii.CuiEsposa;
-                    hoja.Cells[fila, 2].Value = "EXP-APA-" + solicitud.Codigo;
-
-                    fila++;
-                }
-
-                // Autoajustar columnas
-                hoja.Cells[hoja.Dimension.Address].AutoFitColumns();
-
-                // Generar archivo Excel
-                var stream = new MemoryStream();
-                package.SaveAs(stream);
-                stream.Position = 0;
-
-                // Descargar archivo
-                var nombreArchivo = $"ConsultaCUIRenap_{solicitud.IdSolicitud}.xlsx";
-                return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", nombreArchivo);
+                return Json(new { success = true, data = resultados });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
             }
         }
 

@@ -50,7 +50,7 @@ namespace PROY.Repositories
         {
             var query = _dbContext.Solicitudes
                 .Where(s => s.Restrictiva == 0 &&
-                           s.IdEstadoSolicitud == idEstado &&
+                           s.IdEstadoSolicitud >= idEstado &&
                            s.Depto == $"{IdDepto}" && // Aquí usa IdDepto (fijo)
                            s.Rechazada == rechazada);
 
@@ -76,6 +76,58 @@ namespace PROY.Repositories
             }
 
             var listado = await query.ToListAsync();
+            return listado;
+        }
+
+        public async Task<List<ReporteEjecucion>> ObtenerEjecucionesAPAConFiltros(int? idDepartamento = null, int? idMunicipio = null, DateTime? fechaInicio = null, DateTime? fechaFin = null)
+        {
+            var query = from arv in _dbContext.AsignaRacionV2
+                        join solicitud in _dbContext.Solicitudes on arv.IdSolicitud equals (int)solicitud.IdSolicitud
+                        join municipio in _dbContext.Catalogos on arv.IdMunicipio equals (int)municipio.IdCatalogo
+                        join departamento in _dbContext.Catalogos on arv.IdDepartamento equals (int)departamento.IdCatalogo
+                        where solicitud.Restrictiva == 0 &&
+                              solicitud.IdEstadoSolicitud >= 8 &&
+                              solicitud.Depto == "2"
+                        select new { arv, solicitud, municipio, departamento };
+
+            // Aplicar filtros opcionales
+            if (idDepartamento.HasValue)
+            {
+                query = query.Where(x => x.arv.IdDepartamento == idDepartamento.Value);
+            }
+
+            if (idMunicipio.HasValue)
+            {
+                query = query.Where(x => x.arv.IdMunicipio == idMunicipio.Value);
+            }
+
+            if (fechaInicio.HasValue)
+            {
+                query = query.Where(x => x.solicitud.FechaRegistro >= fechaInicio.Value);
+            }
+
+            if (fechaFin.HasValue)
+            {
+                query = query.Where(x => x.solicitud.FechaRegistro <= fechaFin.Value);
+            }
+
+            var listado = await query
+                .GroupBy(x => new
+                {
+                    Departamento = x.departamento.Descripcion,
+                    Municipio = x.municipio.Descripcion,
+                })
+                .Select(g => new ReporteEjecucion
+                {
+                    Departamento = g.Key.Departamento,
+                    Municipio = g.Key.Municipio,
+                    CantidadComunidades = g.Select(x => x.arv.Comunidad).Distinct().Count(),
+                    TotalRaciones = g.Sum(x => x.solicitud.Raciones)
+                })
+                .OrderBy(x => x.Departamento)
+                .ThenBy(x => x.Municipio)
+                .ToListAsync();
+
             return listado;
         }
 

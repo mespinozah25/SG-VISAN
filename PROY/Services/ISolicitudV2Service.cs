@@ -15,6 +15,7 @@ namespace PROY.Services
         Task<string> ActualizarRaciones(int idSolicitud, int nuevasRaciones);
 
         Task<List<Solicitud>> ObtenerSolicitudesConFiltros(int idEstado, int idDepto, int? idDepartamento = null, int? idMunicipio = null, DateTime? fechaInicio = null, DateTime? fechaFin = null, int rechazada = 0);
+        Task<List<ReporteEjecucion>> ObtenerEjecucionesAPAConFiltros(int?  idDepartamento = null, int? idMunicipio = null, DateTime? fechaInicio = null, DateTime? fechaFin = null);
 
         #region Bitacora
         Task<List<Bitacora>> GetAllBitacora(Int64 id);

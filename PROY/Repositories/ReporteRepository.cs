@@ -445,6 +445,58 @@ namespace PROY.Repositories
             return listado;
         }
 
+        public List<dynamic> ReporteEjecucionesAPA(FiltrosReportesDTO filtros)
+        {
+            var query = from arv in _dbContext.AsignaRacionV2
+                        join solicitud in _dbContext.Solicitudes on arv.IdSolicitud equals (int)solicitud.IdSolicitud
+                        join municipio in _dbContext.Catalogos on arv.IdMunicipio equals (int)municipio.IdCatalogo
+                        join departamento in _dbContext.Catalogos on arv.IdDepartamento equals (int)departamento.IdCatalogo
+                        where solicitud.Restrictiva == 0 &&
+                              solicitud.IdEstadoSolicitud >= 8 &&
+                              solicitud.Depto == "2"
+                        select new { arv, solicitud, municipio, departamento };
+
+            // Aplicar filtros opcionales
+            if (filtros.IdDepartamento.HasValue)
+            {
+                query = query.Where(x => x.arv.IdDepartamento == filtros.IdDepartamento.Value);
+            }
+
+            if (filtros.IdMunicipio.HasValue)
+            {
+                query = query.Where(x => x.arv.IdMunicipio == filtros.IdMunicipio.Value);
+            }
+
+            if (filtros.FechaInicio.HasValue)
+            {
+                query = query.Where(x => x.solicitud.FechaRegistro >= filtros.FechaInicio.Value);
+            }
+
+            if (filtros.FechaFin.HasValue)
+            {
+                query = query.Where(x => x.solicitud.FechaRegistro <= filtros.FechaFin.Value);
+            }
+
+            var listado = query
+                .GroupBy(x => new
+                {
+                    Departamento = x.departamento.Descripcion,
+                    Municipio = x.municipio.Descripcion,
+                })
+                .Select(g => new
+                {
+                    Departamento = g.Key.Departamento,
+                    Municipio = g.Key.Municipio,
+                    CantidadComunidades = g.Select(x => x.arv.Comunidad).Distinct().Count(),
+                    TotalRaciones = g.Sum(x => x.solicitud.Raciones)
+                })
+                .OrderBy(x => x.Departamento)
+                .ThenBy(x => x.Municipio)
+                .ToList<dynamic>();
+
+            return listado;
+        }
+
         #endregion
 
         #region MÉTODOS DE CREACIÓN DE DOCUMENTOS
@@ -603,17 +655,7 @@ namespace PROY.Repositories
                                 <tr>
                                       <td style='text-align:center' colspan='5'>Documento generado el: " + date.ToShortDateString() + @" a las: " + date.ToShortTimeString() + @" horas </td>
                                 </tr>
-                                <tr></tr>
-                                <tr>
-                                    <th style='border: 1px solid black; color: black; font-weight: bold'>No.</th>
-                                    <th style='border: 1px solid black; color: black; font-weight: bold'>Código</th>
-                                    <th style='border: 1px solid black; color: black; font-weight: bold'>Correlativo</th>
-                                    <th style='border: 1px solid black; color: black; font-weight: bold'>Departamento</th>
-                                    <th style='border: 1px solid black; color: black; font-weight: bold'>Municipio</th>
-                                    <th style='border: 1px solid black; color: black; font-weight: bold'>Comunidad</th>
-                                    <th style='border: 1px solid black; color: black; font-weight: bold'>Fecha Registro</th>
-                                    <th style='border: 1px solid black; color: black; font-weight: bold'>Raciones</th>
-                                </tr>";
+                                <tr></tr>";
                     break;
                 default:
                     break;
@@ -1215,40 +1257,110 @@ namespace PROY.Repositories
 
                     break;
                 case (int)TipoReporteEnum.Ejecuciones_APA:
-                    datos = ReporteAPA(filtros, 9);
+                    datos = ReporteEjecucionesAPA(filtros);
 
-                    foreach (var obj in datos)
+                    int anioActual = DateTime.Now.Year;
+
+                    tbody += @" 
+                                <tr>
+                                    <th style='color: white; font-size: 10px' colspan='7'> Autorizado por la Contraloría General de Cuentas Según Resolución No. Fb/ 2662 Clas.: 365-12-8-1-4-97 del 01-4-1997 No. Correlativo 1052-2022 de fecha 08-12-2022 Envío Fiscal 4-ASCC 20754 de fecha 08-12-2022 del 001 al 5.000 (5.000) Sin Serie Ediciones Santillana Nit.: 763296-3 Libro 4-ASCC Folio 37 No de Cuenta 2022-100-101-18-329 </th>                                </tr>
+                                <tr style='background: #BDD7EE;'>
+                                    <th style='width: 150px; color: black; text-align:center; font-weight: bold;' rowspan='4'>" + magaLogoRepoEgreHtml + @"</th>
+                                    <th style='text-align:center' colspan='7'><h2 style='color: black; text-align: center; font-size: 15px;'>VICEMINISTERIO DE SEGURIDAD ALIMENTARIA Y NUTRICIONAL -VISAN-MAGA</h3></th>
+                                </tr>
+                                <tr style='background: #BDD7EE;'>
+                                    <th style='color: black; text-align: center;' colspan='7'><h3 style='color: black; text-align: center; font-size: 13px;'>Dirección de Asistencia Alimentaria y Nutricional</h3></th>
+                                </tr>
+                                 <tr style='background: #BDD7EE;'>
+                                    <th style='text-align: center;' colspan='7'><h3 style='color: black; text-align: center; font-size: 13px;'>Departamento de Alimentos por Acciones</h3></th>
+                                </tr>
+                                 <tr style='background: #BDD7EE;'>
+                                    <th style='text-align:center ' colspan='7'><h3 style='color: black; text-align: center; font-size: 13px;'>EJECUCIÓN " + anioActual + @"</h3></th>
+                                </tr>
+                                <tr style='background: #BDD7EE;'>
+                                    <th colspan='9' style='height: 10px;'></th>
+                                </tr>";
+
+                    tbody += @"
+                                        <tr style='background: #BDD7EE;'>
+                                            <th colspan='4' style='border: 1px #000 solid; color: #000; text-align: center;'>Departamento</th>
+                                            <th colspan='2' style='border: 1px #000 solid; color: #000; text-align: center;'>Municipio</th>
+                                            <th style='border: 1px #000 solid; color: #000; text-align: center;'>Comunidades</th>
+                                            <th colspan='3' style='border: 1px #000 solid; color: #000; text-align: center;'>Raciones Entregadas</th>
+                                        </tr>";
+
+
+                    // Variables para cálculos
+                    int contador = 1;
+                    int totalGeneralComunidades = 0;
+                    int totalGeneralRaciones = 0;
+                    string departamentoActual = "";
+                    int subtotalDepartamentoComunidades = 0;
+                    int subtotalDepartamentoRaciones = 0;
+                    bool primerRegistro = true;
+
+                    foreach (dynamic item in datos)
                     {
-                        tbody += "<tr>";
-
-                        var fechaValue = obj.GetType().GetProperty("FechaRegistro").GetValue(obj, null);
-                        string fechaFormateada = "";
-
-                        if (fechaValue != null)
+                        var ObjDepartamento = item.Departamento ?? "";
+                        var ObjMunicipio = item.Municipio ?? "";
+                        var objComunidad = item.CantidadComunidades ?? 0;
+                        var objRaciones = item.TotalRaciones ?? 0;
+                        // Si cambia el departamento y no es el primero
+                        if (!string.IsNullOrEmpty(departamentoActual) && departamentoActual != ObjDepartamento)
                         {
-                            if (fechaValue is DateTime fecha)
-                            {
-                                fechaFormateada = fecha.ToString("dd/MM/yyyy");
-                            }
-                            else
-                            {
-                                fechaFormateada = fechaValue.ToString();
-                            }
+                            // Agregar subtotal del departamento anterior
+                            tbody += @"
+                                <tr style='background: #BDD7EE;'>
+                                    <td colspan='6' style='border: 1px #000 solid; color: #000; text-align: center; style='background: #BDD7EE;'>TOTAL</td>
+                                    <td style='border: 1px #000 solid; color: #000; text-align: center; style='background: #BDD7EE;'>" + subtotalDepartamentoComunidades + @"</td>
+                                    <td colspan='2' style='border: 1px #000 solid; color: #000; text-align: center; style='background: #BDD7EE;'>" + subtotalDepartamentoRaciones + @"</td>
+                                </tr>";
+
+                            // Reiniciar subtotales
+                            subtotalDepartamentoComunidades = 0;
+                            subtotalDepartamentoRaciones = 0;
                         }
 
-                        tbody += "<td style='border: 1px solid black; color: black;'>" + nInicial + "</td>";
-                        tbody += "<td style='border: 1px solid black; color: black;'>" + (string)obj.GetType().GetProperty("Codigo").GetValue(obj, null) + "</td>";
-                        tbody += "<td style='border: 1px solid black; color: black;'>" + (string)obj.GetType().GetProperty("Correlativo").GetValue(obj, null) + "</td>";
-                        tbody += "<td style='border: 1px solid black; color: black;'>" + (string)obj.GetType().GetProperty("DepartamentoNombre").GetValue(obj, null) + "</td>";
-                        tbody += "<td style='border: 1px solid black; color: black;'>" + (string)obj.GetType().GetProperty("MunicipioNombre").GetValue(obj, null) + "</td>";
-                        tbody += "<td style='border: 1px solid black; color: black;'>" + (string)obj.GetType().GetProperty("Comunidad").GetValue(obj, null) + "</td>";
-                        tbody += "<td style='border: 1px solid black; color: black;'>" + fechaFormateada + "</td>";
-                        tbody += "<td style='border: 1px solid black; color: black;'>" + obj.GetType().GetProperty("Raciones").GetValue(obj, null) + "</td>";
+                        // Actualizar departamento actual
+                        departamentoActual = ObjDepartamento;
 
-                        tbody += "</tr>";
+                        // Fila de datos
+                        tbody += @"
+                            <tr>
+                                <td colspan='4' style='border: 1px #000 solid; color: #000; text-align: center;'>" + ObjDepartamento + @"</td>
+                                <td colspan='2' style='border: 1px #000 solid; color: #000; text-align: center;'>" + ObjMunicipio + @"</td>
+                                <td style='border: 1px #000 solid; color: #000; text-align: center;'>" + objComunidad + @"</td>
+                                <td colspan='2' style='border: 1px #000 solid; color: #000; text-align: center;'>" + objRaciones + @"</td>
+                            </tr>";
 
-                        nInicial++;
+                        // Acumular subtotales
+                        subtotalDepartamentoComunidades += objComunidad;
+                        subtotalDepartamentoRaciones += objRaciones;
+
+                        // Acumular totales generales
+                        totalGeneralComunidades += objComunidad;
+                        totalGeneralRaciones += objRaciones;
                     }
+
+                    // Agregar subtotal del último departamento
+                    if (datos.Count > 0)
+                    {
+                        tbody += @"
+                        <tr style='background: #BDD7EE;'>
+                            <td colspan='6' style='border: 1px #000 solid; color: #000; text-align: center; style='background: #BDD7EE;'>TOTAL</td>
+                            <td style='border: 1px #000 solid; color: #000; text-align: center; style='background: #BDD7EE;'>" + subtotalDepartamentoComunidades + @"</td>
+                            <td colspan='2' style='border: 1px #000 solid; color: #000; text-align: center; style='background: #BDD7EE;'>" + subtotalDepartamentoRaciones + @"</td>
+                        </tr>";
+                    }
+
+                    // Agregar total general
+                    tbody += @"
+                        <tr style='background: #BDD7EE;'>
+                            <td colspan='6' style='border: 1px #000 solid; color: #000; text-align: center; style='background: #BDD7EE;'>TOTAL GENERAL</td>
+                            <td style='border: 1px #000 solid; color: #000; text-align: center; style='background: #BDD7EE;'>" + totalGeneralComunidades + @"</td>
+                            <td colspan='2' style='border: 1px #000 solid; color: #000; text-align: center; style='background: #BDD7EE;'>" + totalGeneralRaciones + @"</td>
+                        </tr>";
+
 
                     body = string.Format(body, tbody);
 
