@@ -14,5 +14,6 @@
         Ejecuciones_APA = 11,
         Despachos_APA = 12,
         Procesos_APA = 13,
+        Beneficiarios_APA = 14,
     }
 }

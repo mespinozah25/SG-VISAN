@@ -244,6 +244,14 @@ namespace PROY.Services
                 fechaFin);
         }
 
+        public async Task<List<ReporteDespacho>> ObtenerDespachosAPAConFiltros(int? idDepartamento = null, int? idMunicipio = null, DateTime? fechaInicio = null, DateTime? fechaFin = null)
+        {
+            return await _solicitudV2Repository.ObtenerDespachosAPAConFiltros(
+                idDepartamento,
+                idMunicipio,
+                fechaInicio,
+                fechaFin);
+        }
 
         #region Bitacora - SIN ServiceResponse
 

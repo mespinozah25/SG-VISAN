@@ -700,7 +700,37 @@ namespace PROY.Controllers
             return View();
         }
 
+        [HttpPost]
+        public async Task<IActionResult> BuscarDespachosAPA([FromBody] FiltrosReportesDTO filtros)
+        {
+
+            try
+            {
+
+                // Aquí implementas la lógica de búsqueda con los filtros
+                var resultados = await _solicitudV2Service.ObtenerDespachosAPAConFiltros(
+                    idDepartamento: filtros.IdDepartamento, // Este es el filtro opcional
+                    idMunicipio: filtros.IdMunicipio,
+                    fechaInicio: filtros.FechaInicio,
+                    fechaFin: filtros.FechaFin
+                );
+
+                return Json(new { success = true, data = resultados });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
         public async Task<IActionResult> BeneficiariosConveniosAPA()
+        {
+            ViewBag.Departamentos = new SelectList(new List<object>(), "IdCatalogo", "Descripcion");
+            ViewBag.Municipios = new SelectList(new List<object>(), "IdCatalogo", "Descripcion");
+            return View();
+        }
+
+        public async Task<IActionResult> ProcesosAPA()
         {
             ViewBag.Departamentos = new SelectList(new List<object>(), "IdCatalogo", "Descripcion");
             ViewBag.Municipios = new SelectList(new List<object>(), "IdCatalogo", "Descripcion");
