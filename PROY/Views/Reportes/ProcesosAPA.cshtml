@@ -1,13 +1,21 @@
-@model PROY.ViewModels.BodegaVM;
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
+
 <head>
 </head>
+
+<style>
+    table thead th {
+        pointer-events: none;
+        /* Desactiva la interacción con los títulos */
+    }
+</style>
+
 @{
 
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 @{
-    ViewData["Title"] = "Reporte de Procesos de Entrega APA";
+    ViewData["Title"] = "Reporte de Procesos APA";
 }
 @if (TempData["Mensaje"] != null)
 {
@@ -16,9 +24,153 @@
     </div>
 }
 
-<h2 class="float-start">Reporte de Procesos de Entrega APA</h2>
+<h2 class="float-start">Reporte de Procesos APA</h2>
 <p><br /></p>
 
 <br />
 
 @await Html.PartialAsync("_CriteriosDeBusquedaAPA")
+
+<!-- Aquí puedes agregar una tabla para mostrar los resultados -->
+<div class="row mt-4">
+    <div class="col">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Resultados</h5>
+                <div id="tablaResultados">
+                    <!-- Los resultados se cargarán aquí -->
+                    <p class="text-muted">Use los criterios de búsqueda para mostrar resultados.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+
+    <script>
+
+        var tipoReporte = 13;
+        var nombreReporte = "Reporte de Procesos";
+
+        $(document).ready(function () {
+            HabilitarBusquedas();
+        });
+
+        function HabilitarBusquedas() {
+            $('#divCriteriosBusqueda').show();
+            $('#divFechaMovimientoInicio').show(); // Habilita los criterios
+            $('#divFechaMovimientoFin').show();
+            $('#divIdDepartamento').show();
+            $('#divIdMunicipio').show();
+        }
+
+        function LimpiarCriterios() {
+            $('#_frmBusqueda')[0].reset();
+            return false;
+        }
+
+        function Buscar() {
+            // Obtener los valores del formulario
+            var fechaInicio = $('#txtFechaInicio').val();
+            var fechaFin = $('#txtFechaFin').val();
+            var idDepartamento = $('#cbIdDepartamento').val();
+            var idMunicipio = $('#cbIdMunicipio').val();
+
+            // Mostrar loading
+            $('#tablaResultados').html('<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Cargando...</span></div></div>');
+
+            var filtros = {
+                FechaInicio: fechaInicio ? new Date(fechaInicio).toISOString() : null,
+                FechaFin: fechaFin ? new Date(fechaFin).toISOString() : null,
+                IdDepartamento: idDepartamento ? parseInt(idDepartamento) : null,
+                IdMunicipio: idMunicipio ? parseInt(idMunicipio) : null
+            };
+            // Llamada AJAX
+            $.ajax({
+                url: '@Url.Action("BuscarProgramacionesAPA", "Reportes")',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(filtros),
+                success: function (response) {
+                    if (response.success) {
+                        // Actualizar la tabla con los resultados
+                        ActualizarTablaResultados(response.data);
+                    } else {
+                        alert('Error: ' + response.message);
+                        $('#tablaResultados').html('<p class="text-danger">Error al realizar la búsqueda</p>');
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error en AJAX:', error);
+                    alert('Error al conectar con el servidor');
+                    $('#tablaResultados').html('<p class="text-danger">Error de conexión</p>');
+                }
+            });
+
+            return false;
+        }
+
+        // Función para actualizar la tabla con resultados (ejemplo)
+        function ActualizarTablaResultados(datos) {
+            if (!datos || datos.length === 0) {
+                $('#tablaResultados').html('<div class="alert alert-info text-center">No se encontraron resultados con los criterios especificados.</div>');
+                return;
+            }
+
+            console.log(datos)
+
+            var tablaHTML = `
+                <div class="table-responsive">
+                    <table class="table" style="width:100%; position:relative; z-index:2;">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Recibido en APA</th>
+                                <th>Departamento</th>
+                                <th>Municipio</th>
+                                     <th>Comunidad</th>
+                                <th>Familias Solicitantes</th>
+                            </tr>
+                        </thead>`;
+
+            datos.forEach(function (item) {
+                tablaHTML += `
+                    <tr>
+                        <td>${item.codigo || 'N/A'}</td>
+                        <td>${item.fechaRegistroCorta || item.fechaRegistro || 'N/A'}</td>
+                        <td>${item.departamentoNombre || 'No especificado'}</td>
+                        <td>${item.municipioNombre || 'No especificado'}</td>
+                        <td>${item.comunidad || 'No especificado'}</td>
+                        <td class="text-center">${item.raciones || 0}</td>
+                    </tr>`;
+            });
+
+            tablaHTML += `
+                        </tbody>
+                    </table>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <small class="text-muted">Consulta generada: ${new Date().toLocaleString()}</small>
+                        </div>
+                    </div>
+                </div>`;
+
+            $('#tablaResultados').html(tablaHTML);
+        }
+    </script>
+    </script>
+}
+
+<script src="~/js/reportes.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+@* CDN para la creación del archivo xlsx *@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+@* CDN para la creación del archivo PDF *@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
