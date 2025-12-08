@@ -118,31 +118,31 @@
                 return;
             }
 
+            console.log(datos)
+
             var tablaHTML = `
                 <div class="table-responsive">
                     <table class="table" style="width:100%; position:relative; z-index:2;">
                         <thead>
                             <tr>
                                 <th>Código</th>
-                                <th>Correlativo</th>
+                                <th>Recibido en APA</th>
                                 <th>Departamento</th>
                                 <th>Municipio</th>
-                                <th>Comunidad</th>
-                                <th>Fecha Registro</th>
-                                <th>Raciones</th>
+                           
+                        <tbody>`     <th>Comunidad</th>
+                                <th>Familias Solicitantes</th>
                             </tr>
-                        </thead>
-                        <tbody>`;
+                        </thead>;
 
             datos.forEach(function (item) {
                 tablaHTML += `
                     <tr>
                         <td>${item.codigo || 'N/A'}</td>
-                        <td>${item.correlativo || 'N/A'}</td>
+                        <td>${item.fechaRegistroCorta || item.fechaRegistro || 'N/A'}</td>
                         <td>${item.departamentoNombre || 'No especificado'}</td>
                         <td>${item.municipioNombre || 'No especificado'}</td>
                         <td>${item.comunidad || 'No especificado'}</td>
-                        <td>${item.fechaRegistroCorta || item.fechaRegistro || 'N/A'}</td>
                         <td class="text-center">${item.raciones || 0}</td>
                     </tr>`;
             });

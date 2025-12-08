@@ -8,7 +8,7 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 @{
-    ViewData["Title"] = "Reporte de Convenios";
+    ViewData["Title"] = "Listado Beneficiarios Por Convenio";
 }
 @if (TempData["Mensaje"] != null)
 {
@@ -18,12 +18,12 @@
 }
 
 
-<h2 class="float-start">Reporte Listado de Convenios</h2>
+<h2 class="float-start">Reporte Listado de Beneficiarios por Convenios</h2>
 <p><br /></p>
 
 <br />
 
-@await Html.PartialAsync("_CriteriosDeBusqueda")
+@await Html.PartialAsync("_CriteriosDeBusquedaAPA")
 
 <table class="table">
     <thead>
@@ -61,15 +61,24 @@
 
     <script>
 
+        var tipoReporte = 14;
+        var nombreReporte = "Listado Beneficiarios Por Convenio";
+
         $(document).ready(function () {
             HabilitarBusquedas();
         });
 
         function HabilitarBusquedas() {
             $('#divCriteriosBusqueda').show();
-            $('#divNoSolicitud').show(); // Habilita los criterios
-            $('#card-footer').hide();
+            $('#divFechaMovimientoInicio').show(); // Habilita los criterios
+            $('#divFechaMovimientoFin').show();
+            $('#divIdDepartamento').show();
+            $('#divIdMunicipio').show();
+        }
 
+        function LimpiarCriterios() {
+            $('#_frmBusqueda')[0].reset();
+            return false;
         }
 
         var tipoReporte = 5;

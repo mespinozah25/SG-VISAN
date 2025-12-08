@@ -80,7 +80,7 @@ namespace PROY.Services
 
                 await _solicitudV2Repository.ActualizarSolicitud(solicitud);
 
-                
+
 
                 return "Solicitud enviada exitosamente";
             }
@@ -237,6 +237,23 @@ namespace PROY.Services
                 fechaFin);
         }
 
+        public async Task<List<ReporteEjecucion>> ObtenerEjecucionesAPAConFiltros(int? idDepartamento = null, int? idMunicipio = null, DateTime? fechaInicio = null, DateTime? fechaFin = null)
+        {
+            return await _solicitudV2Repository.ObtenerEjecucionesAPAConFiltros(
+                idDepartamento,
+                idMunicipio,
+                fechaInicio,
+                fechaFin);
+        }
+
+        public async Task<List<ReporteDespacho>> ObtenerDespachosAPAConFiltros(int? idDepartamento = null, int? idMunicipio = null, DateTime? fechaInicio = null, DateTime? fechaFin = null)
+        {
+            return await _solicitudV2Repository.ObtenerDespachosAPAConFiltros(
+                idDepartamento,
+                idMunicipio,
+                fechaInicio,
+                fechaFin);
+        }
 
         #region Bitacora - SIN ServiceResponse
 
