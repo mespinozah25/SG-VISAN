@@ -19,7 +19,7 @@
                         </div>
                         <div class="col-3" id="divIdDepartamento" style="display:none;">
                             <label for="cbIdDepartamento" class="control-label">Departamento</label>
-                            <select class="form-select" id="cbIdDepartamento" name="IdDepartamento"
+                            <select class="form-select" id="cbIdDepartamento" name="IdDepartamento"  onchange="cambio()"
                                 asp-items="ViewBag.Programas">
                                 <option value="">-- Seleccione --</option>
                                 @foreach (var departamento in ViewBag.Departamentos)
@@ -33,10 +33,6 @@
                             <select class="form-select" id="cbIdMunicipio" name="IdMunicipio"
                                 asp-items="ViewBag.Municipio">
                                 <option value="">-- Seleccione --</option>
-                                @foreach (var municipio in ViewBag.Municipios)
-                                {
-                                    <option value="@municipio.Value">@municipio.Text</option>
-                                }
                             </select>
                         </div>
                     </div>

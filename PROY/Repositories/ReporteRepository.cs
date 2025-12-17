@@ -1301,8 +1301,41 @@ namespace PROY.Repositories
                                             <th colspan='3' style='border: 1px #000 solid; color: #000; text-align: center;'>Raciones Entregadas</th>
                                         </tr>";
 
+                    foreach (var obj in datos)
+                    {
+                        tbody += "<tr>";
 
+                        var fechaValue = obj.GetType().GetProperty("FechaRegistro").GetValue(obj, null);
+                        string fechaFormateada = "";
 
+                        if (fechaValue != null)
+                        {
+                            if (fechaValue is DateTime fecha)
+                            {
+                                fechaFormateada = fecha.ToString("dd/MM/yyyy");
+                            }
+                            else
+                            {
+                                fechaFormateada = fechaValue.ToString();
+                            }
+                        }
+
+                        tbody += "<td style='border: 1px solid black; color: black; background: #BDD7EE; text-align: center;'>" + nInicial + "</td>";
+                        tbody += "<td style='border: 1px solid black; color: black; text-align: center;'>" + fechaFormateada + "</td>";
+                        tbody += "<td style='border: 1px solid black; color: black; text-align: center;'>" + (string)obj.GetType().GetProperty("DepartamentoNombre").GetValue(obj, null) + "</td>";
+                        tbody += "<td style='border: 1px solid black; color: black; text-align: center;'>" + (string)obj.GetType().GetProperty("MunicipioNombre").GetValue(obj, null) + "</td>";
+                        tbody += "<td style='border: 1px solid black; color: black; text-align: center;'>" + (string)obj.GetType().GetProperty("Comunidad").GetValue(obj, null) + "</td>";
+
+                        tbody += "<td style='border: 1px solid black; color: black; text-align: center;'>" + obj.GetType().GetProperty("Raciones").GetValue(obj, null) + "</td>";
+                        tbody += "<td style='border: 1px solid black; color: black; text-align: center;'>" + (string)obj.GetType().GetProperty("ProyectoNombre").GetValue(obj, null) + "</td>";
+
+                        tbody += "<td style='border: 1px solid black; color: black; text-align: center;'>" + obj.GetType().GetProperty("EstadoNombre").GetValue(obj, null) + "</td>";
+                        tbody += "<td style='border: 1px solid black; color: black; text-align: center;'>" + obj.GetType().GetProperty("TecnicoObservaciones").GetValue(obj, null) + "</td>";
+
+                        tbody += "</tr>";
+
+                        nInicial++;
+                    }
 
                     body = string.Format(body, tbody);
 
@@ -1386,7 +1419,7 @@ namespace PROY.Repositories
                                     <th style='text-align: center;' colspan='7'><h3 style='color: black; text-align: center; font-size: 13px;'>DEPARTAMENTO DE ALIMENTOS POR ACCIONES</h3></th>
                                 </tr>
                                  <tr style='background: #BDD7EE;'>
-                                    <th style='text-align:center ' colspan='7'><h3 style='color: black; text-align: center; font-size: 13px;'>Despachos " + DateTime.Now.Year + @"</h3></th>
+                                    <th style='text-align:center ' colspan='7'><h3 style='color: black; text-align: center; font-size: 13px;'>PROCESOS " + DateTime.Now.Year + @"</h3></th>
                                 </tr>
                                 <tr style='background: #BDD7EE;'>
                                     <th colspan='9' style='height: 10px;'></th>

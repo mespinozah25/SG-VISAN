@@ -1,15 +1,8 @@
+@model PROY.ViewModels.BodegaVM;
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
 
 <head>
 </head>
-
-<style>
-    table thead th {
-        pointer-events: none;
-        /* Desactiva la interacción con los títulos */
-    }
-</style>
-
 @{
 
     Layout = "~/Views/Shared/_Layout.cshtml";
@@ -121,47 +114,79 @@
             console.log(datos)
 
             var tablaHTML = `
-                <div class="table-responsive">
-                    <table class="table" style="width:100%; position:relative; z-index:2;">
-                        <thead>
-                            <tr>
-                                <th>Código</th>
-                                <th>Recibido en APA</th>
-                                <th>Departamento</th>
-                                <th>Municipio</th>
-                           
-                        <tbody>`     <th>Comunidad</th>
-                                <th>Familias Solicitantes</th>
-                            </tr>
-                        </thead>;
+                    <div class="table-responsive">
+                        <table class="table" style="width:100%; position:relative; z-index:2;">
+                            <thead>
+                                <tr>
+                                    <th>Código</th>
+                                    <th>Recibido en APA</th>
+                                    <th>Departamento</th>
+                                    <th>Municipio</th>
+                               <th>Comunidad</th>
+                                    <th>Familias Solicitantes</th>
+                                </tr>
+                            </thead>
+                            <tbody>`     ;
 
             datos.forEach(function (item) {
                 tablaHTML += `
-                    <tr>
-                        <td>${item.codigo || 'N/A'}</td>
-                        <td>${item.fechaRegistroCorta || item.fechaRegistro || 'N/A'}</td>
-                        <td>${item.departamentoNombre || 'No especificado'}</td>
-                        <td>${item.municipioNombre || 'No especificado'}</td>
-                        <td>${item.comunidad || 'No especificado'}</td>
-                        <td class="text-center">${item.raciones || 0}</td>
-                    </tr>`;
+                        <tr>
+                            <td>${item.codigo || 'N/A'}</td>
+                            <td>${item.fechaRegistroCorta || item.fechaRegistro || 'N/A'}</td>
+                            <td>${item.departamentoNombre || 'No especificado'}</td>
+                            <td>${item.municipioNombre || 'No especificado'}</td>
+                            <td>${item.comunidad || 'No especificado'}</td>
+                            <td class="text-center">${item.raciones || 0}</td>
+                        </tr>`;
             });
 
             tablaHTML += `
-                        </tbody>
-                    </table>
-                    <div class="row mt-3">
-                        <div class="col-md-6">
+                            </tbody>
+                        </table>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <small class="text-muted">Consulta generada: ${new Date().toLocaleString()}</small>
+                            </div>
                         </div>
-                        <div class="col-md-6 text-end">
-                            <small class="text-muted">Consulta generada: ${new Date().toLocaleString()}</small>
-                        </div>
-                    </div>
-                </div>`;
+                    </div>`;
 
             $('#tablaResultados').html(tablaHTML);
         }
-    </script>
+
+        function cambio() {
+            //var opcionSeleccionada = $(this).val();
+            var opcionSeleccionada = $('#cbIdDepartamento').val();
+            //console.log('Opción seleccionada:', opcionSeleccionada);
+            //alert(opcionSeleccionada);
+            var catalogoSelect = $('#cbIdMunicipio');
+            catalogoSelect.empty(); // Limpiar el select antes de agregar nuevas opciones
+
+            $.ajax({
+                url: `@ViewData["rutaApp"]/Solicitud/GetOrdenDepto/${opcionSeleccionada}`, // URL para obtener los datos
+                type: 'GET',
+                success: function (data) {
+                    var orden = data;
+                    //alert(orden);
+
+                    //console.log('Cargando intervenciones para DAAN');
+                    $.getJSON('@Url.Action("GetMunicipios", "Solicitud")', { id: orden },
+
+                        function (data) {
+                            //console.log('Datos devueltos:', data);
+                            var items = data.value.value;
+                            $.each(items, function (index, item) {
+                                catalogoSelect.append('<option value="' + item.id + '">' + item.descripcion + '</option>');
+                            });
+                        });
+
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error al obtener los datos de la solicitud:', error);
+                }
+            });
+        }
     </script>
 }
 

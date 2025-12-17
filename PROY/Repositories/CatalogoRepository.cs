@@ -28,7 +28,7 @@ namespace PROY.Repositories
         }
         public async Task<Catalogo> GetCatalogo(int id)
         {
-            Catalogo catalogo_encontrado = await _dbContext.Catalogos.FirstAsync(c => c.IdCatalogo == id && c.Restrictiva == 0);
+            Catalogo catalogo_encontrado = await _dbContext.Catalogos.FirstOrDefaultAsync(c => c.IdCatalogo == id && c.Restrictiva == 0);
 
             return catalogo_encontrado;
         }

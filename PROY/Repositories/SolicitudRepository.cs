@@ -16,8 +16,8 @@ namespace PROY.Repositories
         //SOLICITUDES DAAN
         public async Task<List<Solicitud>> GetAllSolicitudes()
         {
-            
-            List<Solicitud> listado = await _dbContext.Solicitudes.Where(s => s.Restrictiva == 0 && s.Estado == "CREADO" && s.Depto=="1")
+
+            List<Solicitud> listado = await _dbContext.Solicitudes.Where(s => s.Restrictiva == 0 && s.Estado == "CREADO" && s.Depto == "1")
                                                                   .Include(d => d.DetallesSolicitud)
                                                                   .Where(s => s.DetallesSolicitud.All(d => d.Restrictiva == 0))
                                                                   .ToListAsync();
@@ -41,10 +41,10 @@ namespace PROY.Repositories
         public async Task<List<Solicitud>> GetAllSolicitudesAPA()
         {
 
-            List<Solicitud> listado = await _dbContext.Solicitudes.Where(s => s.Restrictiva == 0 && s.Estado == "CREADO" && s.Depto=="2")
+            List<Solicitud> listado = await _dbContext.Solicitudes.Where(s => s.Restrictiva == 0 && s.Estado == "CREADO" && s.Depto == "2")
                                                                   .Include(d => d.DetallesSolicitudAPA)
                                                                   .Where(s => s.DetallesSolicitudAPA.All(d => d.Restrictiva == 0))
-                                                                  .ToListAsync();            
+                                                                  .ToListAsync();
 
             return listado;
         }
@@ -52,7 +52,7 @@ namespace PROY.Repositories
         public async Task<List<DetalleSolicitud>> GetAllDetalleSolicitud(long id)
         {
 
-            List<DetalleSolicitud> listado = await _dbContext.DetalleSolicitud.Where(ds => ds.Restrictiva == 0 && ds.IdSolicitud==id)
+            List<DetalleSolicitud> listado = await _dbContext.DetalleSolicitud.Where(ds => ds.Restrictiva == 0 && ds.IdSolicitud == id)
                                                                   .Include(d => d.Ninos)
                                                                   .ToListAsync();
             return listado;
@@ -66,9 +66,21 @@ namespace PROY.Repositories
             return listado;
         }
 
+        public async Task<List<DetalleSolicitudAPA>> GetAllDetalleSolicitudAPACodigo(long id)
+        {
+            string correlativo = id.ToString();
+            
+            var listado = await _dbContext.DetalleSolicitudAPA
+                .Include(d => d.Solicitud)
+                .Where(d => d.Restrictiva == 0 && d.Solicitud.Correlativo == correlativo)
+                .ToListAsync();
+            
+            return listado;
+        }
+
         public async Task<Solicitud> GetSolicitud(long id)
         {
-            Solicitud solicitud_encontrada = await _dbContext.Solicitudes.Where(s => s.IdSolicitud == id && s.Restrictiva == 0).FirstOrDefaultAsync();        
+            Solicitud solicitud_encontrada = await _dbContext.Solicitudes.Where(s => s.IdSolicitud == id && s.Restrictiva == 0).FirstOrDefaultAsync();
 
             return solicitud_encontrada;
         }
@@ -84,7 +96,7 @@ namespace PROY.Repositories
         public async Task<DetalleSolicitud> GetDetalleSolicitudByCUI(long id, string paramCUI)
         {
             //Busca por id de solicitud
-            DetalleSolicitud detalle_encontrado = await _dbContext.DetalleSolicitud.Where(ds => ds.IdSolicitud == id && (ds.CuiEsposo==paramCUI || ds.CuiEsposa==paramCUI) && ds.Restrictiva == 0).FirstOrDefaultAsync();
+            DetalleSolicitud detalle_encontrado = await _dbContext.DetalleSolicitud.Where(ds => ds.IdSolicitud == id && (ds.CuiEsposo == paramCUI || ds.CuiEsposa == paramCUI) && ds.Restrictiva == 0).FirstOrDefaultAsync();
 
             return detalle_encontrado;
         }
@@ -262,57 +274,57 @@ namespace PROY.Repositories
                                            from dep in depJoin.DefaultIfEmpty()
                                            join mun in _dbContext.Catalogos on Convert.ToInt32(at.IdMunicipio) equals mun.IdCatalogo
                                            join sol in _dbContext.Solicitudes on at.SolicitudId equals sol.IdSolicitud
-                                                where at.Restrictiva == 0 && at.SolicitudId == id
-                                                    && tec.Restrictiva == 0
-                                                    && (dep == null || dep.Tipo == "DEPARTAMENTO")
-                                                    && mun.Tipo == "MUNICIPIO" 
-                                                select new
-                                                {
-                                                    idAsignaTecnico = at.IdAsignaTecnico,
-                                                    tecnicoId = at.TecnicoId,
-                                                    tecnico = new
-                                                    {
-                                                        idTecnico = tec.IdTecnico,
-                                                        nombre = tec.Nombre,
-                                                        telefono = tec.Telefono,
-                                                        restrictiva = tec.Restrictiva
-                                                    },
-                                                    solicitudId = at.SolicitudId,
-                                                    solicitud = new
-                                                    {
-                                                        idSolicitud = sol.IdSolicitud,
-                                                        correlativo = sol.Correlativo,
-                                                        codigo = sol.Codigo,
-                                                        fechaIngresoDespacho = sol.FechaIngresoDespacho,
-                                                        fechaIngresoDireccion = sol.FechaIngresoDireccion,
-                                                        fechaIngresoUnidad = sol.FechaIngresoUnidad,
-                                                        idUnidad = sol.IdUnidad,
-                                                        idIntervencion = sol.IdIntervencion,
-                                                        archivo = sol.Archivo,
-                                                        restrictiva = sol.Restrictiva,
-                                                        estado = sol.Estado,
-                                                        fallecidos = sol.Fallecidos,
-                                                        duplicados = sol.Duplicados,
-                                                        sinDatos = sol.SinDatos,
-                                                        gobierno = sol.Gobierno,
-                                                        depto = sol.Depto,
-                                                        descripcion = sol.Descripcion,
-                                                        idInstitucion = sol.IdInstitucion,
-                                                        fInicioEntrega = sol.FInicioEntrega,
-                                                        fFinEntrega = sol.FFinEntrega,
-                                                        departamento = sol.Departamento,
-                                                        municipio= sol.Municipio,
-                                                        //direccionEntrega = sol.DireccionEntrega,
-                                                        //tecnicoNombre = sol.TecnicoNombre,
-                                                        //tecnicoTelefono = sol.TecnicoTelefono,
-                                                        tecnicoObservaciones = sol.TecnicoObservaciones,
-                                                        raciones = sol.Raciones
-                                                    },
-                                                    departamentoId = dep.Descripcion,
-                                                    idMunicipio = mun.Descripcion,//at.IdMunicipio,
-                                                    direccionEntrega = at.DireccionEntrega,
-                                                    restrictiva = at.Restrictiva
-                                                }).ToListAsync<Object>();
+                                           where at.Restrictiva == 0 && at.SolicitudId == id
+                                               && tec.Restrictiva == 0
+                                               && (dep == null || dep.Tipo == "DEPARTAMENTO")
+                                               && mun.Tipo == "MUNICIPIO"
+                                           select new
+                                           {
+                                               idAsignaTecnico = at.IdAsignaTecnico,
+                                               tecnicoId = at.TecnicoId,
+                                               tecnico = new
+                                               {
+                                                   idTecnico = tec.IdTecnico,
+                                                   nombre = tec.Nombre,
+                                                   telefono = tec.Telefono,
+                                                   restrictiva = tec.Restrictiva
+                                               },
+                                               solicitudId = at.SolicitudId,
+                                               solicitud = new
+                                               {
+                                                   idSolicitud = sol.IdSolicitud,
+                                                   correlativo = sol.Correlativo,
+                                                   codigo = sol.Codigo,
+                                                   fechaIngresoDespacho = sol.FechaIngresoDespacho,
+                                                   fechaIngresoDireccion = sol.FechaIngresoDireccion,
+                                                   fechaIngresoUnidad = sol.FechaIngresoUnidad,
+                                                   idUnidad = sol.IdUnidad,
+                                                   idIntervencion = sol.IdIntervencion,
+                                                   archivo = sol.Archivo,
+                                                   restrictiva = sol.Restrictiva,
+                                                   estado = sol.Estado,
+                                                   fallecidos = sol.Fallecidos,
+                                                   duplicados = sol.Duplicados,
+                                                   sinDatos = sol.SinDatos,
+                                                   gobierno = sol.Gobierno,
+                                                   depto = sol.Depto,
+                                                   descripcion = sol.Descripcion,
+                                                   idInstitucion = sol.IdInstitucion,
+                                                   fInicioEntrega = sol.FInicioEntrega,
+                                                   fFinEntrega = sol.FFinEntrega,
+                                                   departamento = sol.Departamento,
+                                                   municipio = sol.Municipio,
+                                                   //direccionEntrega = sol.DireccionEntrega,
+                                                   //tecnicoNombre = sol.TecnicoNombre,
+                                                   //tecnicoTelefono = sol.TecnicoTelefono,
+                                                   tecnicoObservaciones = sol.TecnicoObservaciones,
+                                                   raciones = sol.Raciones
+                                               },
+                                               departamentoId = dep.Descripcion,
+                                               idMunicipio = mun.Descripcion,//at.IdMunicipio,
+                                               direccionEntrega = at.DireccionEntrega,
+                                               restrictiva = at.Restrictiva
+                                           }).ToListAsync<Object>();
 
 
 
@@ -339,7 +351,7 @@ namespace PROY.Repositories
 
             return listado;
 
-            
+
             //.Include(s=>s.Solicitud).Where(s=>s.Solicitud.Restrictiva==0)
         }
 
@@ -386,10 +398,10 @@ namespace PROY.Repositories
 
         public async Task<AsignaRacion> GetAsignaRacion(long idRacion)
         {
-            var encontrado=await _dbContext.AsignaRaciones.Where(r => r.IdAsignaRacion == idRacion && r.Restrictiva == 0).FirstOrDefaultAsync();            
-            
+            var encontrado = await _dbContext.AsignaRaciones.Where(r => r.IdAsignaRacion == idRacion && r.Restrictiva == 0).FirstOrDefaultAsync();
+
             return encontrado;
-        }        
+        }
 
         public async Task<AsignaTecnico> GetAsignaTecnico(long idAsignaTecnico)
         {
@@ -402,9 +414,9 @@ namespace PROY.Repositories
             /*List<AsignaRacion> listado = await _dbContext.AsignaRaciones.Where(ar => ar.Restrictiva == 0 && ar.SolicitudId == id)
                                                                         //.Include(t => t.Tecnico).Where(t => t.Tecnico.Restrictiva == 0 && t.TecnicoId == t.Tecnico.IdTecnico)
                                                                         .ToListAsync();*/
-            
-            var sol = await _dbContext.Solicitudes.Where(s=>s.Restrictiva==0 && s.IdSolicitud==id).FirstOrDefaultAsync();
-            
+
+            var sol = await _dbContext.Solicitudes.Where(s => s.Restrictiva == 0 && s.IdSolicitud == id).FirstOrDefaultAsync();
+
             if (sol.Depto == "1")
             {
                 var totalBenef = await _dbContext.DetalleSolicitud
@@ -421,7 +433,7 @@ namespace PROY.Repositories
 
                 var totalRaciones = totalBenef * sol.Raciones;
             }
-            
+
 
             var listado = await (from ar in _dbContext.AsignaRaciones
                                  join dep in _dbContext.Catalogos on Convert.ToInt32(ar.DepartamentoId) equals dep.IdCatalogo into depJoin
