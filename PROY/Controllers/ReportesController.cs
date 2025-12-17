@@ -695,8 +695,14 @@ namespace PROY.Controllers
 
         public async Task<IActionResult> DespachosAPA()
         {
-            ViewBag.Departamentos = new SelectList(new List<object>(), "IdCatalogo", "Descripcion");
-            ViewBag.Municipios = new SelectList(new List<object>(), "IdCatalogo", "Descripcion");
+
+            var departamentos = await _catalogoService.GetCatalogo("DEPARTAMENTO");
+            var municipios = await _catalogoService.GetCatalogo("MUNICIPIO");
+
+            // Preparar SelectLists para la vista
+            ViewBag.Departamentos = new SelectList(departamentos, "IdCatalogo", "Descripcion");
+
+            ViewBag.Municipios = new SelectList(municipios, "IdCatalogo", "Descripcion");
             return View();
         }
 
@@ -725,15 +731,25 @@ namespace PROY.Controllers
 
         public async Task<IActionResult> BeneficiariosConveniosAPA()
         {
-            ViewBag.Departamentos = new SelectList(new List<object>(), "IdCatalogo", "Descripcion");
-            ViewBag.Municipios = new SelectList(new List<object>(), "IdCatalogo", "Descripcion");
+            var departamentos = await _catalogoService.GetCatalogo("DEPARTAMENTO");
+            var municipios = await _catalogoService.GetCatalogo("MUNICIPIO");
+
+            // Preparar SelectLists para la vista
+            ViewBag.Departamentos = new SelectList(departamentos, "IdCatalogo", "Descripcion");
+
+            ViewBag.Municipios = new SelectList(municipios, "IdCatalogo", "Descripcion");
             return View();
         }
 
         public async Task<IActionResult> ProcesosAPA()
         {
-            ViewBag.Departamentos = new SelectList(new List<object>(), "IdCatalogo", "Descripcion");
-            ViewBag.Municipios = new SelectList(new List<object>(), "IdCatalogo", "Descripcion");
+            var departamentos = await _catalogoService.GetCatalogo("DEPARTAMENTO");
+            var municipios = await _catalogoService.GetCatalogo("MUNICIPIO");
+
+            // Preparar SelectLists para la vista
+            ViewBag.Departamentos = new SelectList(departamentos, "IdCatalogo", "Descripcion");
+
+            ViewBag.Municipios = new SelectList(municipios, "IdCatalogo", "Descripcion");
             return View();
         }
 
@@ -750,7 +766,7 @@ namespace PROY.Controllers
             Solicitud solicitud = new Solicitud();
             solicitud = await _solicitudService.GetSolicitud((long)filtros.IdSolicitud);
 
-            var datos = (await _solicitudService.GetAllDetalleSolicitudAPA((long)filtros.IdSolicitud))
+            var datos = (await _solicitudService.GetAllDetalleSolicitudAPACodigo((long)filtros.IdSolicitud))
                         .Where(d => d.IdAnulacion == 67 || d.IdAnulacion == 0 || d.IdAnulacion is null);
 
             // Configuración para EPPlus
@@ -811,7 +827,7 @@ namespace PROY.Controllers
         public async Task<IActionResult> ExportarGuatenominas([FromBody] FiltrosReportesDTO filtros)
         {
             // Datos de ejemplo
-            var datos = (await _solicitudService.GetAllDetalleSolicitudAPA((long)filtros.IdSolicitud))
+            var datos = (await _solicitudService.GetAllDetalleSolicitudAPACodigo((long)filtros.IdSolicitud))
                         .Where(d => d.IdAnulacion == 67 || d.IdAnulacion == 0 || d.IdAnulacion is null);
 
             // Crear contenido del archivo TXT

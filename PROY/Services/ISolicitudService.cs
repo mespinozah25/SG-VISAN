@@ -14,6 +14,7 @@ namespace PROY.Services
         Task ActualizarEstadoEgreso(Int64 idSolicitud, int nuevoEstado);
         Task<List<DetalleSolicitud>> GetAllDetalleSolicitud(Int64 id);
         Task<List<DetalleSolicitudAPA>> GetAllDetalleSolicitudAPA(Int64 id);
+        Task<List<DetalleSolicitudAPA>> GetAllDetalleSolicitudAPACodigo(Int64 id);
         List<SelectListItem> GetComunidades(Int64 id);
         List<SelectListItem> GetComunidadesAPA(Int64 id);
         Task<Solicitud> GetSolicitud(Int64 id);

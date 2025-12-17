@@ -161,6 +161,14 @@ namespace PROY.Services
 
             return listado;
         }
+
+        public async Task<List<DetalleSolicitudAPA>> GetAllDetalleSolicitudAPACodigo(long id)
+        {
+            List<DetalleSolicitudAPA> listado = await _solicitudRepository.GetAllDetalleSolicitudAPACodigo(id);
+
+            return listado;
+        }
+
         public async Task<Solicitud> GetSolicitud(long id)
         {
             Solicitud solicitud_encontrada = await _solicitudRepository.GetSolicitud(id);
