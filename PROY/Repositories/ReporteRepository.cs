@@ -490,9 +490,24 @@ namespace PROY.Repositories
                 query = query.Where(x => x.solicitud.FechaRegistro <= filtros.FechaFin.Value);
             }
 
-            var listado = query.ToList<object>();
+            var resultado = query
+                .GroupBy(x => new
+                {
+                    Departamento = x.departamento.Descripcion,
+                    Municipio = x.municipio.Descripcion,
+                })
+                .Select(g => new
+                {
+                    Departamento = g.Key.Departamento,
+                    Municipio = g.Key.Municipio,
+                    CantidadComunidades = g.Select(x => x.arv.Comunidad).Distinct().Count(),
+                    TotalRaciones = g.Sum(x => x.solicitud.Raciones)
+                })
+                .OrderBy(x => x.Departamento)
+                .ThenBy(x => x.Municipio)
+                .ToList();
 
-            return listado;
+            return resultado.Cast<dynamic>().ToList();
         }
 
         #endregion
@@ -1301,41 +1316,77 @@ namespace PROY.Repositories
                                             <th colspan='3' style='border: 1px #000 solid; color: #000; text-align: center;'>Raciones Entregadas</th>
                                         </tr>";
 
-                    foreach (var obj in datos)
-                    {
-                        tbody += "<tr>";
+                                        // Variables para cálculos 
+                    int contador = 1; 
+                    int totalGeneralComunidades = 0; 
+                    int totalGeneralRaciones = 0; 
+                    string departamentoActual = ""; 
+                    int subtotalDepartamentoComunidades = 0; 
+                    int subtotalDepartamentoRaciones = 0; 
+                    bool primerRegistro = true; 
+ 
+                    foreach (dynamic item in datos) 
+                    { 
+                        var ObjDepartamento = item.Departamento ?? ""; 
+                        var ObjMunicipio = item.Municipio?? ""; 
+                        var objComunidad = item.CantidadComunidades ?? 0; 
+                        var objRaciones = item.TotalRaciones ?? 0; 
+                        // Si cambia el departamento y no es el primero 
+                        if (!string.IsNullOrEmpty(departamentoActual) && departamentoActual != ObjDepartamento) 
+                        { 
+                            // Agregar subtotal del departamento anterior 
+                            tbody += @" 
+                                <tr style='background: #BDD7EE;'> 
+                                    <td colspan='6' style='border: 1px #000 solid; color: #000; text-align: center; style='background: #BDD7EE;'>TOTAL</td> 
+                                    <td style='border: 1px #000 solid; color: #000; text-align: center; style='background: #BDD7EE;'>" + subtotalDepartamentoComunidades + @"</td> 
+                                    <td colspan='2' style='border: 1px #000 solid; color: #000; text-align: center; style='background: #BDD7EE;'>" + subtotalDepartamentoRaciones + @"</td> 
+                                </tr>"; 
+ 
+                            // Reiniciar subtotales 
+                            subtotalDepartamentoComunidades = 0; 
+                            subtotalDepartamentoRaciones = 0; 
+                        } 
+ 
+                        // Actualizar departamento actual 
+                        departamentoActual = ObjDepartamento; 
+ 
+                        // Fila de datos 
+                        tbody += @" 
+                            <tr> 
+                                <td colspan='4' style='border: 1px #000 solid; color: #000; text-align: center;'>" + ObjDepartamento + @"</td> 
+                                <td colspan='2' style='border: 1px #000 solid; color: #000; text-align: center;'>" + ObjMunicipio + @"</td> 
+                                <td style='border: 1px #000 solid; color: #000; text-align: center;'>" + objComunidad + @"</td> 
+                                <td colspan='2' style='border: 1px #000 solid; color: #000; text-align: center;'>" + objRaciones + @"</td> 
+                            </tr>"; 
+ 
+                        // Acumular subtotales 
+                        subtotalDepartamentoComunidades += objComunidad; 
+                        subtotalDepartamentoRaciones += objRaciones; 
+ 
+                        // Acumular totales generales 
+                        totalGeneralComunidades += objComunidad; 
+                        totalGeneralRaciones += objRaciones; 
+                    } 
+ 
+                    // Agregar subtotal del último departamento 
+                    if (datos.Count > 0) 
+                    { 
+                        tbody += @" 
+                        <tr style='background: #BDD7EE;'> 
+                            <td colspan='6' style='border: 1px #000 solid; color: #000; text-align: center; style='background: #BDD7EE;'>TOTAL</td> 
+                            <td style='border: 1px #000 solid; color: #000; text-align: center; style='background: #BDD7EE;'>" + subtotalDepartamentoComunidades + @"</td> 
+                            <td colspan='2' style='border: 1px #000 solid; color: #000; text-align: center; style='background: #BDD7EE;'>" + subtotalDepartamentoRaciones + @"</td> 
+                        </tr>"; 
+                    } 
+ 
+                    // Agregar total general 
+                    tbody += @" 
+                        <tr style='background: #BDD7EE;'> 
+                            <td colspan='6' style='border: 1px #000 solid; color: #000; text-align: center; style='background: #BDD7EE;'>TOTAL GENERAL</td> 
+                            <td style='border: 1px #000 solid; color: #000; text-align: center; style='background: #BDD7EE;'>" + totalGeneralComunidades + @"</td> 
+                            <td colspan='2' style='border: 1px #000 solid; color: #000; text-align: center; style='background: #BDD7EE;'>" + totalGeneralRaciones + @"</td> 
+                        </tr>"; 
 
-                        var fechaValue = obj.GetType().GetProperty("FechaRegistro").GetValue(obj, null);
-                        string fechaFormateada = "";
-
-                        if (fechaValue != null)
-                        {
-                            if (fechaValue is DateTime fecha)
-                            {
-                                fechaFormateada = fecha.ToString("dd/MM/yyyy");
-                            }
-                            else
-                            {
-                                fechaFormateada = fechaValue.ToString();
-                            }
-                        }
-
-                        tbody += "<td style='border: 1px solid black; color: black; background: #BDD7EE; text-align: center;'>" + nInicial + "</td>";
-                        tbody += "<td style='border: 1px solid black; color: black; text-align: center;'>" + fechaFormateada + "</td>";
-                        tbody += "<td style='border: 1px solid black; color: black; text-align: center;'>" + (string)obj.GetType().GetProperty("DepartamentoNombre").GetValue(obj, null) + "</td>";
-                        tbody += "<td style='border: 1px solid black; color: black; text-align: center;'>" + (string)obj.GetType().GetProperty("MunicipioNombre").GetValue(obj, null) + "</td>";
-                        tbody += "<td style='border: 1px solid black; color: black; text-align: center;'>" + (string)obj.GetType().GetProperty("Comunidad").GetValue(obj, null) + "</td>";
-
-                        tbody += "<td style='border: 1px solid black; color: black; text-align: center;'>" + obj.GetType().GetProperty("Raciones").GetValue(obj, null) + "</td>";
-                        tbody += "<td style='border: 1px solid black; color: black; text-align: center;'>" + (string)obj.GetType().GetProperty("ProyectoNombre").GetValue(obj, null) + "</td>";
-
-                        tbody += "<td style='border: 1px solid black; color: black; text-align: center;'>" + obj.GetType().GetProperty("EstadoNombre").GetValue(obj, null) + "</td>";
-                        tbody += "<td style='border: 1px solid black; color: black; text-align: center;'>" + obj.GetType().GetProperty("TecnicoObservaciones").GetValue(obj, null) + "</td>";
-
-                        tbody += "</tr>";
-
-                        nInicial++;
-                    }
 
                     body = string.Format(body, tbody);
 
