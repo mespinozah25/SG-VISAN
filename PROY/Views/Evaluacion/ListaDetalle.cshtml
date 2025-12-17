@@ -1754,7 +1754,7 @@ else if (condicion == "2")
                             <label for="file">Selecciona archivo txt:</label>
                             <div class="row">
                                 <div class="col-10">
-                                    <input type="file" name="fileExcelAnulacion" id="fileExcelAnulacion" class="form-control" />
+                                    <input type="file" name="fileTxtGuatenominas" id="fileTxtGuatenominas" class="form-control" />
                                 </div>
                                 <div class="col-2">
                                     <button type="button" class="btn btn-primary" onclick="cargarValidacionGuatenominasAPA(document.getElementById('hiddenSolicitudId').value)">Depurar Renap</button>
@@ -2700,6 +2700,41 @@ else if (condicion == "2")
             },
             error: function () {
                 alert("Error al cargar el archivo Excel.");
+            }
+        });
+    }
+
+    function cargarValidacionGuatenominasAPA(paramID) {
+        event.preventDefault();
+        
+        // Crear un FormData con el archivo seleccionado
+        var formData = new FormData();
+        var fileInput = $("#fileTxtGuatenominas")[0].files[0]; // Cambiado a fileTxtRenap
+        
+        // Validar que sea un archivo .txt
+        if (!fileInput.name.toLowerCase().endsWith('.txt')) {
+            alert("Por favor, seleccione un archivo .txt");
+            return;
+        }
+        
+        formData.append("fileTxt", fileInput); // Cambiado a fileTxt
+
+        // Enviar el archivo al servidor mediante AJAX
+        $.ajax({
+            url: `@ViewData["rutaApp"]/Evaluacion/cargarValidacionGuatenominasAPA?k=2&id=${paramID}`,
+            type: "POST",
+            data: formData,
+            contentType: false,
+            processData: false,
+            success: function (data) {
+                // Mostrar resultados si es necesario
+                console.log(data);
+                alert("Archivo procesado exitosamente");
+                location.reload();
+            },
+            error: function (xhr, status, error) {
+                console.error("Error:", error);
+                alert("Error al cargar el archivo txt: " + error);
             }
         });
     }

@@ -1497,6 +1497,91 @@ namespace PROY.Controllers
                 return Unauthorized(); // Si el claim no existe o el valor no coincide
             }
         }
+
+
+        public async Task<IActionResult> cargarValidacionGuatenominasAPA(IFormFile fileTxt, Int64 id)
+        {
+            var depto = User.FindFirst("depto")?.Value;
+            var rol = User.FindFirst(ClaimTypes.Role)?.Value;
+            var valorK = HttpContext?.Request.Query["k"].ToString();
+            bool tieneValorK = !string.IsNullOrEmpty(valorK);
+            var condicion = "";
+
+            if ((depto == "DAAN" && rol != "Admin") || (tieneValorK && valorK == "1" && rol == "Admin"))
+                condicion = "1";
+            else if ((depto == "DAPA" && rol != "Admin") || (tieneValorK && valorK == "2" && rol == "Admin"))
+                condicion = "2";
+
+            if (condicion != "2")
+            {
+                return Unauthorized();
+            }
+
+            if (fileTxt == null || fileTxt.Length == 0)
+            {
+                return BadRequest("Archivo no válido");
+            }
+
+            // Opcional: Validar que sea archivo txt
+            var extension = Path.GetExtension(fileTxt.FileName).ToLower();
+            if (extension != ".txt")
+            {
+                return BadRequest("Solo se permiten archivos .txt");
+            }
+
+            // Lista para almacenar los datos leídos
+            var excelData = new List<Models.ExcelRowAPA>();
+
+            using (var stream = new MemoryStream())
+            {
+                await fileTxt.CopyToAsync(stream);
+                stream.Position = 0; // Resetear la posición del stream
+
+                // Leer el archivo como texto
+                using (var reader = new StreamReader(stream))
+                {
+                    string line;
+                    int row = 0;
+
+                    while ((line = await reader.ReadLineAsync()) != null)
+                    {
+                        row++;
+                        if (string.IsNullOrWhiteSpace(line))
+                            continue;
+
+                        // Dividir la línea por el pipe '|'
+                        var columns = line.Split('|');
+
+                        // Verificar que tenga al menos 2 columnas (CUI en la columna 2 según tu estructura)
+                        if (columns.Length < 2)
+                            continue;
+
+                        var cui = columns[0].Trim(); // Columna 2 es el CUI
+
+                        // Buscar el detalle por CUI
+                        DetalleSolicitudAPA detInfo = await _solicitudService.GetDetalleSolicitudByCUIAPA(id, cui);
+
+                        if (detInfo != null)
+                        {
+                            try
+                            {
+                                // Verificar si es difunto (columna 10 según tu comentario)
+                                detInfo.IdAnulacion = 66;
+                                await _solicitudService.UpdateDetalleSolicitudAPA(detInfo);
+                            }
+                            catch (Exception ex)
+                            {
+                                // Log del error si es necesario
+                                Console.WriteLine($"Error procesando línea {row}: {ex.Message}");
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Devolver los datos procesados
+            return Json(excelData);
+        }
     }
 
 
