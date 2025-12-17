@@ -24,5 +24,18 @@ namespace PROY.Repositories
                 .CountAsync();
             return total;
         }
+
+        public async Task<int> EliminarRegistrosSolicitud(int IdSolicitud)
+        {
+            int total = await _dbContext.DetalleSolicitudAPA
+                .Where(
+                    ds => ds.Restrictiva == 0 &&
+                    ds.IdSolicitud == IdSolicitud
+                )
+                .ExecuteUpdateAsync(setter => setter
+                    .SetProperty(p => p.Restrictiva, 1) 
+                );
+            return total;
+        }
     }
 }

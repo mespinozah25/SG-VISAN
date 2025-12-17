@@ -1,6 +1,15 @@
 @inject IHttpContextAccessor HttpContextAccessor
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
 
+<style>
+    .required-asterisk {
+        color: #dc3545;
+        display: inline;
+        margin-left: 2px;
+        font-weight: bold;
+    }
+</style>
+
 @model PROY.ViewModels.SolicitudesVM
 
 @{
@@ -33,7 +42,7 @@
         </div>
         <div class="row m-3">
             <div class="col-md-4">
-                <label for="txtNoSolicitud" class="control-label">No. Solicitud</label>
+                <label for="txtNoSolicitud" class="control-label">No. Solicitud<span class="required-asterisk">*</span></label>
                 <input asp-for="@Model.Solicitud!.Correlativo" type="text" id="txtNoSolicitud" class="form-control" />
                 <span asp-validation-for="@Model.Solicitud!.Correlativo" class="text-danger"></span>
             </div>
@@ -60,7 +69,7 @@
                 <span asp-validation-for="@Model.Solicitud!.Municipio" class="text-danger"></span>
             </div>
             <div class="col-md-4">
-                <label for="txtComunidad" class="control-label">Comunidad</label>
+                <label for="txtComunidad" class="control-label">Comunidad<span class="required-asterisk">*</span></label>
                 <input type="text" class="form-control" id="txtComunidad" asp-for="@Model.Solicitud!.Comunidad" required></input>
                 <span asp-validation-for="@Model.Solicitud!.Comunidad" class="text-danger"></span>
             </div>
@@ -89,19 +98,36 @@
         </div>
         <div class="row m-3">
             <div class="col-md-4">
-                <label for="txtNombreCocode" class="control-label">Nombre COCODE</label>
+                <label for="txtNombreCocode" class="control-label">Nombre COCODE<span class="required-asterisk">*</span></label>
                 <input type="text" class="form-control" id="txtNombreCocode" asp-for="@Model.Solicitud!.NombreCocode" required maxlength="100"></input>
                 <span asp-validation-for="@Model.Solicitud!.NombreCocode" class="text-danger"></span>
             </div>
             <div class="col-md-4">
-                <label for="txtComunidadCocode" class="control-label">Comunidad COCODE</label>
+                <label for="txtComunidadCocode" class="control-label">Comunidad COCODE<span class="required-asterisk">*</span></label>
                 <input type="text" class="form-control" id="txtComunidadCocode" asp-for="@Model.Solicitud!.ComunidadCocode" required maxlength="150"></input>
                 <span asp-validation-for="@Model.Solicitud!.ComunidadCocode" class="text-danger"></span>
             </div>
             <div class="col-md-4">
-                <label for="txtTelefonoCocode" class="control-label">Teléfono COCODE</label>
+                <label for="txtTelefonoCocode" class="control-label">Teléfono COCODE<span class="required-asterisk">*</span></label>
                 <input type="text" class="form-control" id="txtTelefonoCocode" asp-for="@Model.Solicitud!.TelefonoCocode" required maxlength="10"></input>
                 <span asp-validation-for="@Model.Solicitud!.TelefonoCocode" class="text-danger"></span>
+            </div>
+        </div>
+        <div class="row m-3">
+            <div class="col-md-12">
+                <label for="oldfile" class="control-label">Medio de verificación actual</label>
+                <input asp-for="@Model.Solicitud!.Archivo" type="text" id="oldfile" class="form-control" disabled />
+            </div>
+            <div class="col-md-12">
+                <div class="form-group">
+                    <label for="file">Medio de verificación:</label>
+                    <input type="file" name="file" id="file" class="form-control" 
+                            accept=".pdf,
+                                    application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,
+                                    application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,
+                                    application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,
+                                    image/jpeg,image/png,image/gif,image/bmp" />
+                </div>
             </div>
         </div>
         <div class="row m-3">
@@ -124,3 +150,49 @@
 }
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+
+<script>
+
+    $(document).ready(function () {
+        const queryString = window.location.search; 
+        
+        const urlParams = new URLSearchParams(queryString); 
+
+        if(urlParams.get("IdSolicitud") == null) cambio();
+    });
+
+    function cambio() {
+        //var opcionSeleccionada = $(this).val();
+        var opcionSeleccionada = $('#cbDepartamento').val();
+        //console.log('Opción seleccionada:', opcionSeleccionada);
+        //alert(opcionSeleccionada);
+        var catalogoSelect = $('#cbMunicipio');
+        catalogoSelect.empty(); // Limpiar el select antes de agregar nuevas opciones
+
+        $.ajax({
+            url: `@ViewData["rutaApp"]/Solicitud/GetOrdenDepto/${opcionSeleccionada}`, // URL para obtener los datos
+            type: 'GET',
+            success: function (data) {
+                var orden = data;
+                //alert(orden);
+
+                //console.log('Cargando intervenciones para DAAN');
+                $.getJSON('@Url.Action("GetMunicipios", "Solicitud")', { id: orden },
+
+                    function (data) {
+                        //console.log('Datos devueltos:', data);
+                        var items = data.value.value;
+                        $.each(items, function (index, item) {
+                            catalogoSelect.append('<option value="' + item.id + '">' + item.descripcion + '</option>');
+                        });
+                    });
+
+            },
+            error: function (xhr, status, error) {
+                console.error('Error al obtener los datos de la solicitud:', error);
+            }
+        });
+    }
+
+</script>

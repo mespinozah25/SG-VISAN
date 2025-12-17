@@ -11,16 +11,13 @@ namespace PROY.Services
         private readonly IAsignaRacionService _asignaRacionService;
         private readonly IConfiguration _configuration;
 
-        private readonly IUsuarioService _usuarioService;
-
-        public SolicitudV2Service(ISolicitudV2Repository SolicitudV2Repository, IDetalleSolicitudAPARepository DetalleSolicitudAPARepository, IDetalleEvaluacionAPARepository DetalleEvaluacionAPARepository, IAsignaRacionService AsignaRacionService, IConfiguration Configuration, IUsuarioService usuarioService)
+        public SolicitudV2Service(ISolicitudV2Repository SolicitudV2Repository, IDetalleSolicitudAPARepository DetalleSolicitudAPARepository, IDetalleEvaluacionAPARepository DetalleEvaluacionAPARepository, IAsignaRacionService AsignaRacionService, IConfiguration Configuration)
         {
             _solicitudV2Repository = SolicitudV2Repository;
             _detalleSolicitudAPARepository = DetalleSolicitudAPARepository;
             _detalleEvaluacionAPARepository = DetalleEvaluacionAPARepository;
             _asignaRacionService = AsignaRacionService;
             _configuration = Configuration;
-            _usuarioService = usuarioService;
         }
 
         public async Task<List<Solicitud>> ObtenerSolicitudesSegunEstado(int IdEstado, int IdDepartamento, int Rechazada)
@@ -221,6 +218,11 @@ namespace PROY.Services
             {
                 return $"Error al actualizada solicitud: {ex}";
             }
+        }
+
+        public async Task<int> EliminarRegistrosSolicitud(int IdSolicitud)
+        {
+            return await _detalleSolicitudAPARepository.EliminarRegistrosSolicitud(IdSolicitud);
         }
 
         public async Task<List<Solicitud>> ObtenerSolicitudesConFiltros(int idEstado, int idDepto, int? idDepartamento = null, int? idMunicipio = null, DateTime? fechaInicio = null, DateTime? fechaFin = null, int rechazada = 0)
