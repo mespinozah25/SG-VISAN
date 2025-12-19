@@ -148,6 +148,12 @@ namespace PROY.Services
 
         //-----------------------------------------------------------------
 
+        public async Task<List<DetalleSolicitudAPA>> GetAllDetalleSolicitudSinFiltro()
+        {
+            List<DetalleSolicitudAPA> listado = await _solicitudRepository.GetAllDetalleSolicitudSinFiltro();
+
+            return listado;
+        }
         public async Task<List<DetalleSolicitud>> GetAllDetalleSolicitud(long id)
         {
             List<DetalleSolicitud> listado = await _solicitudRepository.GetAllDetalleSolicitud(id);
@@ -175,6 +181,7 @@ namespace PROY.Services
 
             return solicitud_encontrada;
         }
+
 
         public async Task<DetalleSolicitud> GetDetalleSolicitud(long id)
         {
@@ -508,7 +515,7 @@ namespace PROY.Services
             return response;
         }
 
-        public async Task<ServiceResponse<DetalleSolicitud>> SaveListaDetalleSolicitudxIntervencion(List<ExcelRowDinamic> datos,int IdInteraccion)
+        public async Task<ServiceResponse<DetalleSolicitud>> SaveListaDetalleSolicitudxIntervencion(List<ExcelRowDinamic> datos, int IdInteraccion)
         {
             var response = new ServiceResponse<DetalleSolicitud>();
 
@@ -523,7 +530,7 @@ namespace PROY.Services
 
 
                     await _solicitudRepository.SaveDetalleSolicitud(detSolicitud);
-                    
+
                     response.Data = detSolicitud;
                     response.Success = true;
                     response.Message = "Detalle Solicitud creado exitosamente";
@@ -747,7 +754,7 @@ namespace PROY.Services
                         NombreCompletoPersona2 = dato.Columna6,
                         CuiPersona2 = dato.Columna7,
                         EdadPersona2 = short.TryParse(dato.Columna8, out var ep2) ? ep2 : 0,
-                        
+
                         GeneroPersona2 = dato.Columna9,
 
                         IdDepartamento = await catalogo.GetDepartamento(dato.Columna10),
@@ -860,7 +867,7 @@ namespace PROY.Services
                         string apellido2 = dato.GetType().GetProperty($"Columna{baseCol + 4}")?.GetValue(dato)?.ToString();
                         string cui = dato.GetType().GetProperty($"Columna{baseCol + 5}")?.GetValue(dato)?.ToString();
                         string fechaNacimiento = dato.GetType().GetProperty($"Columna{baseCol + 6}")?.GetValue(dato)?.ToString();
-                        
+
                         if (!string.IsNullOrWhiteSpace(nombre1) || !string.IsNullOrWhiteSpace(apellido1))
                         {
                             listaNinos.Add(new Nino
@@ -1578,7 +1585,7 @@ namespace PROY.Services
         public async Task<int?> GetIntervencionBySolicitudId(Int64? idSolicitud)
         {
             var idintervencion = await _solicitudRepository.GetIntervencionBySolicitudId(idSolicitud);
-        return idintervencion;
+            return idintervencion;
         }
 
         //public Task<ServiceResponse<DetalleSolicitud>> SaveListaDetalleSolicitud(List<Services.ExcelRow> datos)

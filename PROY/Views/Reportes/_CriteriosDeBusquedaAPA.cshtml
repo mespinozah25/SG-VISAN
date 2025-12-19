@@ -5,6 +5,16 @@
             <div class="row">
                 <form id="_frmBusqueda">
                     <div class="row">
+                        <div class="col-3" id="divConvenio" style="display:none;">
+                            <label for="cbConvenio" class="control-label">Convenio</label>
+                            <select class="form-select" id="cbIdConvenio" name="IdConvenio"
+                                asp-items="ViewBag.Programas">
+                                @foreach (var convenio in ViewBag.Convenios)
+                                {
+                                    <option value="@convenio.Value">Convenio @convenio.Text</option>
+                                }
+                            </select>
+                        </div>
                         <div class="col-3" id="divNoSolicitud" style="display:none;">
                             <label for="txtNoSolicitud" class="control-label">No. Solicitud</label>
                             <input type="text" class="form-control" id="txtNoSolicitud" name="NoSolicitud">

@@ -408,6 +408,68 @@ namespace PROY.Repositories
                         join e in _dbContext.EstadoSolicitud on s.IdEstadoSolicitud equals e.IdEstadoSolicitud into estadoJoin
                         from estado in estadoJoin.DefaultIfEmpty()
                         where s.Restrictiva == 0 &&
+                              s.IdEstadoSolicitud == id_estado &&
+                              s.Depto == "2" &&
+                              s.Rechazada == 0
+                        select new
+                        {
+                            // Propiedades de Solicitud
+                            s.IdSolicitud,
+                            s.Codigo,
+                            s.Correlativo,
+                            s.Comunidad,
+                            s.FechaRegistro,
+                            s.Raciones,
+                            s.Departamento,
+                            s.Municipio,
+                            s.Estado,
+                            s.TecnicoObservaciones,
+                            // Nombres de los catálogos
+                            DepartamentoNombre = departamento.Descripcion,
+                            MunicipioNombre = municipio.Descripcion,
+                            // Nombre del estado
+                            EstadoNombre = estado.Nombre,
+                            // Propiedades de Proyecto (si las necesitas)
+                            ProyectoNombre = proyecto.Descripcion
+                        };
+
+            // Aplicar filtros opcionales
+            if (filtros.IdDepartamento.HasValue)
+            {
+                query = query.Where(x => x.Departamento == filtros.IdDepartamento.Value);
+            }
+
+            if (filtros.IdMunicipio.HasValue)
+            {
+                query = query.Where(x => x.Municipio == filtros.IdMunicipio.Value);
+            }
+
+            if (filtros.FechaInicio.HasValue)
+            {
+                query = query.Where(x => x.FechaRegistro >= filtros.FechaInicio.Value);
+            }
+
+            if (filtros.FechaFin.HasValue)
+            {
+                query = query.Where(x => x.FechaRegistro <= filtros.FechaFin.Value);
+            }
+
+            var listado = query.ToList<object>();
+            return listado;
+        }
+
+        public List<dynamic> ReporteAPATotal(FiltrosReportesDTO filtros, int id_estado)
+        {
+            var query = from s in _dbContext.Solicitudes
+                        join d in _dbContext.Catalogos on s.Departamento equals (int?)d.IdCatalogo into departamentoJoin
+                        from departamento in departamentoJoin.DefaultIfEmpty()
+                        join m in _dbContext.Catalogos on s.Municipio equals (int?)m.IdCatalogo into municipioJoin
+                        from municipio in municipioJoin.DefaultIfEmpty()
+                        join p in _dbContext.Catalogos on s.IdProyecto equals (int?)p.IdCatalogo into proyectoJoin
+                        from proyecto in proyectoJoin.DefaultIfEmpty()
+                        join e in _dbContext.EstadoSolicitud on s.IdEstadoSolicitud equals e.IdEstadoSolicitud into estadoJoin
+                        from estado in estadoJoin.DefaultIfEmpty()
+                        where s.Restrictiva == 0 &&
                               s.IdEstadoSolicitud >= id_estado &&
                               s.Depto == "2" &&
                               s.Rechazada == 0
@@ -508,6 +570,128 @@ namespace PROY.Repositories
                 .ToList();
 
             return resultado.Cast<dynamic>().ToList();
+        }
+
+        public List<dynamic> ReporteDespachosAPA(FiltrosReportesDTO filtros)
+        {
+            var query = from arv in _dbContext.AsignaRacionV2
+                        join solicitud in _dbContext.Solicitudes on arv.IdSolicitud equals (int?)solicitud.IdSolicitud
+                        join municipio in _dbContext.Catalogos on arv.IdMunicipio equals (int)municipio.IdCatalogo
+                        join departamento in _dbContext.Catalogos on arv.IdDepartamento equals (int)departamento.IdCatalogo
+                        join atv in _dbContext.AsignaTecnicoV2 on arv.IdSolicitud equals (int?)atv.IdSolicitud
+                        join t in _dbContext.Tecnicos on atv.IdTecnico equals t.IdTecnico
+                        where solicitud.Restrictiva == 0 &&
+                              solicitud.Depto == "2"
+                        select new
+                        {
+                            arv,
+                            solicitud,
+                            municipio,
+                            departamento,
+                            atv,
+                            t
+                        };
+
+            // Aplicar filtros opcionales
+            if (filtros.IdDepartamento.HasValue)
+            {
+                query = query.Where(x => x.arv.IdDepartamento == filtros.IdDepartamento.Value);
+            }
+
+            if (filtros.IdMunicipio.HasValue)
+            {
+                query = query.Where(x => x.arv.IdMunicipio == filtros.IdMunicipio.Value);
+            }
+
+            if (filtros.FechaInicio.HasValue)
+            {
+                query = query.Where(x => x.solicitud.FechaRegistro >= filtros.FechaInicio.Value);
+            }
+
+            if (filtros.FechaFin.HasValue)
+            {
+                query = query.Where(x => x.solicitud.FechaRegistro <= filtros.FechaFin.Value);
+            }
+
+            var resultados = query
+                .Select(x => new ReporteDespacho
+                {
+                    Despacho = x.arv.IdAsignaRacion,
+                    Exp = "EXP-APA-" + x.solicitud.Codigo,
+                    TotalRaciones = x.solicitud.Raciones,
+                    Exp2 = "",
+                    Departamento = x.departamento.Descripcion,
+                    Municipio = x.municipio.Descripcion,
+                    Comunidad = x.arv.Comunidad,
+                    TecnicoResponsable = x.t.Nombre,
+                    Convenio = "",
+                    Estatus = "",
+                    FechaOtorgamiento = x.arv.FechaRegistro,
+                    Observaciones = x.solicitud.TecnicoObservaciones
+                })
+                .ToList();
+
+            return resultados.Cast<dynamic>().ToList();
+        }
+
+        public List<dynamic> ReporteBeneficiariosporConvenio(FiltrosReportesDTO filtros)
+        {
+            var query = from detalle in _dbContext.DetalleSolicitudAPA
+                        join solicitud in _dbContext.Solicitudes on detalle.IdSolicitud equals solicitud.IdSolicitud
+                        join municipio in _dbContext.Catalogos on solicitud.Municipio equals municipio.IdCatalogo
+                        join departamento in _dbContext.Catalogos on solicitud.Departamento equals departamento.IdCatalogo
+                        select new
+                        {
+                            detalle,
+                            solicitud,
+                            municipio,
+                            departamento,
+                        };
+
+            // Aplicar filtros opcionales
+            if (filtros.IdDepartamento.HasValue)
+            {
+                query = query.Where(x => x.solicitud.Departamento == filtros.IdDepartamento.Value);
+            }
+
+            if (filtros.IdMunicipio.HasValue)
+            {
+                query = query.Where(x => x.solicitud.Municipio == filtros.IdMunicipio.Value);
+            }
+
+            if (filtros.FechaInicio.HasValue)
+            {
+                query = query.Where(x => x.solicitud.FechaRegistro >= filtros.FechaInicio.Value);
+            }
+
+            if (filtros.FechaFin.HasValue)
+            {
+                query = query.Where(x => x.solicitud.FechaRegistro <= filtros.FechaFin.Value);
+            }
+
+            var resultados = query
+                .Select(x => new
+                {
+                    Exp = "EXP-APA-" + x.solicitud.Codigo,
+                    CUI = x.detalle.CuiEsposa,
+                    // Nombres completos
+                    PrimerNombre = x.detalle.Nombre1Esposa,
+                    SegundoNombre = x.detalle.Nombre2Esposa,
+                    TercerNombre = x.detalle.Nombre3Esposa,
+                    PrimerApellido = x.detalle.Apellido1Esposa,
+                    SegundoApellido = x.detalle.Apellido2Esposa,
+                    ApellidoCasada = x.detalle.ApellidoCasada,
+                    NombreCompleto = $"{x.detalle.Nombre1Esposa} {x.detalle.Nombre2Esposa} {x.detalle.Nombre3Esposa}",
+                    Apellidos = $"{x.detalle.Apellido1Esposa} {x.detalle.Apellido2Esposa}",
+    
+                    // Ubicación desde catálogos
+                    Departamento = x.departamento.Descripcion,
+                    Municipio = x.municipio.Descripcion,
+                    Comunidad = x.solicitud.Comunidad
+                })
+                .ToList();
+
+            return resultados.Cast<dynamic>().ToList();
         }
 
         #endregion
@@ -1316,40 +1500,40 @@ namespace PROY.Repositories
                                             <th colspan='3' style='border: 1px #000 solid; color: #000; text-align: center;'>Raciones Entregadas</th>
                                         </tr>";
 
-                                        // Variables para cálculos 
-                    int contador = 1; 
-                    int totalGeneralComunidades = 0; 
-                    int totalGeneralRaciones = 0; 
-                    string departamentoActual = ""; 
-                    int subtotalDepartamentoComunidades = 0; 
-                    int subtotalDepartamentoRaciones = 0; 
-                    bool primerRegistro = true; 
- 
-                    foreach (dynamic item in datos) 
-                    { 
-                        var ObjDepartamento = item.Departamento ?? ""; 
-                        var ObjMunicipio = item.Municipio?? ""; 
-                        var objComunidad = item.CantidadComunidades ?? 0; 
-                        var objRaciones = item.TotalRaciones ?? 0; 
+                    // Variables para cálculos 
+                    int contador = 1;
+                    int totalGeneralComunidades = 0;
+                    int totalGeneralRaciones = 0;
+                    string departamentoActual = "";
+                    int subtotalDepartamentoComunidades = 0;
+                    int subtotalDepartamentoRaciones = 0;
+                    bool primerRegistro = true;
+
+                    foreach (dynamic item in datos)
+                    {
+                        var ObjDepartamento = item.Departamento ?? "";
+                        var ObjMunicipio = item.Municipio ?? "";
+                        var objComunidad = item.CantidadComunidades ?? 0;
+                        var objRaciones = item.TotalRaciones ?? 0;
                         // Si cambia el departamento y no es el primero 
-                        if (!string.IsNullOrEmpty(departamentoActual) && departamentoActual != ObjDepartamento) 
-                        { 
+                        if (!string.IsNullOrEmpty(departamentoActual) && departamentoActual != ObjDepartamento)
+                        {
                             // Agregar subtotal del departamento anterior 
                             tbody += @" 
                                 <tr style='background: #BDD7EE;'> 
                                     <td colspan='6' style='border: 1px #000 solid; color: #000; text-align: center; style='background: #BDD7EE;'>TOTAL</td> 
                                     <td style='border: 1px #000 solid; color: #000; text-align: center; style='background: #BDD7EE;'>" + subtotalDepartamentoComunidades + @"</td> 
                                     <td colspan='2' style='border: 1px #000 solid; color: #000; text-align: center; style='background: #BDD7EE;'>" + subtotalDepartamentoRaciones + @"</td> 
-                                </tr>"; 
- 
+                                </tr>";
+
                             // Reiniciar subtotales 
-                            subtotalDepartamentoComunidades = 0; 
-                            subtotalDepartamentoRaciones = 0; 
-                        } 
- 
+                            subtotalDepartamentoComunidades = 0;
+                            subtotalDepartamentoRaciones = 0;
+                        }
+
                         // Actualizar departamento actual 
-                        departamentoActual = ObjDepartamento; 
- 
+                        departamentoActual = ObjDepartamento;
+
                         // Fila de datos 
                         tbody += @" 
                             <tr> 
@@ -1357,42 +1541,42 @@ namespace PROY.Repositories
                                 <td colspan='2' style='border: 1px #000 solid; color: #000; text-align: center;'>" + ObjMunicipio + @"</td> 
                                 <td style='border: 1px #000 solid; color: #000; text-align: center;'>" + objComunidad + @"</td> 
                                 <td colspan='2' style='border: 1px #000 solid; color: #000; text-align: center;'>" + objRaciones + @"</td> 
-                            </tr>"; 
- 
+                            </tr>";
+
                         // Acumular subtotales 
-                        subtotalDepartamentoComunidades += objComunidad; 
-                        subtotalDepartamentoRaciones += objRaciones; 
- 
+                        subtotalDepartamentoComunidades += objComunidad;
+                        subtotalDepartamentoRaciones += objRaciones;
+
                         // Acumular totales generales 
-                        totalGeneralComunidades += objComunidad; 
-                        totalGeneralRaciones += objRaciones; 
-                    } 
- 
+                        totalGeneralComunidades += objComunidad;
+                        totalGeneralRaciones += objRaciones;
+                    }
+
                     // Agregar subtotal del último departamento 
-                    if (datos.Count > 0) 
-                    { 
+                    if (datos.Count > 0)
+                    {
                         tbody += @" 
                         <tr style='background: #BDD7EE;'> 
                             <td colspan='6' style='border: 1px #000 solid; color: #000; text-align: center; style='background: #BDD7EE;'>TOTAL</td> 
                             <td style='border: 1px #000 solid; color: #000; text-align: center; style='background: #BDD7EE;'>" + subtotalDepartamentoComunidades + @"</td> 
                             <td colspan='2' style='border: 1px #000 solid; color: #000; text-align: center; style='background: #BDD7EE;'>" + subtotalDepartamentoRaciones + @"</td> 
-                        </tr>"; 
-                    } 
- 
+                        </tr>";
+                    }
+
                     // Agregar total general 
                     tbody += @" 
                         <tr style='background: #BDD7EE;'> 
                             <td colspan='6' style='border: 1px #000 solid; color: #000; text-align: center; style='background: #BDD7EE;'>TOTAL GENERAL</td> 
                             <td style='border: 1px #000 solid; color: #000; text-align: center; style='background: #BDD7EE;'>" + totalGeneralComunidades + @"</td> 
                             <td colspan='2' style='border: 1px #000 solid; color: #000; text-align: center; style='background: #BDD7EE;'>" + totalGeneralRaciones + @"</td> 
-                        </tr>"; 
+                        </tr>";
 
 
                     body = string.Format(body, tbody);
 
                     break;
                 case (int)TipoReporteEnum.Despachos_APA:
-                    datos = ReporteAPA(filtros, 6);
+                    datos = ReporteDespachosAPA(filtros);
 
                     int anioActual = DateTime.Now.Year;
 
@@ -1410,41 +1594,33 @@ namespace PROY.Repositories
                                     <th style='text-align: center;' colspan='7'><h3 style='color: black; text-align: center; font-size: 13px;'>Departamento de Alimentos por Acciones</h3></th>
                                 </tr>
                                  <tr style='background: #BDD7EE;'>
-                                    <th style='text-align:center ' colspan='7'><h3 style='color: black; text-align: center; font-size: 13px;'>EJECUCIÓN " + anioActual + @"</h3></th>
+                                    <th style='text-align:center ' colspan='7'><h3 style='color: black; text-align: center; font-size: 13px;'>DESPACHOS " + anioActual + @"</h3></th>
                                 </tr>
                                 <tr style='background: #BDD7EE;'>
                                     <th colspan='9' style='height: 10px;'></th>
                                 </tr>";
 
-                    foreach (var obj in datos)
+                    tbody += @"
+                                        <tr style='background: #BDD7EE;'>
+                                            <th style='border: 1px #000 solid; color: #000; text-align: center;'>DEPARTAMENTO</th>
+                                            <th style='border: 1px #000 solid; color: #000; text-align: center;'>MUNICIPIO</th>
+                                            <th style='border: 1px #000 solid; color: #000; text-align: center;'>COMUNIDAD</th>
+                                            <th style='border: 1px #000 solid; color: #000; text-align: center;'>EXPEDIENTE</th>
+                                            <th style='border: 1px #000 solid; color: #000; text-align: center;'>RACIONES</th>
+                                            <th style='border: 1px #000 solid; color: #000; text-align: center;'>NO DESPACHO</th>
+                                            <th style='border: 1px #000 solid; color: #000; text-align: center;'>TECNICO RESPONSABLE</th>
+                                        </tr>";
+
+                    foreach (dynamic item in datos)
                     {
                         tbody += "<tr>";
-
-                        var fechaValue = obj.GetType().GetProperty("FechaRegistro").GetValue(obj, null);
-                        string fechaFormateada = "";
-
-                        if (fechaValue != null)
-                        {
-                            if (fechaValue is DateTime fecha)
-                            {
-                                fechaFormateada = fecha.ToString("dd/MM/yyyy");
-                            }
-                            else
-                            {
-                                fechaFormateada = fechaValue.ToString();
-                            }
-                        }
-
-                        tbody += "<td style='border: 1px solid black; color: black;'>" + nInicial + "</td>";
-                        tbody += "<td style='border: 1px solid black; color: black;'>" + (string)obj.GetType().GetProperty("Codigo").GetValue(obj, null) + "</td>";
-                        tbody += "<td style='border: 1px solid black; color: black;'>" + (string)obj.GetType().GetProperty("Correlativo").GetValue(obj, null) + "</td>";
-                        tbody += "<td style='border: 1px solid black; color: black;'>" + (string)obj.GetType().GetProperty("DepartamentoNombre").GetValue(obj, null) + "</td>";
-                        tbody += "<td style='border: 1px solid black; color: black;'>" + (string)obj.GetType().GetProperty("MunicipioNombre").GetValue(obj, null) + "</td>";
-                        tbody += "<td style='border: 1px solid black; color: black;'>" + (string)obj.GetType().GetProperty("Comunidad").GetValue(obj, null) + "</td>";
-                        tbody += "<td style='border: 1px solid black; color: black;'>" + fechaFormateada + "</td>";
-                        tbody += "<td style='border: 1px solid black; color: black;'>" + obj.GetType().GetProperty("Raciones").GetValue(obj, null) + "</td>";
-                        tbody += "<td style='border: 1px solid black; color: black;'>" + obj.GetType().GetProperty("TecnicoObservaciones").GetValue(obj, null) + "</td>";
-
+                        tbody += "<td style='border: 1px solid black; color: black;'>" + item.Departamento + "</td>";
+                        tbody += "<td style='border: 1px solid black; color: black;'>" + item.Municipio + "</td>";
+                        tbody += "<td style='border: 1px solid black; color: black;'>" + item.Comunidad + "</td>";
+                        tbody += "<td style='border: 1px solid black; color: black;'>" + item.Exp + "</td>";
+                        tbody += "<td style='border: 1px solid black; color: black;'>" + item.TotalRaciones + "</td>";
+                        tbody += "<td style='border: 1px solid black; color: black;'>" + item.Despacho + "</td>";
+                        tbody += "<td style='border: 1px solid black; color: black;'>" + item.TecnicoResponsable + "</td>";
                         tbody += "</tr>";
 
                         nInicial++;
@@ -1454,7 +1630,7 @@ namespace PROY.Repositories
 
                     break;
                 case (int)TipoReporteEnum.Procesos_APA:
-                    datos = ReporteAPA(filtros, 1);
+                    datos = ReporteAPATotal(filtros, 1);
 
                     tbody += @" 
                                 <tr>
@@ -1530,6 +1706,70 @@ namespace PROY.Repositories
                     body = string.Format(body, tbody);
                     break;
                 case (int)TipoReporteEnum.Beneficiarios_APA:
+                    datos = ReporteBeneficiariosporConvenio(filtros);
+
+                    tbody += @" 
+                                <tr>
+                                    <th style='color: white; font-size: 10px' colspan='7'> 65-12-8-1-4-97 del 01-4-1997 No. Correlativo 1052-2022 de fecha 08-12-2022 Envío Fiscal 4-ASCC 20754 de fecha 08-12-2022 del 001 al 5.000 (5.000) Sin Serie Ediciones Santillana Nit.: 763296-3 Libro 4-ASCC Folio 37 No de Cuenta 2022-100-101-18-329 </th>                                </tr>
+                                <tr style='background: #BDD7EE;'>
+                                    <th style='width: 150px; color: black; text-align:center; font-weight: bold;' rowspan='4'>" + MinisterioLogoHTML + @"</th>
+                                    <th style='text-align:center' colspan='7'><h2 style='color: black; text-align: center; font-size: 15px;'>VICEMINISTERIO DE SEGURIDAD ALIMENTARIA Y NUTRICIONAL -VISAN-MAGA</h3></th>
+                                </tr>
+                                <tr style='background: #BDD7EE;'>
+                                    <th style='color: black; text-align: center;' colspan='7'><h3 style='color: black; text-align: center; font-size: 13px;'>DIRECCIÓN DE ASISTENCIA ALIMENTARIA Y NUTRICIONAL</h3></th>
+                                </tr>
+                                 <tr style='background: #BDD7EE;'>
+                                    <th style='text-align: center;' colspan='7'><h3 style='color: black; text-align: center; font-size: 13px;'>DEPARTAMENTO DE ALIMENTOS POR ACCIONES</h3></th>
+                                </tr>
+                                 <tr style='background: #BDD7EE;'>
+                                    <th style='text-align:center ' colspan='7'><h3 style='color: black; text-align: center; font-size: 13px;'>Beneficiarios por Convvenios " + DateTime.Now.Year + @"</h3></th>
+                                </tr>
+                                <tr style='background: #BDD7EE;'>
+                                    <th colspan='9' style='height: 10px;'></th>
+                                </tr>";
+
+                    tbody += @"
+                                        <tr style='background: #BDD7EE;'>
+                                            <th style='border: 1px #000 solid; color: #000; text-align: center;'>EXP/PROV</th>
+                                            <th style='border: 1px #000 solid; color: #000; text-align: center;'>NO.</th>
+                                            <th style='border: 1px #000 solid; color: #000; text-align: center;'>RACIONES</th>
+                                            <th style='border: 1px #000 solid; color: #000; text-align: center;'>DEPARTAMENTO</th>
+                                            <th style='border: 1px #000 solid; color: #000; text-align: center;'>MUNICIPIO</th>
+                                            <th style='border: 1px #000 solid; color: #000; text-align: center;'>COMUNIDAD</th>
+                                            <th style='border: 1px #000 solid; color: #000; text-align: center;'>CUI</th>
+                                            <th style='border: 1px #000 solid; color: #000; text-align: center;'>PRIMER NOMBRE</th>
+                                            <th style='border: 1px #000 solid; color: #000; text-align: center;'>SEGUNDO NOMBRE</th>
+                                            <th style='border: 1px #000 solid; color: #000; text-align: center;'>TERCER NOMBRE</th>
+                                            <th style='border: 1px #000 solid; color: #000; text-align: center;'>PRIMER APELLIDO</th>
+                                            <th style='border: 1px #000 solid; color: #000; text-align: center;'>SEGUNDO APELLIDO</th>
+                                            <th style='border: 1px #000 solid; color: #000; text-align: center;'>APELLIDO DE CASADA</th>
+                                        </tr>";
+
+
+
+                    foreach (dynamic item in datos)
+                    {
+                        tbody += "<tr>";
+
+                        tbody += "<td style='border: 1px solid black; color: black; text-align: center;'>" + item.Exp + "</td>";
+                        tbody += "<td style='border: 1px solid black; color: black; background: #BDD7EE; text-align: center;'>" + nInicial + "</td>";
+                        tbody += "<td style='border: 1px solid black; color: black; text-align: center;'>" + 1 + "</td>";
+                        tbody += "<td style='border: 1px solid black; color: black; text-align: center;'>" + item.Departamento + "</td>";
+                        tbody += "<td style='border: 1px solid black; color: black; text-align: center;'>" + item.Municipio + "</td>";
+                        tbody += "<td style='border: 1px solid black; color: black; text-align: center;'>" + item.Comunidad + "</td>";
+                        tbody += "<td style='border: 1px solid black; color: black; text-align: center;'>" + item.CUI + "</td>";
+                        tbody += "<td style='border: 1px solid black; color: black; text-align: center;'>" + item.PrimerNombre + "</td>";
+                        tbody += "<td style='border: 1px solid black; color: black; text-align: center;'>" + item.SegundoNombre + "</td>";
+                        tbody += "<td style='border: 1px solid black; color: black; text-align: center;'>" + item.TercerNombre + "</td>";
+                        tbody += "<td style='border: 1px solid black; color: black; text-align: center;'>" + item.PrimerApellido + "</td>";
+                        tbody += "<td style='border: 1px solid black; color: black; text-align: center;'>" + item.SegundoApellido + "</td>";
+                        tbody += "<td style='border: 1px solid black; color: black; text-align: center;'>" + item.ApellidoCasada + "</td>";
+                        tbody += "</tr>";
+
+                        nInicial++;
+                    }
+
+                    body = string.Format(body, tbody);
                     break;
                 default:
                     break;

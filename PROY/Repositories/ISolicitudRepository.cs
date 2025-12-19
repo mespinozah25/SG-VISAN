@@ -7,10 +7,11 @@ namespace PROY.Repositories
     {
         Task<List<Solicitud>> GetAllSolicitudes();
         Task<List<Solicitud>> GetAllSolicitudesAPA();
+        Task<List<DetalleSolicitudAPA>> GetAllDetalleSolicitudSinFiltro();
         Task<List<DetalleSolicitud>> GetAllDetalleSolicitud(Int64 id);
         Task<List<DetalleSolicitudAPA>> GetAllDetalleSolicitudAPA(Int64 id);
         Task<List<DetalleSolicitudAPA>> GetAllDetalleSolicitudAPACodigo(Int64 id);
-        Task<Solicitud> GetSolicitud(Int64 id);        
+        Task<Solicitud> GetSolicitud(Int64 id);      
         Task<DetalleSolicitud> GetDetalleSolicitud(Int64 id);
         Task<DetalleSolicitud> GetDetalleSolicitudByCUI(long id, string paramCUI);
         Task<DetalleSolicitudAPA> GetDetalleSolicitudByCUIAPA(long id, string paramCUI);

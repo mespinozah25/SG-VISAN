@@ -39,6 +39,8 @@ namespace PROY.Controllers
         private readonly ISolicitudV2Service _solicitudV2Service;
         private readonly ISolicitudService _solicitudService;
 
+        private readonly IEstadoSolicitudService _estadoSolicitudService;
+
         public ReportesController(IReporteService reporteService,
                                   IBodegaService bodegaService,
                                   ICatalogoService catalogoService,
@@ -57,7 +59,8 @@ namespace PROY.Controllers
                                   IRacionService racionService,
                                   IEgresoAlimentosService egresoAlimentosService,
                                   ISolicitudV2Service solicitudV2Service,
-                                  ISolicitudService solicitudService)
+                                  ISolicitudService solicitudService,
+                                  IEstadoSolicitudService estadoSolicitudService)
         {
             _reporteService = reporteService;
             _bodegaService = bodegaService;
@@ -78,6 +81,7 @@ namespace PROY.Controllers
             _egresoAlimentosService = egresoAlimentosService;
             _solicitudV2Service = solicitudV2Service;
             _solicitudService = solicitudService;
+            _estadoSolicitudService = estadoSolicitudService;
         }
 
         #endregion
@@ -594,8 +598,8 @@ namespace PROY.Controllers
             var municipios = await _catalogoService.GetCatalogo("MUNICIPIO");
 
             // Preparar SelectLists para la vista
+            ViewBag.Convenios = new SelectList(new List<object>(), "IdCatalogo", "Descripcion");
             ViewBag.Departamentos = new SelectList(departamentos, "IdCatalogo", "Descripcion");
-
             ViewBag.Municipios = new SelectList(municipios, "IdCatalogo", "Descripcion");
 
             return View();
@@ -663,8 +667,8 @@ namespace PROY.Controllers
             var municipios = await _catalogoService.GetCatalogo("MUNICIPIO");
 
             // Preparar SelectLists para la vista
+            ViewBag.Convenios = new SelectList(new List<object>(), "IdCatalogo", "Descripcion");
             ViewBag.Departamentos = new SelectList(departamentos, "IdCatalogo", "Descripcion");
-
             ViewBag.Municipios = new SelectList(municipios, "IdCatalogo", "Descripcion");
 
             return View();
@@ -700,8 +704,8 @@ namespace PROY.Controllers
             var municipios = await _catalogoService.GetCatalogo("MUNICIPIO");
 
             // Preparar SelectLists para la vista
+            ViewBag.Convenios = new SelectList(new List<object>(), "IdCatalogo", "Descripcion");
             ViewBag.Departamentos = new SelectList(departamentos, "IdCatalogo", "Descripcion");
-
             ViewBag.Municipios = new SelectList(municipios, "IdCatalogo", "Descripcion");
             return View();
         }
@@ -709,10 +713,8 @@ namespace PROY.Controllers
         [HttpPost]
         public async Task<IActionResult> BuscarDespachosAPA([FromBody] FiltrosReportesDTO filtros)
         {
-
             try
             {
-
                 // Aquí implementas la lógica de búsqueda con los filtros
                 var resultados = await _solicitudV2Service.ObtenerDespachosAPAConFiltros(
                     idDepartamento: filtros.IdDepartamento, // Este es el filtro opcional
@@ -731,15 +733,53 @@ namespace PROY.Controllers
 
         public async Task<IActionResult> BeneficiariosConveniosAPA()
         {
+            var convenios = (await _convenioService.GetAll()).Where(d => d.Descripcion.Contains("APA"));
             var departamentos = await _catalogoService.GetCatalogo("DEPARTAMENTO");
             var municipios = await _catalogoService.GetCatalogo("MUNICIPIO");
 
-            // Preparar SelectLists para la vista
-            ViewBag.Departamentos = new SelectList(departamentos, "IdCatalogo", "Descripcion");
 
+            // Preparar SelectLists para la vista
+            ViewBag.Convenios = new SelectList(convenios, "IdConvenio", "NombreConvenio");
+            ViewBag.Departamentos = new SelectList(departamentos, "IdCatalogo", "Descripcion");
             ViewBag.Municipios = new SelectList(municipios, "IdCatalogo", "Descripcion");
+
+
             return View();
         }
+
+        [HttpPost]
+        public async Task<IActionResult> BuscarBeneficiariosConveniosAPA([FromBody] FiltrosReportesDTO filtros)
+        {
+            try
+            {
+                var resultados = await _solicitudService.GetAllDetalleSolicitudSinFiltro();
+
+
+                // Obtener catálogos para mapear IDs a nombres
+                var departamentos = await _catalogoService.GetCatalogo("DEPARTAMENTO");
+                var municipios = await _catalogoService.GetCatalogo("MUNICIPIO");
+
+                var resultadosConNombres = resultados.Select(s => new
+                {
+                    CuiEsposa = s.CuiEsposa ?? "",
+                    Nombre1Esposa = s.Nombre1Esposa ?? "",
+                    Nombre2Esposa = s.Nombre2Esposa ?? "",
+                    Nombre3Esposa = s.Nombre3Esposa ?? "",
+                    Apellido1Esposa = s.Apellido1Esposa ?? "",
+                    Apellido2Esposa = s.Apellido2Esposa ?? "",
+                    ApellidoCasada = s.ApellidoCasada ?? "",
+
+                }).ToList();
+
+                // Crear objetos anónimos con nombres en lugar de IDs
+                return Json(new { success = true, data = resultados });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
 
         public async Task<IActionResult> ProcesosAPA()
         {
@@ -747,14 +787,68 @@ namespace PROY.Controllers
             var municipios = await _catalogoService.GetCatalogo("MUNICIPIO");
 
             // Preparar SelectLists para la vista
+            ViewBag.Convenios = new SelectList(new List<object>(), "IdCatalogo", "Descripcion");
             ViewBag.Departamentos = new SelectList(departamentos, "IdCatalogo", "Descripcion");
-
             ViewBag.Municipios = new SelectList(municipios, "IdCatalogo", "Descripcion");
             return View();
         }
 
+
+        [HttpPost]
+        public async Task<IActionResult> BuscarProcesosAPA([FromBody] FiltrosReportesDTO filtros)
+        {
+
+            try
+            {
+                var configuration = HttpContext.RequestServices.GetRequiredService<IConfiguration>();
+
+                // Aquí implementas la lógica de búsqueda con los filtros
+                var resultados = await _solicitudV2Service.ObtenerSolicitudesTotalesConFiltros(
+                    idEstado: 1,
+                    idDepto: 2, // Este es el parámetro fijo
+                    idDepartamento: filtros.IdDepartamento, // Este es el filtro opcional
+                    idMunicipio: filtros.IdMunicipio,
+                    fechaInicio: filtros.FechaInicio,
+                    fechaFin: filtros.FechaFin,
+                    rechazada: 0
+                );
+
+                // Obtener catálogos para mapear IDs a nombres
+                var departamentos = await _catalogoService.GetCatalogo("DEPARTAMENTO");
+                var municipios = await _catalogoService.GetCatalogo("MUNICIPIO");
+                var estadosSolicitud = await _estadoSolicitudService.ObtenerTodos();
+
+                // Crear objetos anónimos con nombres en lugar de IDs
+                var resultadosConNombres = resultados.Select(s => new
+                {
+                    s.IdSolicitud,
+                    s.Codigo,
+                    s.Correlativo,
+                    DepartamentoNombre = departamentos.FirstOrDefault(d => d.IdCatalogo == s.Departamento)?.Descripcion ?? "No especificado",
+                    MunicipioNombre = municipios.FirstOrDefault(m => m.IdCatalogo == s.Municipio)?.Descripcion ?? "No especificado",
+                    s.Comunidad,
+                    FechaRegistro = s.FechaRegistro.ToString("dd/MM/yyyy"),
+                    s.Raciones,
+                    s.Descripcion,
+                    EstadoNombre = estadosSolicitud?.FirstOrDefault(e => e.IdEstadoSolicitud == s.IdEstadoSolicitud)?.Nombre ?? "No especificado",
+                    // Mantener los IDs originales por si los necesitas
+                    DepartamentoId = s.Departamento,
+                    MunicipioId = s.Municipio
+                }).ToList();
+
+
+                return Json(new { success = true, data = resultadosConNombres });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+
         public async Task<IActionResult> RenapAPA()
         {
+            ViewBag.Convenios = new SelectList(new List<object>(), "IdCatalogo", "Descripcion");
             ViewBag.Departamentos = new SelectList(new List<object>(), "IdCatalogo", "Descripcion");
             ViewBag.Municipios = new SelectList(new List<object>(), "IdCatalogo", "Descripcion");
             return View();
@@ -819,6 +913,7 @@ namespace PROY.Controllers
 
         public async Task<IActionResult> GuatenominasAPA()
         {
+            ViewBag.Convenios = new SelectList(new List<object>(), "IdCatalogo", "Descripcion");
             ViewBag.Departamentos = new SelectList(new List<object>(), "IdCatalogo", "Descripcion");
             ViewBag.Municipios = new SelectList(new List<object>(), "IdCatalogo", "Descripcion");
             return View();
@@ -855,6 +950,7 @@ namespace PROY.Controllers
 
         public async Task<IActionResult> PlanillaAPA()
         {
+            ViewBag.Convenios = new SelectList(new List<object>(), "IdCatalogo", "Descripcion");
             ViewBag.Departamentos = new SelectList(new List<object>(), "IdCatalogo", "Descripcion");
             ViewBag.Municipios = new SelectList(new List<object>(), "IdCatalogo", "Descripcion");
             return View();

@@ -50,7 +50,40 @@ namespace PROY.Repositories
         {
             var query = _dbContext.Solicitudes
                 .Where(s => s.Restrictiva == 0 &&
-                           s.IdEstadoSolicitud >= idEstado &&
+                           s.IdEstadoSolicitud == idEstado &&
+                           s.Depto == $"{IdDepto}" && // Aquí usa IdDepto (fijo)
+                           s.Rechazada == rechazada);
+
+            // Aplicar filtros opcionales
+            if (idDepartamento.HasValue)
+            {
+                query = query.Where(s => s.Departamento == idDepartamento); // Aquí usa idDepartamento (filtro)
+            }
+
+            if (idMunicipio.HasValue)
+            {
+                query = query.Where(s => s.Municipio == idMunicipio);
+            }
+
+            if (fechaInicio.HasValue)
+            {
+                query = query.Where(s => s.FechaRegistro >= fechaInicio.Value);
+            }
+
+            if (fechaFin.HasValue)
+            {
+                query = query.Where(s => s.FechaRegistro <= fechaFin.Value);
+            }
+
+            var listado = await query.ToListAsync();
+            return listado;
+        }
+
+        public async Task<List<Solicitud>> ObtenerSolicitudesTotalesConFiltros(int idEstado, int IdDepto, int rechazada = 0, int? idDepartamento = null, int? idMunicipio = null, DateTime? fechaInicio = null, DateTime? fechaFin = null)
+        {
+            var query = _dbContext.Solicitudes
+                .Where(s => s.Restrictiva == 0 &&
+                           s.IdEstadoSolicitud >= 1 &&
                            s.Depto == $"{IdDepto}" && // Aquí usa IdDepto (fijo)
                            s.Rechazada == rechazada);
 
@@ -86,7 +119,7 @@ namespace PROY.Repositories
                         join municipio in _dbContext.Catalogos on arv.IdMunicipio equals (int)municipio.IdCatalogo
                         join departamento in _dbContext.Catalogos on arv.IdDepartamento equals (int)departamento.IdCatalogo
                         where solicitud.Restrictiva == 0 &&
-                              solicitud.IdEstadoSolicitud >= 8 &&
+                              solicitud.IdEstadoSolicitud >= 6 &&
                               solicitud.Depto == "2"
                         select new { arv, solicitud, municipio, departamento };
 
