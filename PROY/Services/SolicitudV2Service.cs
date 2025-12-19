@@ -237,6 +237,18 @@ namespace PROY.Services
                 fechaFin);
         }
 
+        public async Task<List<Solicitud>> ObtenerSolicitudesTotalesConFiltros(int idEstado, int idDepto, int? idDepartamento = null, int? idMunicipio = null, DateTime? fechaInicio = null, DateTime? fechaFin = null, int rechazada = 0)
+        {
+            return await _solicitudV2Repository.ObtenerSolicitudesTotalesConFiltros(
+                idEstado,
+                idDepto,
+                rechazada,
+                idDepartamento,
+                idMunicipio,
+                fechaInicio,
+                fechaFin);
+        }
+
         public async Task<List<ReporteEjecucion>> ObtenerEjecucionesAPAConFiltros(int? idDepartamento = null, int? idMunicipio = null, DateTime? fechaInicio = null, DateTime? fechaFin = null)
         {
             return await _solicitudV2Repository.ObtenerEjecucionesAPAConFiltros(

@@ -89,7 +89,7 @@
             };
             // Llamada AJAX
             $.ajax({
-                url: '@Url.Action("BuscarProgramacionesAPA", "Reportes")',
+                url: '@Url.Action("BuscarProcesosAPA", "Reportes")',
                 type: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify(filtros),
@@ -128,9 +128,10 @@
                                 <tr>
                                     <th>Código</th>
                                     <th>Recibido en APA</th>
+                                    <th>Proceso</th>
                                     <th>Departamento</th>
                                     <th>Municipio</th>
-                                         <th>Comunidad</th>
+                                    <th>Comunidad</th>
                                     <th>Familias Solicitantes</th>
                                 </tr>
                             </thead>`;
@@ -140,6 +141,7 @@
                         <tr>
                             <td>${item.codigo || 'N/A'}</td>
                             <td>${item.fechaRegistroCorta || item.fechaRegistro || 'N/A'}</td>
+                            <td>${item.estadoNombre || 'N/A'}</td>
                             <td>${item.departamentoNombre || 'No especificado'}</td>
                             <td>${item.municipioNombre || 'No especificado'}</td>
                             <td>${item.comunidad || 'No especificado'}</td>

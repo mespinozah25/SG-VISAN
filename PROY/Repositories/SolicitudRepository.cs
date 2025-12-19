@@ -49,6 +49,15 @@ namespace PROY.Repositories
             return listado;
         }
 
+        public async Task<List<DetalleSolicitudAPA>>  GetAllDetalleSolicitudSinFiltro()
+        {
+            //Busca por id de solicitud
+            List<DetalleSolicitudAPA> listado = await _dbContext.DetalleSolicitudAPA
+                                                .Where(ds => ds.Restrictiva == 0 && ds.IdAnulacion == null)
+                                                .ToListAsync();
+            return listado;
+        }
+
         public async Task<List<DetalleSolicitud>> GetAllDetalleSolicitud(long id)
         {
 
@@ -85,6 +94,7 @@ namespace PROY.Repositories
             return solicitud_encontrada;
         }
 
+        
         public async Task<DetalleSolicitud> GetDetalleSolicitud(long id)
         {
             //Busca por id de solicitud
