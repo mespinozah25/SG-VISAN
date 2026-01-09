@@ -49,7 +49,7 @@ namespace PROY.Repositories
             return listado;
         }
 
-        public async Task<List<DetalleSolicitudAPA>>  GetAllDetalleSolicitudSinFiltro()
+        public async Task<List<DetalleSolicitudAPA>> GetAllDetalleSolicitudSinFiltro()
         {
             //Busca por id de solicitud
             List<DetalleSolicitudAPA> listado = await _dbContext.DetalleSolicitudAPA
@@ -78,12 +78,12 @@ namespace PROY.Repositories
         public async Task<List<DetalleSolicitudAPA>> GetAllDetalleSolicitudAPACodigo(long id)
         {
             string correlativo = id.ToString();
-            
+
             var listado = await _dbContext.DetalleSolicitudAPA
                 .Include(d => d.Solicitud)
                 .Where(d => d.Restrictiva == 0 && d.Solicitud.Correlativo == correlativo)
                 .ToListAsync();
-            
+
             return listado;
         }
 
@@ -94,7 +94,7 @@ namespace PROY.Repositories
             return solicitud_encontrada;
         }
 
-        
+
         public async Task<DetalleSolicitud> GetDetalleSolicitud(long id)
         {
             //Busca por id de solicitud
@@ -213,6 +213,16 @@ namespace PROY.Repositories
 
         public async Task<DetalleSolicitudAPA> SaveDetalleSolicitudAPA(DetalleSolicitudAPA modelo)
         {
+            bool existenRegistros = await _dbContext.DetalleSolicitudAPA
+               .AnyAsync(ds => ds.Restrictiva == 0
+                   && ds.CuiEsposa == modelo.CuiEsposa
+                   && ds.IdSolicitud == modelo.IdSolicitud);
+
+            if (existenRegistros)
+            {
+                modelo.IdAnulacion = 64;
+            }
+
             _dbContext.DetalleSolicitudAPA.Add(modelo);
             await _dbContext.SaveChangesAsync();
             return modelo;
