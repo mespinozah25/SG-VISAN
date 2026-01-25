@@ -71,7 +71,9 @@ namespace PROY.Repositories
         {
 
             List<DetalleSolicitudAPA> listado = await _dbContext.DetalleSolicitudAPA.Where(ds => ds.Restrictiva == 0 && ds.IdSolicitud == id)
-                                                                  .ToListAsync();
+                                                                    .OrderBy(ds => ds.Nombre1Esposa)
+                                                                    .ThenBy(ds => ds.Apellido1Esposa)
+                                                                    .ToListAsync();
             return listado;
         }
 

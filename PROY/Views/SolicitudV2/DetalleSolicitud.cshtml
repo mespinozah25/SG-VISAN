@@ -586,281 +586,217 @@
             img.src = url;
         });
     }
-
+    
     async function generacionPlantillasPDF(idSolicitud, nombre, departamento, municipio, comunidad) {
         const magaBase64 = await obtenerImagenBase64('/LogoMAGA.jpg');
         const guatemalaBase64 = await obtenerImagenBase64('/LogoVISAN.png');
 
         const date = new Date();
-        const options = {
-            day: '2-digit',
-            month: 'short',
-            year: '2-digit'
-        };
+        const options = { day: '2-digit', month: 'short', year: '2-digit' };
         const formatter = new Intl.DateTimeFormat('es-ES', options);
         const fecha = formatter.format(date).replace(/\//g, '-').replace(/\./g, '-');
 
         const response = await fetch('/SolicitudV2/GeneracionPlantillas?IdSolicitud=' + idSolicitud);
-        
         if (!response.ok) return;
 
         const beneficiariosData = await response.json();
 
-        let contadorFemenino = 0
-        let contadorMasculino = 0
+        let contadorFemenino = 0;
+        let contadorMasculino = 0;
+        beneficiariosData.forEach(b => b.genero === 'F' ? contadorFemenino++ : contadorMasculino++);
 
-        for(let i = 0 ; i < beneficiariosData.length ; i++){
-            if(beneficiariosData[i].genero == 'F') contadorFemenino++
-            else contadorMasculino++
-        }
-            
+        const chunkArray = (arr, size) => {
+            const chunks = [];
+            for (let i = 0; i < arr.length; i += size) {
+                chunks.push(arr.slice(i, i + size));
+            }
+            return chunks;
+        };
+
+        const beneficiariosSegmentados = chunkArray(beneficiariosData, 10);
 
         const docDefinition = {
             pageSize: 'LETTER',
-            pageMargins: [40, 100, 40, 80],
+            // AJUSTE: Reducido de 360 a 310 para eliminar el espacio vacío
+            pageMargins: [40, 310, 40, 80],
 
-            header: function(currentPage, pageCount, pageSize) {
+            header: function(currentPage, pageCount) {
                 return {
-                    table: {
-                        widths: ['*', '*', '*', 'auto'],
-                        body: [
-                            [
+                    margin: [40, 20, 40, 0],
+                    stack: [
+                        {
+                            table: {
+                                widths: ['auto', '*', 'auto'],
+                                body: [[
+                                    { image: guatemalaBase64, width: 80, height: 40, border: [false, false, false, false] },
+                                    {
+                                        stack: [
+                                            { text: 'MINISTERIO DE AGRICULTURA, GANADERIA Y ALIMENTACIÓN', fontSize: 10, bold: true, alignment: 'center' },
+                                            { text: 'Viceministerio de Seguridad Alimentaria y Nutricional', fontSize: 9, alignment: 'center' },
+                                            { text: 'ALIMENTOS POR ACCIONES', alignment: 'center', bold: true, fontSize: 10, margin: [0, 5, 0, 0] }
+                                        ],
+                                        border: [false, false, false, false]
+                                    },
+                                    {
+                                        stack: [
+                                            { image: magaBase64, width: 40, height: 40, alignment: 'right' },
+                                            { text: `Página ${currentPage} de ${pageCount}`, fontSize: 8, alignment: 'right', margin: [0, 5, 0, 0] }
+                                        ],
+                                        border: [false, false, false, false]
+                                    }
+                                ]]
+                            },
+                            layout: 'noBorders'
+                        },
+                        {
+                            table: {
+                                widths: [150, '*', 150, 'auto'],
+                                body: [[
+                                    { text: 'DESPACHO DE ALMACÉN No. ________', fontSize: 8 },
+                                    { text: '', border: [false, false, false, false] },
+                                    { text: 'FECHA DE IMPRESIÓN:', fontSize: 8 },
+                                    { text: fecha, fontSize: 8, bold: true }
+                                ]]
+                            },
+                            layout: 'noBorders',
+                            margin: [0, 5, 0, 5]
+                        },
+                        {
+                            columns: [
                                 {
+                                    width: '35%',
                                     stack: [
-                                        { image: guatemalaBase64, width: 80, height: 40, alignment: 'left' },
-                                    ],
-                                    width: 'auto',
-                                    border: [false, false, false, false]
+                                        { text: `Departamento: ${departamento}`, fontSize: 8, margin: [0, 1] },
+                                        { text: `Municipio: ${municipio}`, fontSize: 8, margin: [0, 1] },
+                                        { text: `Comunidad: ${comunidad}`, fontSize: 8, margin: [0, 1] },
+                                        { text: 'Fecha de Entrega: _____ / _____ / _______', fontSize: 8, margin: [0, 5, 0, 0] }
+                                    ]
                                 },
                                 {
+                                    width: '25%',
                                     stack: [
-                                        { text: 'MINISTERIO DE AGRICULTURA, GANADERIA Y ALIMENTACION', fontSize: 10, bold: true, alignment: 'center' },
-                                        { text: 'Viceministerio de Seguridad Alimentaria y Nutricional', fontSize: 9, alignment: 'center' },
-                                    ],
-                                    colSpan: 2,
-                                    border: [false, false, false, false]
+                                        { text: 'TIPO DE DISCAPACIDAD:', fontSize: 7, bold: true, margin: [0, 0, 0, 2] },
+                                        { text: '1. NO', fontSize: 7 },
+                                        { text: '2. VER', fontSize: 7 },
+                                        { text: '3. OIR', fontSize: 7 },
+                                        { text: '4. CAMINAR', fontSize: 7 },
+                                        { text: '5. RECORDAR', fontSize: 7 },
+                                        { text: '6. ASEARSE', fontSize: 7 },
+                                        { text: '7. COMUNICARSE', fontSize: 7 }
+                                    ]
                                 },
-                                {},
                                 {
+                                    width: '40%',
                                     stack: [
-                                        { image: magaBase64, width: 40, height: 40, alignment: 'right' },
-                                        { text: `Página ${currentPage}`, fontSize: 8, alignment: 'right', margin: [0, 5, 0, 0] }
-                                    ],
-                                    width: 'auto',
-                                    border: [false, false, false, false]
+                                        { text: 'RACIÓN:', fontSize: 7, bold: true, margin: [0, 0, 0, 2] },
+                                        { text: '• 5 LBS ARROZ / 25 LBS MAÍZ BLANCO', fontSize: 7 },
+                                        { text: '• 1 BOTELLA ACEITE 800 ml', fontSize: 7 },
+                                        { text: '• 10 LBS FRIJOL / 1 BOLSA AZÚCAR 1kg', fontSize: 7 },
+                                        { text: '• 1 KG AVENA / 1 BOLSA SAL 460gr', fontSize: 7 },
+                                        { text: '• 1 BOLSA HARINA MAÍZ Y SOYA 900gr', fontSize: 7 }
+                                    ]
                                 }
                             ]
-                        ]
-                    },
-                    layout: 'noBorders',
-                    margin: [40, 30, 40, 0]
+                        },
+                        {
+                            columns: [
+                                { width: '*', text: '' },
+                                {
+                                    width: 'auto',
+                                    table: {
+                                        widths: [50, 40],
+                                        body: [
+                                            [{ text: 'Hombres:', fontSize: 8, alignment: 'right', border: [false, false, false, false] }, { text: `${contadorMasculino}`, fontSize: 8, alignment: 'center', border: [true, true, true, true] }],
+                                            [{ text: 'Mujeres:', fontSize: 8, alignment: 'right', border: [false, false, false, false] }, { text: `${contadorFemenino}`, fontSize: 8, alignment: 'center', border: [true, true, true, true] }],
+                                            [{ text: 'ETNIA:', fontSize: 8, alignment: 'right', border: [false, false, false, false] }, { text: ``, fontSize: 8, alignment: 'center', border: [true, true, true, true] }]
+                                        ]
+                                    },
+                                    margin: [0, 5, 0, 0]
+                                }
+                            ]
+                        }
+                    ]
                 };
             },
+
             footer: function(currentPage, pageCount) {
                 return {
                     columns: [
                         {
                             stack: [
-                                { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 200, y2: 0, lineWidth: 1, lineColor: '#000000' }], margin: [0, 30, 0, 5] },
-                                { text: 'NOMBRE, FIRMA Y SELLO', alignment: 'center', fontSize: 9, bold: true },
-                                { text: 'PRESIDENTE O REPRESENTANTE LEGAL DEL COCODE', alignment: 'center', fontSize: 8 }
+                                { canvas: [{ type: 'line', x1: 40, y1: 0, x2: 220, y2: 0, lineWidth: 1 }], margin: [0, 20, 0, 5] },
+                                { text: 'NOMBRE, FIRMA Y SELLO - COCODE', alignment: 'center', fontSize: 7, bold: true }
                             ],
-                            width: 'auto',
                             margin: [40, 0, 0, 0]
                         },
-                        { width: '*', text: '' },
                         {
                             stack: [
-                                { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 200, y2: 0, lineWidth: 1, lineColor: '#000000' }], margin: [0, 30, 0, 5] },
-                                { text: 'NOMBRE Y FIRMA', alignment: 'center', fontSize: 9, bold: true },
-                                { text: 'TÉCNICO DEL MAGA', alignment: 'center', fontSize: 8 }
+                                { canvas: [{ type: 'line', x1: 40, y1: 0, x2: 220, y2: 0, lineWidth: 1 }], margin: [0, 20, 0, 5] },
+                                { text: 'NOMBRE Y FIRMA - TÉCNICO MAGA', alignment: 'center', fontSize: 7, bold: true }
                             ],
-                            width: 'auto',
                             margin: [0, 0, 40, 0]
                         }
-                    ],
-                    margin: [0, 0, 0, 30]
+                    ]
                 };
             },
 
-            content: [
-                { text: 'ALIMENTOS POR ACCIONES', alignment: 'center', bold: true, fontSize: 10, margin: [0, 0, 0, 5] },
-                {
-                    table: {
-                        widths: [150, '*', 150, 'auto'],
-                        body: [
-                            [
-                                { text: 'DESPACHO DE ALMACÉN No.', fontSize: 8, border: [false, false, false, false] },
-                                { text: '', border: [false, false, false, false] },
-                                { text: 'FECHA DE IMPRESIÓN:', fontSize: 8, border: [false, false, false, false] },
-                                { text: fecha, fontSize: 8, bold: true, border: [false, false, false, false] }
-                            ]
-                        ]
-                    },
-                    layout: 'noBorders',
-                    margin: [0, 0, 0, 5]
-                },
-                {
-                    table: {
-                        widths: ['*', 'auto'],
-                        body: [
-                            [
-                                { text: 'LISTADO DE BENEFICIARIOS Y CONSTANCIA DE ENTREGA DE ALIMENTOS', alignment: 'center', bold: true, fontSize: 10, colSpan: 2 }, {}
-                            ]
-                        ]
-                    },
-                    layout: 'lightHorizontalLines',
-                    margin: [0, 0, 0, 5]
-                },
-                {
-                    columns: [
+            content: beneficiariosSegmentados.map((chunk, index) => {
+                return {
+                    stack: [
                         {
-                            width: '40%',
-                            stack: [
-                                { text: `Departamento: ${departamento}`, fontSize: 8, margin: [0, 0, 0, 5] },
-                                { text: `Municipio: ${municipio}`, fontSize: 8, margin: [0, 0, 0, 5] },
-                                { text: `Comunidad: ${comunidad}`, fontSize: 8, margin: [0, 0, 0, 5] },
-                                { text: 'Fecha de Entrega: _____ / _____ / _______', fontSize: 8, margin: [0, 10, 0, 0] }
-                            ]
-                        },
-                        {
-                            width: '25%',
-                            stack: [
-                                { text: 'TIPO DE DISCAPACIDAD:', fontSize: 8, bold: true, margin: [0, 0, 0, 5] },
-                                { text: '1. NO', fontSize: 8 },
-                                { text: '2. VER', fontSize: 8 },
-                                { text: '3. OIR', fontSize: 8 },
-                                { text: '4. CAMINAR', fontSize: 8 },
-                                { text: '5. RECORDAR O CONCENTRARSE', fontSize: 8 },
-                                { text: '6. ASEARSE O VESTIRSE', fontSize: 8 },
-                                { text: '7. COMUNICARSE', fontSize: 8 }
-                            ],
-                            margin: [10, 0, 0, 0]
-                        },
-                        {
-                            width: '35%',
-                            stack: [
-                                { text: 'RACIÓN:', fontSize: 8, bold: true, margin: [0, 0, 0, 5] },
-                                { text: '5 LIBRAS DE ARROZ', fontSize: 8 },
-                                { text: '25 LIBRAS DE MAIZ BLANCO', fontSize: 8 },
-                                { text: '1 BOTELLA DE ACEITE 800 ml', fontSize: 8 },
-                                { text: '10 LIBRAS DE FRIJOL', fontSize: 8 },
-                                { text: '1 BOLSA DE AZUCAR DE 1000 gr', fontSize: 8 },
-                                { text: '1 KILOGRAMO DE HOJUELA DE AVENA', fontSize: 8 },
-                                { text: '1 BOLSA DE SAL YODADA DE 460 gr', fontSize: 8 },
-                                { text: '1 BOLSA DE MEZCLA DE HARINA DE MAIZ Y SOYA FORTIFICADA DE 900 gr', fontSize: 8 },
-                            ],
-                            margin: [10, 0, 0, 0]
+                            style: 'mainTableStyle',
+                            table: {
+                                headerRows: 1,
+                                widths: [20, '*', 90, 30, 40, 40, 100],
+                                body: buildBeneficiariesTable(chunk, index)
+                            },
+                            layout: {
+                                hLineWidth: (i, node) => 0.5,
+                                vLineWidth: (i, node) => 0.5,
+                                paddingTop: (i) => (i === 0 ? 1 : 1),
+                                paddingBottom: (i) => (i === 0 ? 4 : 12),
+                            }
                         }
                     ],
-                    margin: [0, 0, 0, 10]
-                },
-                {
-                    table: {
-                        widths: ['*', 'auto'],
-                        body: [
-                            [
-                                { text: 'Hombres:', fontSize: 8, alignment: 'right', border: [false, false, true, false], padding: [0, 0, 5, 0] },
-                                { text: `${contadorMasculino}`, fontSize: 8, alignment: 'right', border: [true, true, true, true], padding: [0, 0, 5, 0] }
-                            ],
-                            [
-                                { text: 'Mujeres:', fontSize: 8, alignment: 'right', border: [false, false, true, false], padding: [0, 0, 5, 0] },
-                                { text: `${contadorFemenino}`, fontSize: 8, alignment: 'right', border: [true, true, true, true], padding: [0, 0, 5, 0] }
-                            ],
-                            [
-                                { text: 'ETNIA:', fontSize: 8, alignment: 'right', border: [false, false, true, false], padding: [0, 0, 5, 0] },
-                                { text: '', fontSize: 8, alignment: 'right', border: [true, true, true, true], padding: [0, 0, 5, 0] }
-                            ]
-                        ]
-                    },
-                    layout: 'noBorders',
-                    margin: [0, 0, 0, 0]
-                },
-                {
-                    style: 'mainTableStyle',
-                    table: {
-                        headerRows: 1,
-                        dontBreakRows: true,
-                        keepWithHeaderRows: 1,
-                        widths: [20, '*', 100, 30, 50, 50, '*'],
-                        body: buildBeneficiariesTable(beneficiariosData)
-                    },
-                    layout: {
-                        hLineWidth: function(i, node) { return (i === 0 || i === node.table.body.length) ? 1 : 0.5; },
-                        vLineWidth: function(i, node) { return (i === 0 || i === node.table.widths.length) ? 1 : 0.5; },
-                        hLineColor: function(i, node) { return (i === 0 || i === node.table.body.length) ? 'black' : 'gray'; },
-                        vLineColor: function(i, node) { return (i === 0 || i === node.table.widths.length) ? 'black' : 'gray'; },
-                        paddingLeft: function(i, node) { return 4; },
-                        paddingRight: function(i, node) { return 4; },
-                        paddingTop: function(i, node) { return 2; },
-                        paddingBottom: function(i, node) { return 2; },
-                    }
-                }
-            ],
+                    pageBreak: (index < beneficiariosSegmentados.length - 1) ? 'after' : null
+                };
+            }),
+
             styles: {
-                header: {
-                    fontSize: 18,
-                    bold: true,
-                    margin: [0, 0, 0, 10]
-                },
-                subheader: {
-                    fontSize: 12,
-                    margin: [0, 2, 0, 15]
-                },
-                mainTableStyle: {
-                    margin: [0, 0, 0, 0]
-                },
-                tableHeader: {
-                    bold: true,
-                    fontSize: 8,
-                    color: 'black',
-                    alignment: 'center',
-                    fillColor: '#EEEEEE'
-                },
-                tableCell: {
-                    fontSize: 8,
-                    color: 'black',
-                    alignment: 'left'
-                },
-                centerCell: {
-                    fontSize: 8,
-                    color: 'black',
-                    alignment: 'center'
-                }
-            },
-            defaultStyle: {}
+                tableHeader: { bold: true, fontSize: 8, alignment: 'center', fillColor: '#EEEEEE' },
+                tableCell: { fontSize: 8 },
+                centerCell: { fontSize: 8, alignment: 'center' }
+            }
         };
 
-        function buildBeneficiariesTable(data) {
-            const body = [];
-
-            body.push([
+        function buildBeneficiariesTable(data, index) {
+            const body = [[
                 { text: 'No.', style: 'tableHeader' },
                 { text: 'NOMBRE DEL BENEFICIARIO', style: 'tableHeader' },
                 { text: 'CUI', style: 'tableHeader' },
                 { text: 'EDAD', style: 'tableHeader' },
-                { text: 'RACIONES\nRECIBIDAS', style: 'tableHeader' },
-                { text: 'COD.\nDISCAPACIDAD', style: 'tableHeader' },
+                { text: 'RAC.', style: 'tableHeader' },
+                { text: 'DISC.', style: 'tableHeader' },
                 { text: 'FIRMA O HUELLA DIGITAL', style: 'tableHeader' }
-            ]);
+            ]];
 
-            data.forEach(item => {
+            data.forEach((item, i) => {
                 body.push([
-                    { text: `${item.idDetalleSolicitud || ''}`, style: 'centerCell' },
-                    { text: `${item.nombre1Esposa || ''} ${item.nombre2Esposa || ''} ${item.nombre3Esposa || ''} ${item.apellido1Esposa || ''} ${item.apellido2Esposa || ''} ${item.apellidoCasada || ''}`, style: 'tableCell' },
+                    { text: `${(i + 1) + ((index || 0) * 10)}`, style: 'centerCell' },
+                    { text: `${item.nombre1Esposa || ''} ${item.apellido1Esposa || ''}`, style: 'tableCell' },
                     { text: `${item.cuiEsposa || ''}`, style: 'centerCell' },
-                    { text: ``, style: 'centerCell' },
-                    { text: `1`, style: 'centerCell' },
-                    { text: ``, style: 'centerCell' },
-                    { text: ``, style: 'centerCell' }
+                    { text: '', style: 'centerCell' },
+                    { text: '1', style: 'centerCell' },
+                    { text: '', style: 'centerCell' },
+                    { text: '', style: 'centerCell' }
                 ]);
             });
-
             return body;
         }
 
         pdfMake.createPdf(docDefinition).download(`${nombre}.pdf`);
     }
+
 
     document.getElementById('formActualizarRaciones').addEventListener('submit', function(e) {
         e.preventDefault();
