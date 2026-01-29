@@ -2088,7 +2088,35 @@ else if (condicion == "2")
     }
 
     function cargarINFO_APA() {
-        //alert('ENTRO');
+        var fileInput = $("#fileExcel")[0].files[0];
+    
+        if (!fileInput) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Archivo requerido',
+                text: 'Por favor, seleccione un archivo Excel para cargar.',
+                confirmButtonText: 'Aceptar',
+                confirmButtonColor: '#3085d6'
+            });
+            return; // Detener la ejecución
+        }
+
+        var nombreArchivo = fileInput.name.toLowerCase();
+        
+        // Validar que sea un archivo Excel
+        var extensionesValidas = ['.xlsx', '.xls', '.csv'];
+        var esArchivoValido = extensionesValidas.some(ext => nombreArchivo.endsWith(ext));
+        
+        if (!esArchivoValido) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Tipo de archivo no válido',
+                text: 'Por favor, seleccione un archivo Excel (.xlsx, .xls)',
+                confirmButtonText: 'Aceptar',
+                confirmButtonColor: '#d33'
+            });
+            return;
+        }
 
         var table = $('#excelDataTableAPA').DataTable();
 
@@ -2125,8 +2153,31 @@ else if (condicion == "2")
                     //$("#excelDataTable tbody").append(rowHtml);
                 });
             },
-            error: function () {
-                alert("Error al cargar el archivo Excel.");
+            error: function (xhr, status, error) {
+                var errorMessage = "Error al cargar el archivo Excel.";
+                if (xhr.responseText) {
+                    try {
+                        var response = JSON.parse(xhr.responseText);
+                        if (response && response.Mensaje) {
+                            errorMessage = response.Mensaje;
+                        } else if (response && typeof response === 'string') {
+                            errorMessage = response;
+                        }
+                    } catch (e) {
+                        errorMessage = xhr.responseText;
+                    }
+                }
+                
+                listoAPA();
+
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error en el archivo Excel',
+                    html: errorMessage,
+                    confirmButtonText: 'Aceptar',
+                    confirmButtonColor: '#d33',
+                    width: '600px'
+                });
             },
             complete: function (){
                 listoAPA();

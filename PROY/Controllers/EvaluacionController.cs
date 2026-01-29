@@ -1371,7 +1371,9 @@ namespace PROY.Controllers
                 stream.Position = 0;
 
                 // Descargar archivo
-                var nombreArchivo = "ConsultaCUIRenap.xlsx";
+                var fecha = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                var nombreArchivo = $"ConsultaCUIRenap.{fecha}.xlsx";
+
                 return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", nombreArchivo);
             }
         }
@@ -1401,7 +1403,9 @@ namespace PROY.Controllers
             stream.Position = 0;
 
             // Descargar archivo
-            var nombreArchivo = "ConsultaCUIGuatenominas.txt";
+            var fecha = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+            var nombreArchivo = $"ConsultaCUIGuatenominas.{fecha}.txt";
+
             return File(stream, "text/plain", nombreArchivo);
         }
 

@@ -2318,6 +2318,23 @@ else if (condicion=="2")
             return; // Detener la ejecución
         }
 
+        var nombreArchivo = fileInput.name.toLowerCase();
+        
+        // Validar que sea un archivo Excel
+        var extensionesValidas = ['.xlsx', '.xls', '.csv'];
+        var esArchivoValido = extensionesValidas.some(ext => nombreArchivo.endsWith(ext));
+        
+        if (!esArchivoValido) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Tipo de archivo no válido',
+                text: 'Por favor, seleccione un archivo Excel (.xlsx, .xls)',
+                confirmButtonText: 'Aceptar',
+                confirmButtonColor: '#d33'
+            });
+            return;
+        }
+
         var table = $('#excelDataTableAPA').DataTable();
 
         event.preventDefault();
@@ -2367,6 +2384,8 @@ else if (condicion=="2")
                     }
                 }
                 
+                listoAPA();
+
                 Swal.fire({
                     icon: 'error',
                     title: 'Error en el archivo Excel',
@@ -2375,6 +2394,8 @@ else if (condicion=="2")
                     confirmButtonColor: '#d33',
                     width: '600px'
                 });
+
+                
             },
             complete: function () {
                 listoAPA();

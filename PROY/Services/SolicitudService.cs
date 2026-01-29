@@ -957,8 +957,6 @@ namespace PROY.Services
                         Genero = dato.Columna9,
                         GrupoEtnico = await _catalogoRepository.GetItemCatalogo(dato.Columna10, "GRUPO ETNICO"),
 
-                        IdAnulacion = dato.Columna8.Trim().Length != 13 ? 67 : null,
-
                         Restrictiva = 0,
                         Estado = "CREADO"
                     };
