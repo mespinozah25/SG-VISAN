@@ -599,7 +599,9 @@
         const response = await fetch('/SolicitudV2/GeneracionPlantillas?IdSolicitud=' + idSolicitud);
         if (!response.ok) return;
 
-        const beneficiariosData = await response.json();
+        let beneficiariosData = await response.json();
+
+        beneficiariosData = beneficiariosData.filter(beneficiario => beneficiario.idAnulacion == null);
 
         let contadorFemenino = 0;
         let contadorMasculino = 0;
@@ -781,9 +783,20 @@
             ]];
 
             data.forEach((item, i) => {
+                let nombreCompleto = [
+                    item.nombre1Esposa,
+                    item.nombre2Esposa,
+                    item.nombre3Esposa,
+                    item.apellido1Esposa,
+                    item.apellido2Esposa,
+                    item.apellidoCasada
+                ]
+                .filter(Boolean)
+                .join(' ');
+
                 body.push([
                     { text: `${(i + 1) + ((index || 0) * 10)}`, style: 'centerCell' },
-                    { text: `${item.nombre1Esposa || ''} ${item.apellido1Esposa || ''}`, style: 'tableCell' },
+                    { text: `${nombreCompleto}`, style: 'tableCell' },
                     { text: `${item.cuiEsposa || ''}`, style: 'centerCell' },
                     { text: '', style: 'centerCell' },
                     { text: '1', style: 'centerCell' },
