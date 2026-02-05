@@ -69,7 +69,22 @@
                 xhrFields: {
                     responseType: 'blob' // IMPORTANTE: Para manejar archivos binarios
                 },
+                 beforeSend: function() {
+                    // Mostrar loader mientras se genera el archivo
+                    Swal.fire({
+                        title: 'Generando archivo...',
+                        text: 'Por favor espere',
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+                },
                 success: function (data, status, xhr) {
+                    // Cerrar loader
+                    Swal.close();
+
                     // Ocultar loading
                     $('#tablaResultados').html('');
 
@@ -106,22 +121,20 @@
 
                 },
                 error: function (xhr, status, error) {
-                    console.error('Error en AJAX:', error);
-
-                    // Intentar leer respuesta JSON si hay error
-                    if (xhr.responseText) {
-                        try {
-                            var errorResponse = JSON.parse(xhr.responseText);
-                            
-                        } catch (e) {
-                     
-                        }
-                    } else {
-
-                    }
-
-                    $('#tablaResultados').html('<p class="text-danger">Error al generar el reporte</p>');
-                }
+                    // Cerrar loader
+                    Swal.close();
+                    
+                    var errorMessage = 'Sin datos';
+                    var errorDetails = '';
+                    
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Sin datos para la solicitud',
+                        text: 'No hay beneficiarios cargados a la solicitud',
+                        confirmButtonText: 'Aceptar',
+                        confirmButtonColor: '#d33'
+                    });
+                },
             });
 
             return false;

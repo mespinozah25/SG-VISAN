@@ -11,6 +11,9 @@ using System.Security.Claims;
 using System.Text;
 using System.IO;
 using ExcelRow = PROY.Models.ExcelRow;
+using NPOI.HSSF.UserModel;
+using System.Globalization;
+using System.Text;
 
 namespace PROY.Controllers
 {
@@ -1320,72 +1323,94 @@ namespace PROY.Controllers
 
         public async Task<IActionResult> ExportarExcelRENAP(Int64? idSolicitud)
         {
-            // Datos de ejemplo
-
-            Solicitud solicitud = new Solicitud();
-            solicitud = await _solicitudService.GetSolicitud((long)idSolicitud);
+            Solicitud solicitud = await _solicitudService.GetSolicitud((long)idSolicitud);
 
             var datos = (await _solicitudService.GetAllDetalleSolicitudAPA((long)idSolicitud))
                         .Where(d => d.IdAnulacion == 67 || d.IdAnulacion == 0 || d.IdAnulacion is null);
 
-            // Configuración para EPPlus
-            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+            var paramDepto = await _catalogoService.GetCatalogo(solicitud.Departamento ?? 0);
 
-            using (var package = new ExcelPackage())
+            var departamento = System.Text.RegularExpressions.Regex.Replace(
+                            paramDepto.Descripcion ?? string.Empty,
+                            @"\s+",
+                            "_"
+                        );
+
+            var anio = solicitud.FechaIngresoDespacho.Year;
+
+
+            var comunidad = System.Text.RegularExpressions.Regex.Replace(
+                solicitud.Comunidad ?? string.Empty,
+                @"\s+",
+                "_"
+            );
+
+            using (var workbook = new NPOI.HSSF.UserModel.HSSFWorkbook())
             {
-                var hoja = package.Workbook.Worksheets.Add("CONSULTAS");
+                var hoja = workbook.CreateSheet("CONSULTAS");
 
-                // Encabezados                                
-                hoja.Cells[1, 1].Value = "CUI";
-                hoja.Cells[1, 2].Value = "Referencia";
+                // Crear estilo para encabezados
+                var estiloEncabezado = workbook.CreateCellStyle();
+                var fuente = workbook.CreateFont();
+                fuente.IsBold = true;
+                estiloEncabezado.SetFont(fuente);
 
-                // Aplicar estilo al encabezado
-                using (var rango = hoja.Cells[1, 1, 1, 2])
-                {
-                    rango.Style.Font.Bold = true;
-                    rango.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                    rango.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.White);
-                }
+                // Encabezados
+                var filaEncabezado = hoja.CreateRow(0);
+                filaEncabezado.CreateCell(0).SetCellValue("CUI");
+                filaEncabezado.CreateCell(1).SetCellValue("Referencia");
+
+                // Aplicar estilo
+                filaEncabezado.GetCell(0).CellStyle = estiloEncabezado;
+                filaEncabezado.GetCell(1).CellStyle = estiloEncabezado;
 
                 // Llenar datos
-                int fila = 2;
+                int fila = 1;
                 foreach (var ii in datos)
                 {
-                    //var paramDepto = await _catalogoService.GetCatalogo(ii.IdDepartamento);
-                    //var paramMuni = await _catalogoService.GetCatalogo(ii.IdMunicipio);
-                    //var paramEstadoCivil = await _catalogoService.GetCatalogo(ii.EstadoCivil);
                     var paramGrupoEtnico = await _catalogoService.GetCatalogo(ii.GrupoEtnico);
 
-                    hoja.Cells[fila, 1].Value = ii.CuiEsposa;
-                    hoja.Cells[fila, 2].Value = "EXP-APA-" + solicitud.Codigo;
+                    var filaActual = hoja.CreateRow(fila);
+                    filaActual.CreateCell(0).SetCellValue(ii.CuiEsposa?.ToString() ?? "");
+                    filaActual.CreateCell(1).SetCellValue($"EXP-APA-{solicitud.Codigo}-{anio}_{departamento}_{comunidad}");
 
                     fila++;
                 }
 
-                // Autoajustar columnas
-                hoja.Cells[hoja.Dimension.Address].AutoFitColumns();
+                // Establecer ancho de columnas manualmente
+                hoja.SetColumnWidth(0, 20 * 256); // Columna CUI - 20 caracteres
+                hoja.SetColumnWidth(1, 40 * 256); // Columna Referencia - 40 caracteres
 
-                // Generar archivo Excel
+                // GENERAR ARCHIVO 
                 var stream = new MemoryStream();
-                package.SaveAs(stream);
+                workbook.Write(stream);
                 stream.Position = 0;
 
-                // Descargar archivo
                 var fecha = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-                var nombreArchivo = $"ConsultaCUIRenap.{fecha}.xlsx";
+                var nombreArchivo = $"EXP-APA-{solicitud.Codigo}-{anio}_{departamento}_{comunidad}_{fecha}.xls";
 
-                return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", nombreArchivo);
+                // El stream será manejado automáticamente por File() de ASP.NET Core
+                return File(stream, "application/vnd.ms-excel", nombreArchivo);
             }
         }
 
         public async Task<IActionResult> ExportarGuatenominas(Int64? idSolicitud)
         {
+            Solicitud solicitud = await _solicitudService.GetSolicitud((long)idSolicitud);
             // Datos de ejemplo
             var datos = (await _solicitudService.GetAllDetalleSolicitudAPA((long)idSolicitud))
                         .Where(d => d.IdAnulacion == 67 || d.IdAnulacion == 0 || d.IdAnulacion is null);
 
             // Crear contenido del archivo TXT
             var contenidoTxt = new StringBuilder();
+
+            var paramDepto = await _catalogoService.GetCatalogo(solicitud.Departamento ?? 0);
+
+            var departamento = CleanText(paramDepto.Descripcion ?? "");
+            var comunidad = CleanText(solicitud.Comunidad ?? "");
+
+            var anio = solicitud.FechaIngresoDespacho.Year;
+
 
             // Llenar datos
             foreach (var ii in datos)
@@ -1404,17 +1429,37 @@ namespace PROY.Controllers
 
             // Descargar archivo
             var fecha = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-            var nombreArchivo = $"ConsultaCUIGuatenominas.{fecha}.txt";
+
+            var nombreArchivo = $"EXP-APA-{solicitud.Codigo}-{anio}_{departamento}_{comunidad}_{fecha}.txt";
 
             return File(stream, "text/plain", nombreArchivo);
+        }
+
+        private string CleanText(string input)
+        {
+            if (string.IsNullOrWhiteSpace(input))
+                return string.Empty;
+
+            // Eliminar tildes
+            var normalized = input.Normalize(NormalizationForm.FormD);
+            var withoutDiacritics = new string(
+                normalized.Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+                          .ToArray()
+            ).Normalize(NormalizationForm.FormC);
+
+            // Reemplazar espacios y limpiar
+            return System.Text.RegularExpressions.Regex.Replace(
+                withoutDiacritics,
+                @"[^\w]+",
+                "_"
+            ).Trim('_');
         }
 
         //Carga Masiva Anulacion
         [HttpPost]
         public async Task<IActionResult> cargarValidacionRenapAPA(IFormFile fileExcel, Int64 id)
         {
-            //SolicitudesVM nuevo = new SolicitudesVM();
-            //List<DetalleSolicitud> listDet = new List<DetalleSolicitud>();
+
             var depto = User.FindFirst("depto")?.Value;
             var rol = User.FindFirst(ClaimTypes.Role)?.Value;
 
@@ -1427,81 +1472,304 @@ namespace PROY.Controllers
             else if ((depto == "DAPA" && rol != "Admin") || (tieneValorK && valorK == "2" && rol == "Admin"))
                 condicion = "2";
 
-            if (condicion == "2")
+            if (condicion != "2")
             {
-                if (fileExcel != null && fileExcel.Length > 0)
+                return Unauthorized();
+            }
+
+            if (fileExcel == null || fileExcel.Length == 0)
+            {
+                return BadRequest("Archivo no válido o vacío");
+            }
+
+            // Validar extensión del archivo
+            var extension = Path.GetExtension(fileExcel.FileName).ToLower();
+
+            if (extension != ".xls" && extension != ".xlsx")
+            {
+                return BadRequest("Formato de archivo no válido. Solo se aceptan .xls o .xlsx");
+            }
+
+            try
+            {
+                ProcesamientoResultado resultado;
+
+                if (extension == ".xlsx")
                 {
-                    // Lista para almacenar los datos leídos
-                    var excelData = new List<Models.ExcelRowAPA>();
+                    resultado = await ProcesarArchivoXlsx(fileExcel, id);
+                }
+                else // .xls
+                {
+                    resultado = await ProcesarArchivoXls(fileExcel, id);
+                }
 
-                    using (var stream = new MemoryStream())
+                return Json(new
+                {
+                    estadisticas = new
                     {
-                        fileExcel.CopyTo(stream);
-                        // Establecer el contexto de la licencia antes de usar EPPlus
-                        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+                        totalDifuntosEnArchivo = resultado.TotalDifuntosEnArchivo,
+                        cuisDifuntosEncontrados = resultado.CuisDifuntosEncontrados,
+                        cuisDifuntosNoEncontrados = resultado.CuisDifuntosNoEncontrados,
+                        totalRegistrosProcesados = resultado.TotalRegistrosProcesados,
+                        // Estadísticas de la segunda hoja
 
-                        // Usar EPPlus para leer el archivo Excel
-                        using (var package = new ExcelPackage(stream))
+                        totalCUISinInfo = resultado.TotalCUISinInfo,
+                        cuisEncontradosSinInfo = resultado.CuisEncontradosSinInfo,
+                        cuisNoEncontradosSinInfo = resultado.CuisNoEncontradosSinInfo
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error al procesar el archivo: {ex.Message}");
+            }
+        }
+
+        public class ProcesamientoResultado
+        {
+            public List<ExcelRowAPA> ExcelData { get; set; } = new List<ExcelRowAPA>();
+            public List<ExcelRowAPA> ExcelDataSegundaHoja { get; set; } = new List<ExcelRowAPA>();
+            public int TotalDifuntosEnArchivo { get; set; }
+            public int CuisDifuntosEncontrados { get; set; }
+            public int CuisDifuntosNoEncontrados { get; set; }
+            public int TotalRegistrosProcesados { get; set; }
+            // Estadísticas para la segunda hoja
+            public int TotalCUISinInfo { get; set; }
+            public int CuisEncontradosSinInfo { get; set; }
+            public int CuisNoEncontradosSinInfo { get; set; }
+        }
+
+        private async Task<ProcesamientoResultado> ProcesarArchivoXlsx(IFormFile fileExcel, long id)
+        {
+            var resultado = new ProcesamientoResultado();
+
+            using (var stream = new MemoryStream())
+            {
+                await fileExcel.CopyToAsync(stream);
+                stream.Position = 0;
+
+                ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
+                using (var package = new ExcelPackage(stream))
+                {
+                    // Procesar PRIMERA HOJA (difuntos)
+                    if (package.Workbook.Worksheets.Count > 0)
+                    {
+                        var worksheet = package.Workbook.Worksheets[0];
+                        var rowCount = worksheet.Dimension?.Rows ?? 0;
+                        resultado.TotalRegistrosProcesados = rowCount - 1; // Restar encabezados
+
+                        for (int row = 2; row <= rowCount; row++)
                         {
-                            var worksheet = package.Workbook.Worksheets[0]; // Tomamos la primera hoja
-                            var rowCount = worksheet.Dimension.Rows;        // Número de filas
-                            var colCount = worksheet.Dimension.Columns;     // Número de columnas
+                            string cuiValue = worksheet.Cells[row, 2]?.Text ?? "";
+                            string difuntoValue = worksheet.Cells[row, 10]?.Text ?? "";
 
-                            // Leer filas y columnas de la hoja de cálculo
-                            for (int row = 2; row <= rowCount; row++) // Empezar en la fila 2 si hay encabezados
+                            // Contar difuntos en el archivo
+                            if (difuntoValue.ToUpper() == "SI")
                             {
-                                DetalleSolicitudAPA detInfo = _solicitudService.GetDetalleSolicitudByCUIAPA(id, worksheet.Cells[row, 2].Text).Result;
-                                if (detInfo != null)
+                                resultado.TotalDifuntosEnArchivo++;
+                            }
+
+                            await ProcesarFilaDifuntos(cuiValue, difuntoValue, id, resultado);
+                        }
+                    }
+
+                    // Procesar SEGUNDA HOJA (Columna B -> IdAnulacion = 65)
+                    if (package.Workbook.Worksheets.Count > 1)
+                    {
+                        var segundaHoja = package.Workbook.Worksheets[1];
+                        var rowCountSegundaHoja = segundaHoja.Dimension?.Rows ?? 0;
+
+                        for (int row = 1; row <= rowCountSegundaHoja; row++) // Empezar en fila 1 (posible encabezado)
+                        {
+                            string cuiValue = segundaHoja.Cells[row, 2]?.Text?.Trim() ?? ""; // Columna B
+
+                            if (!string.IsNullOrEmpty(cuiValue))
+                            {
+                                resultado.TotalCUISinInfo++;
+                                await ProcesarFilaSinInfo(cuiValue, id, resultado);
+                            }
+                        }
+                    }
+                }
+            }
+
+            return resultado;
+        }
+
+        private async Task<ProcesamientoResultado> ProcesarArchivoXls(IFormFile fileExcel, long id)
+        {
+            var resultado = new ProcesamientoResultado();
+
+            using (var stream = new MemoryStream())
+            {
+                await fileExcel.CopyToAsync(stream);
+                stream.Position = 0;
+
+                using (var workbook = new NPOI.HSSF.UserModel.HSSFWorkbook(stream))
+                {
+                    // Procesar PRIMERA HOJA (difuntos)
+                    if (workbook.NumberOfSheets > 0)
+                    {
+                        var worksheet = workbook.GetSheetAt(0);
+                        if (worksheet != null)
+                        {
+                            var rowCount = worksheet.LastRowNum + 1;
+                            resultado.TotalRegistrosProcesados = rowCount - 1; // Restar encabezados
+
+                            for (int row = 1; row < rowCount; row++)
+                            {
+                                var currentRow = worksheet.GetRow(row);
+                                if (currentRow == null) continue;
+
+                                var cuiCell = currentRow.GetCell(1);
+                                var difuntoCell = currentRow.GetCell(9);
+
+                                string cuiValue = GetCellValueAsString(cuiCell);
+                                string difuntoValue = GetCellValueAsString(difuntoCell);
+
+                                // Contar difuntos en el archivo
+                                if (difuntoValue.ToUpper() == "SI")
                                 {
-                                    var rowData = new ExcelRowAPA();
-                                    try
-                                    {
-                                        var difunto = worksheet.Cells[row, 10].Text;
-                                        if (difunto == "SI")
-                                        {
-                                            detInfo.IdAnulacion = 63;
-                                            await _solicitudService.UpdateDetalleSolicitudAPA(detInfo);
-                                            rowData = new ExcelRowAPA
-                                            {
-                                                Columna1 = detInfo.IdDetalleSolicitud.ToString(), // Columna 1                                                                      
-                                                Columna2 = detInfo.Nombre1Esposa, //worksheet.Cells[row, 2].Text, // Columna 2
-                                                Columna3 = detInfo.Nombre2Esposa, //worksheet.Cells[row, 3].Text, // Columna 3
-                                                Columna4 = detInfo.Nombre3Esposa, //worksheet.Cells[row, 4].Text, // Columna 3
-                                                Columna5 = detInfo.Apellido1Esposa, //worksheet.Cells[row, 5].Text,
-                                                Columna6 = detInfo.Apellido2Esposa, //worksheet.Cells[row, 6].Text,                                    
-                                                Columna7 = detInfo.ApellidoCasada, //worksheet.Cells[row, 6].Text,                                    
-                                                Columna8 = detInfo.CuiEsposa, // Columna 1
-                                                Columna9 = _catalogoService.GetCatalogo(detInfo.GrupoEtnico).Result.Descripcion, // Columna 1                                    
-                                                Columna10 = worksheet.Cells[row, 10].Text
-                                            };
-                                            excelData.Add(rowData);
-
-                                        }
-                                    }
-                                    catch
-                                    {
-
-                                    }
+                                    resultado.TotalDifuntosEnArchivo++;
                                 }
+
+                                await ProcesarFilaDifuntos(cuiValue, difuntoValue, id, resultado);
                             }
                         }
                     }
 
-                    // Pasar los datos al modelo para mostrarlos en la vista
-                    return Json(excelData);
+                    // Procesar SEGUNDA HOJA (Columna B -> IdAnulacion = 65)
+                    if (workbook.NumberOfSheets > 1)
+                    {
+                        var segundaHoja = workbook.GetSheetAt(1);
+                        if (segundaHoja != null)
+                        {
+                            var rowCountSegundaHoja = segundaHoja.LastRowNum + 1;
+
+                            for (int row = 0; row < rowCountSegundaHoja; row++)
+                            {
+                                var currentRow = segundaHoja.GetRow(row);
+                                if (currentRow == null) continue;
+
+                                var cuiCell = currentRow.GetCell(1); // Columna B (0-indexed = 1)
+                                string cuiValue = GetCellValueAsString(cuiCell)?.Trim() ?? "";
+
+                                if (!string.IsNullOrEmpty(cuiValue))
+                                {
+                                    resultado.TotalCUISinInfo++;
+                                    await ProcesarFilaSinInfo(cuiValue, id, resultado);
+                                }
+                            }
+                        }
+                    }
                 }
-                //return RedirectToAction("IndexDetalle", "Solicitud",nuevo);
-                //return View("IndexDetalle",listDet);
-                //return View();
-                //return BadRequest("Archivo no válido");
-                return Ok("Archivo cargado");
+            }
+
+            return resultado;
+        }
+
+
+        private async Task ProcesarFilaDifuntos(string cuiValue, string difuntoValue, long id, ProcesamientoResultado resultado)
+        {
+            if (string.IsNullOrEmpty(cuiValue)) return;
+
+            // Solo procesar si es difunto
+            if (difuntoValue.ToUpper() != "SI") return;
+
+            DetalleSolicitudAPA detInfo = await _solicitudService.GetDetalleSolicitudByCUIAPA(id, cuiValue);
+
+            if (detInfo != null)
+            {
+                // CUI difunto encontrado
+                resultado.CuisDifuntosEncontrados++;
+
+                detInfo.IdAnulacion = 63; // Difuntos
+                await _solicitudService.UpdateDetalleSolicitudAPA(detInfo);
+
+                var rowData = new ExcelRowAPA
+                {
+                    Columna1 = detInfo.IdDetalleSolicitud.ToString(),
+                    Columna2 = detInfo.Nombre1Esposa,
+                    Columna3 = detInfo.Nombre2Esposa,
+                    Columna4 = detInfo.Nombre3Esposa,
+                    Columna5 = detInfo.Apellido1Esposa,
+                    Columna6 = detInfo.Apellido2Esposa,
+                    Columna7 = detInfo.ApellidoCasada,
+                    Columna8 = detInfo.CuiEsposa,
+                    Columna9 = (await _catalogoService.GetCatalogo(detInfo.GrupoEtnico))?.Descripcion ?? "",
+                    Columna10 = difuntoValue,
+                    Columna11 = "Difunto"
+                };
+
+                resultado.ExcelData.Add(rowData);
             }
             else
             {
-                return Unauthorized(); // Si el claim no existe o el valor no coincide
+                // CUI difunto NO encontrado
+                resultado.CuisDifuntosNoEncontrados++;
             }
         }
 
+        private async Task ProcesarFilaSinInfo(string cuiValue, long id, ProcesamientoResultado resultado)
+        {
+            if (string.IsNullOrEmpty(cuiValue)) return;
+
+            DetalleSolicitudAPA detInfo = await _solicitudService.GetDetalleSolicitudByCUIAPA(id, cuiValue);
+
+            if (detInfo != null)
+            {
+                // CUI encontrado en segunda hoja
+                resultado.CuisEncontradosSinInfo++;
+
+                detInfo.IdAnulacion = 65; // Valor para segunda hoja
+                await _solicitudService.UpdateDetalleSolicitudAPA(detInfo);
+
+                var rowData = new ExcelRowAPA
+                {
+                    Columna1 = detInfo.IdDetalleSolicitud.ToString(),
+                    Columna2 = detInfo.Nombre1Esposa,
+                    Columna3 = detInfo.Nombre2Esposa,
+                    Columna4 = detInfo.Nombre3Esposa,
+                    Columna5 = detInfo.Apellido1Esposa,
+                    Columna6 = detInfo.Apellido2Esposa,
+                    Columna7 = detInfo.ApellidoCasada,
+                    Columna8 = detInfo.CuiEsposa,
+                    Columna9 = (await _catalogoService.GetCatalogo(detInfo.GrupoEtnico))?.Descripcion ?? "",
+                    Columna10 = "N/A",
+                    Columna11 = "Segunda Hoja" // Indicar que viene de segunda hoja
+                };
+
+                resultado.ExcelDataSegundaHoja.Add(rowData);
+            }
+            else
+            {
+                // CUI NO encontrado en segunda hoja
+                resultado.CuisNoEncontradosSinInfo++;
+            }
+        }
+
+        private string GetCellValueAsString(NPOI.SS.UserModel.ICell cell)
+        {
+            if (cell == null) return string.Empty;
+
+            switch (cell.CellType)
+            {
+                case NPOI.SS.UserModel.CellType.String:
+                    return cell.StringCellValue;
+                case NPOI.SS.UserModel.CellType.Numeric:
+                    if (NPOI.SS.UserModel.DateUtil.IsCellDateFormatted(cell))
+                        return cell.DateCellValue.ToString();
+                    else
+                        return cell.NumericCellValue.ToString();
+                case NPOI.SS.UserModel.CellType.Boolean:
+                    return cell.BooleanCellValue.ToString();
+                case NPOI.SS.UserModel.CellType.Formula:
+                    return cell.StringCellValue;
+                default:
+                    return string.Empty;
+            }
+        }
 
         public async Task<IActionResult> cargarValidacionGuatenominasAPA(IFormFile fileTxt, Int64 id)
         {
@@ -1556,7 +1824,7 @@ namespace PROY.Controllers
                         // Dividir la línea por el pipe '|'
                         var columns = line.Split('|');
 
-                        // Verificar que tenga al menos 2 columnas (CUI en la columna 2 según tu estructura)
+                        // Verificar que tenga al menos 2 columnas
                         if (columns.Length < 2)
                             continue;
 
@@ -1586,7 +1854,10 @@ namespace PROY.Controllers
             // Devolver los datos procesados
             return Json(excelData);
         }
+
+
     }
+
 
 
 }

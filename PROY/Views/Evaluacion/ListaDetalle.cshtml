@@ -2781,10 +2781,22 @@ else if (condicion == "2")
             return; // Detener la ejecución
         }
 
-        event.preventDefault();
+         event.preventDefault();
         // Crear un FormData con el archivo seleccionado
         var formData = new FormData();
-        var fileInput = $("#fileExcelRenap")[0].files[0];
+
+        var fileName = fileInput.name.toLowerCase();
+        if (!fileName.endsWith('.xls') && !fileName.endsWith('.xlsx')) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Archivo incorrecto',
+                text: 'Por favor, seleccione un archivo Excel (.xls o .xlsx)',
+                confirmButtonText: 'Aceptar',
+                confirmButtonColor: '#3085d6'
+            });
+            return;
+        }
+       
         formData.append("fileExcel", fileInput);
 
         // Enviar el archivo al servidor mediante AJAX
@@ -2795,11 +2807,53 @@ else if (condicion == "2")
             contentType: false,
             processData: false,
             success: function (data) {
-                // Limpiar la tabla
-                location.reload();
+                console.log(data);
+                var stats = data.estadisticas;
+                var mensaje = `Archivo procesado exitosamente.<br><br>
+                            <strong>Resultados Personas difuntas:</strong><br>
+                            • Total de personas difuntas en el archivo: ${stats.totalDifuntosEnArchivo}<br>
+                            • Total de personas difuntas encontradas: ${stats.cuisDifuntosEncontrados}<br>
+                            <br><strong>Resultados Personas sin informacion:</strong><br>
+                            • Total de personas sin información en el archivo: ${stats.totalCUISinInfo}<br>
+                            • Total de personas sin información encontradas: ${stats.cuisEncontradosSinInfo}<br>`;
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Validación completada',
+                    html: mensaje,
+                    confirmButtonText: 'Aceptar',
+                    confirmButtonColor: '#3085d6'
+                }).then((result) => {
+                    location.reload();
+                });
+
             },
-            error: function () {
-                alert("Error al cargar el archivo Excel.");
+            error: function (xhr, status, error) {
+            // Cerrar loader
+                Swal.close();
+                
+                console.error("Error:", error);
+                
+                // Obtener mensaje de error
+                let errorMessage = 'Error al cargar el archivo Excel';
+                
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage = xhr.responseJSON.message;
+                } else if (xhr.responseText) {
+                    errorMessage = xhr.responseText;
+                } else {
+                    errorMessage = error;
+                }
+                
+                // Mostrar error
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    html: 'Error al cargar el archivo:<br><strong>' + 
+                        errorMessage + '</strong>',
+                    confirmButtonText: 'Aceptar',
+                    confirmButtonColor: '#d33'
+                });
             }
         });
     }
@@ -2847,14 +2901,37 @@ else if (condicion == "2")
             contentType: false,
             processData: false,
             success: function (data) {
-                // Mostrar resultados si es necesario
-                console.log(data);
-                alert("Archivo procesado exitosamente");
-                location.reload();
+                
+                Swal.fire({
+                icon: 'success',
+                title: 'Éxito',
+                text: 'Archivo procesado exitosamente',
+                confirmButtonText: 'Aceptar',
+                confirmButtonColor: '#3085d6',
+                timer: 3000, // Opcional: cerrar automáticamente después de 3 segundos
+                timerProgressBar: true
+                }).then((result) => {
+                    // Recargar la página después de cerrar la alerta
+                    if (result.isConfirmed || result.isDismissed) {
+                        location.reload();
+                    }
+                });
+
             },
             error: function (xhr, status, error) {
-                console.error("Error:", error);
-                alert("Error al cargar el archivo txt: " + error);
+                
+                // Validar que sea un archivo .txt
+                if (!fileInput.name.toLowerCase().endsWith('.txt')) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Archivo incorrecto',
+                        text: 'Por favor, seleccione un archivo .txt',
+                        confirmButtonText: 'Aceptar',
+                        confirmButtonColor: '#3085d6'
+                    });
+                    return;
+                }
+
             }
         });
     }
