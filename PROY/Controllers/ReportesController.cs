@@ -12,6 +12,9 @@ using System.Drawing;
 using System.Text;
 using System.IO;
 using ExcelRow = PROY.Models.ExcelRow;
+using NPOI.HSSF.UserModel;
+using System.Globalization;
+using System.Text;
 
 namespace PROY.Controllers
 {
@@ -857,57 +860,83 @@ namespace PROY.Controllers
         [HttpPost]
         public async Task<IActionResult> BuscarRenapAPA([FromBody] FiltrosReportesDTO filtros)
         {
-            Solicitud solicitud = new Solicitud();
-            solicitud = await _solicitudService.GetSolicitud((long)filtros.IdSolicitud);
+
 
             var datos = (await _solicitudService.GetAllDetalleSolicitudAPACodigo((long)filtros.IdSolicitud))
                         .Where(d => d.IdAnulacion == 67 || d.IdAnulacion == 0 || d.IdAnulacion is null);
 
-            // Configuración para EPPlus
-            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-
-            using (var package = new ExcelPackage())
+            if (!datos.Any())
             {
-                var hoja = package.Workbook.Worksheets.Add("CONSULTAS");
+                // Manejar el caso cuando no hay datos
+                return BadRequest("No hay datos disponibles");
+            }
 
-                // Encabezados                                
-                hoja.Cells[1, 1].Value = "CUI";
-                hoja.Cells[1, 2].Value = "Referencia";
+            var primerDato = datos.FirstOrDefault();
+            Solicitud solicitud = await _solicitudService.GetSolicitud((long)primerDato.IdSolicitud);
 
-                // Aplicar estilo al encabezado
-                using (var rango = hoja.Cells[1, 1, 1, 2])
-                {
-                    rango.Style.Font.Bold = true;
-                    rango.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                    rango.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.White);
-                }
+            var paramDepto = await _catalogoService.GetCatalogo(solicitud.Departamento ?? 0);
+
+            var departamento = System.Text.RegularExpressions.Regex.Replace(
+                            paramDepto.Descripcion ?? string.Empty,
+                            @"\s+",
+                            "_"
+                        );
+
+            var anio = solicitud.FechaIngresoDespacho.Year;
+
+
+            var comunidad = System.Text.RegularExpressions.Regex.Replace(
+                solicitud.Comunidad ?? string.Empty,
+                @"\s+",
+                "_"
+            );
+
+            using (var workbook = new NPOI.HSSF.UserModel.HSSFWorkbook())
+            {
+                var hoja = workbook.CreateSheet("CONSULTAS");
+
+                // Crear estilo para encabezados
+                var estiloEncabezado = workbook.CreateCellStyle();
+                var fuente = workbook.CreateFont();
+                fuente.IsBold = true;
+                estiloEncabezado.SetFont(fuente);
+
+                // Encabezados
+                var filaEncabezado = hoja.CreateRow(0);
+                filaEncabezado.CreateCell(0).SetCellValue("CUI");
+                filaEncabezado.CreateCell(1).SetCellValue("Referencia");
+
+                // Aplicar estilo
+                filaEncabezado.GetCell(0).CellStyle = estiloEncabezado;
+                filaEncabezado.GetCell(1).CellStyle = estiloEncabezado;
 
                 // Llenar datos
-                int fila = 2;
+                int fila = 1;
                 foreach (var ii in datos)
                 {
-                    //var paramDepto = await _catalogoService.GetCatalogo(ii.IdDepartamento);
-                    //var paramMuni = await _catalogoService.GetCatalogo(ii.IdMunicipio);
-                    //var paramEstadoCivil = await _catalogoService.GetCatalogo(ii.EstadoCivil);
                     var paramGrupoEtnico = await _catalogoService.GetCatalogo(ii.GrupoEtnico);
 
-                    hoja.Cells[fila, 1].Value = ii.CuiEsposa;
-                    hoja.Cells[fila, 2].Value = "EXP-APA-" + solicitud.Codigo;
+                    var filaActual = hoja.CreateRow(fila);
+                    filaActual.CreateCell(0).SetCellValue(ii.CuiEsposa?.ToString() ?? "");
+                    filaActual.CreateCell(1).SetCellValue($"EXP-APA-{solicitud.Codigo}-{anio}_{departamento}_{comunidad}");
 
                     fila++;
                 }
 
-                // Autoajustar columnas
-                hoja.Cells[hoja.Dimension.Address].AutoFitColumns();
+                // Establecer ancho de columnas manualmente
+                hoja.SetColumnWidth(0, 20 * 256); // Columna CUI - 20 caracteres
+                hoja.SetColumnWidth(1, 40 * 256); // Columna Referencia - 40 caracteres
 
-                // Generar archivo Excel
+                // GENERAR ARCHIVO 
                 var stream = new MemoryStream();
-                package.SaveAs(stream);
+                workbook.Write(stream);
                 stream.Position = 0;
 
-                // Descargar archivo
-                var nombreArchivo = "ConsultaCUIRenap.xlsx";
-                return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", nombreArchivo);
+                var fecha = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                var nombreArchivo = $"EXP-APA-{solicitud.Codigo}-{anio}_{departamento}_{comunidad}_{fecha}.xls";
+
+                // El stream será manejado automáticamente por File() de ASP.NET Core
+                return File(stream, "application/vnd.ms-excel", nombreArchivo);
             }
         }
 
@@ -924,6 +953,23 @@ namespace PROY.Controllers
             // Datos de ejemplo
             var datos = (await _solicitudService.GetAllDetalleSolicitudAPACodigo((long)filtros.IdSolicitud))
                         .Where(d => d.IdAnulacion == 67 || d.IdAnulacion == 0 || d.IdAnulacion is null);
+
+                    
+            if (!datos.Any())
+            {
+                // Manejar el caso cuando no hay datos
+                return BadRequest("No hay datos disponibles");
+            }
+
+            var primerDato = datos.FirstOrDefault();
+            Solicitud solicitud = await _solicitudService.GetSolicitud((long)primerDato.IdSolicitud);
+
+            var paramDepto = await _catalogoService.GetCatalogo(solicitud.Departamento ?? 0);
+
+            var departamento = CleanText(paramDepto.Descripcion ?? "");
+            var comunidad = CleanText(solicitud.Comunidad ?? "");
+
+            var anio = solicitud.FechaIngresoDespacho.Year;
 
             // Crear contenido del archivo TXT
             var contenidoTxt = new StringBuilder();
@@ -944,7 +990,8 @@ namespace PROY.Controllers
             stream.Position = 0;
 
             // Descargar archivo
-            var nombreArchivo = "ConsultaCUIGuatenominas.txt";
+            
+            var nombreArchivo = $"EXP-APA-{solicitud.Codigo}-{anio}_{departamento}_{comunidad}_{fecha}.txt";
             return File(stream, "text/plain", nombreArchivo);
         }
 
@@ -956,5 +1003,27 @@ namespace PROY.Controllers
             return View();
         }
 
+        private string CleanText(string input)
+        {
+            if (string.IsNullOrWhiteSpace(input))
+                return string.Empty;
+
+            // Eliminar tildes
+            var normalized = input.Normalize(NormalizationForm.FormD);
+            var withoutDiacritics = new string(
+                normalized.Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+                          .ToArray()
+            ).Normalize(NormalizationForm.FormC);
+
+            // Reemplazar espacios y limpiar
+            return System.Text.RegularExpressions.Regex.Replace(
+                withoutDiacritics,
+                @"[^\w]+",
+                "_"
+            ).Trim('_');
+        }
+
     }
+
+
 }
