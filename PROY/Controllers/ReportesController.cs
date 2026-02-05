@@ -990,7 +990,7 @@ namespace PROY.Controllers
             stream.Position = 0;
 
             // Descargar archivo
-            
+            var fecha = DateTime.Now.ToString("yyyyMMdd_HHmmss");
             var nombreArchivo = $"EXP-APA-{solicitud.Codigo}-{anio}_{departamento}_{comunidad}_{fecha}.txt";
             return File(stream, "text/plain", nombreArchivo);
         }
