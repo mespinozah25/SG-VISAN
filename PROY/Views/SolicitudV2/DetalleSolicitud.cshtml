@@ -1,0 +1,889 @@
+@using System.Text
+@inject IHttpContextAccessor HttpContextAccessor
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
+
+<style>
+    .modal-header .btn-close {
+        color: white !important;
+        opacity: 1;
+        -webkit-filter: invert(1);
+    }
+
+    .header-bg {
+        background-color: #2c3e50;
+    }
+
+    dt {
+        color: #6c757d;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    dd {
+        color: #212529;
+        font-size: 1rem;
+        margin-bottom: 0;
+        margin-top: 0.25rem;
+    }
+
+    .section-separator {
+        border-bottom: 1px solid #dee2e6;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        padding-top: 1rem;
+    }
+
+    .metric-card {
+        transition: all 0.2s ease-in-out;
+        cursor: default;
+    }
+
+    .metric-card:hover {
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+        transform: translateY(-2px);
+    }
+</style>
+
+
+@model PROY.ViewModels.SolicitudesVM
+
+@{
+    ViewData["Title"] = "Index";
+    ViewData["rutaApp"] = @Model.rutaApp;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Mensaje"]
+    </div>
+}
+@{
+    string? rol = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+    string? usuario = User.FindFirst("Usuario")?.Value;
+
+    int Rechazada = (int)(ViewData["Rechazada"] ?? 0);
+
+    string descripcionIntervencion = Model.IntervencionDict.TryGetValue(Model.Solicitud!.IdIntervencion, out string?
+    descInter)
+    ? descInter : "Intervención no encontrada";
+    string descripcionProyecto = Model.Solicitud!.IdProyecto.HasValue
+    ? Model.ProyectoDict.TryGetValue(Model.Solicitud!.IdProyecto.Value, out string? descProy)
+    ? descProy : "Proyecto no encontrado" : "Proyecto no especificado";
+    string descripcionDepartamento = Model.Solicitud!.Departamento.HasValue
+    ? Model.DepartamentoDict.TryGetValue(Model.Solicitud!.Departamento.Value, out string? descDep)
+    ? descDep : "Departamento no encontrado" : "Departamento no especificado";
+    string descripcionMunicipio = Model.Solicitud!.Municipio.HasValue
+    ? Model.MunicipioDict.TryGetValue(Model.Solicitud!.Municipio.Value, out string? descMun)
+    ? descMun : "Municipio no encontrado" : "Municipio no especificado";
+    string? extensionMedioConfirmacion = Model.Solicitud!.Archivo != null ?
+    System.IO.Path.GetExtension(Model.Solicitud.Archivo).ToLower() : null;
+
+    StringBuilder listaPrecondiciones = new StringBuilder();
+
+    if($"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:VERIFICACION_DE_CAMPO"]}" && !Model.Solicitud!.MostrarContinuidadVerificacionCampo){
+        listaPrecondiciones.Append("<li>Precondición: debe ingresar un medio de verificación para aprobación/rechazo</li>");
+    }
+    if($"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:VALIDACION_DE_BENEFICIARIOS"]}" && !Model.Solicitud!.MostrarContinuidadValidacionBeneficiarios){
+        listaPrecondiciones.Append("<li>Precondición: debe ingresar un medio de verificación para enviar a siguiente etapa</li>");
+    }
+    if($"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:PROGRAMACION"]}" && !Model.Solicitud!.MostrarDespachoEnProgramacion){
+        listaPrecondiciones.Append("<li>Precondición: debe completar los medios de verificación</li>");
+    }
+    if($"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:PROGRAMACION"]}" && !Model.Solicitud!.AsignacionDeRacionesCompleta){
+        listaPrecondiciones.Append("<li>Precondición: debe asignar todas las raciones</li>");
+    }
+    if($"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:REVISION_PARA_LIQUIDACION"]}" && !Model.Solicitud!.MostrarContinuidadRevisionLiquidacion){
+        listaPrecondiciones.Append("<li>Precondición: ebe ingresar un medio de verificación para envíar a siguiente etapa</li>");
+    }
+
+    bool mostrarPrecondicion = listaPrecondiciones.Length != 0;
+}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="display-6">Solicitud de Alimentos Por Acciones</h1>
+        </div>
+    </div>
+    <div class="row justify-content-center mt-3">
+        <div class="card shadow-lg border-0 rounded-3">
+            <header class="card-header p-4 p-sm-5 header-bg text-white rounded-top-3">
+                <h1 class="display-4 text-white">Solicitud @Model.Solicitud!.Correlativo</h1>
+                @if(Model.Solicitud!.Rechazada == 0){
+                    <span class="badge rounded-pill bg-primary text-white fs-5 p-3">
+                        Estado: @Model.Solicitud!.EstadoSolicitud.Nombre
+                    </span>
+                }
+                else if(Model.Solicitud!.Rechazada == 1){
+                    <span class="badge rounded-pill bg-danger text-white fs-5 p-3">
+                        Rechazada - Estado: @Model.Solicitud!.EstadoSolicitud.Nombre
+                    </span>
+                }
+            </header>
+            <div class="card-body p-4 p-sm-5">
+                <div class="row">
+                    <div class="col">
+                        <div class="card metric-card p-3 rounded-3 shadow-sm border-bottom border-success border-4">
+                            <p class="h5 text-muted mb-1">Válidos</p>
+                            <p class="fs-4 fw-bolder text-success">@Model.Solicitud!.Validos</p>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="card metric-card p-3 rounded-3 shadow-sm border-bottom border-warning border-4">
+                            <p class="h5 text-muted mb-1">Duplicados</p>
+                            <p class="fs-4 fw-bolder text-warning">@Model.Solicitud!.Duplicados</p>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="card metric-card p-3 rounded-3 shadow-sm border-bottom border-danger border-4">
+                            <p class="h5 text-muted mb-1">Sin Datos</p>
+                            <p class="fs-4 fw-bolder text-danger">@Model.Solicitud!.SinDatos</p>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="card metric-card p-3 rounded-3 shadow-sm border-bottom border-primary border-4">
+                            <p class="h5 text-muted mb-1">Fallecidos</p>
+                            <p class="fs-4 fw-bolder text-primary">@Model.Solicitud!.Fallecidos</p>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="card metric-card p-3 rounded-3 shadow-sm border-bottom border-secondary border-4">
+                            <p class="h5 text-muted mb-1">Gobierno</p>
+                            <p class="fs-4 fw-bolder text-secondary">@Model.Solicitud!.Gobierno</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="row g-4 mb-3">
+                    <div class="col-md-4">
+                        <div class="dropdown">
+                            <button class="btn btn-secondary w-100 dropdown-toggle" type="button" id="dropdownOpcionesSolicitud"
+                                data-bs-toggle="dropdown" aria-expanded="false" data-bs-container="body">
+                                Opciones de la solicitud
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="dropdownOpcionesSolicitud">
+                                <li>
+                                    @if (rol == "Admin" || usuario == Model.Solicitud!.UsuarioRegistro){
+                                        <a class="dropdown-item" asp-controller="SolicitudV2"
+                                            asp-action="HistorialSolicitud" asp-route-IdSolicitud="@Model.Solicitud!.IdSolicitud">
+                                            Ver Historial
+                                        </a>
+                                        @if ($"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:CREADA"]}"){
+                                            <a class="dropdown-item" asp-controller="SolicitudV2"
+                                                asp-action="FormularioSolicitud" asp-route-IdSolicitud="@Model.Solicitud!.IdSolicitud">
+                                                Editar Solicitud
+                                            </a>
+                                            <a class="dropdown-item" asp-controller="SolicitudV2"
+                                                asp-action="EliminarSolicitud" asp-route-IdSolicitud="@Model.Solicitud!.IdSolicitud"
+                                                onclick="confirmarOperacion(event, this, '¿Esta seguro que desea eliminar la solicitud?')">
+                                                Eliminar Solicitud
+                                            </a>
+                                            <a class="dropdown-item" asp-controller="Solicitud" asp-action="IndexDetalle" 
+                                                asp-route-idSolicitud="@Model.Solicitud!.IdSolicitud" asp-route-k="2">
+                                                Gestionar Beneficiarios
+                                            </a>
+                                        }
+                                        @if ($"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:REVISION_ADMINISTRATIVA"]}"){
+                                            <a class="dropdown-item" asp-controller="SolicitudV2" asp-action="DetalleSolicitud" 
+                                                asp-route-IdSolicitud="@Model.Solicitud!.IdSolicitud" asp-route-Rechazada="1">
+                                                Rechazar Solicitud
+                                            </a>
+                                        }
+                                        @if ($"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:VERIFICACION_DE_CAMPO"]}"){
+                                            <a class="dropdown-item" asp-controller="Evaluacion" asp-action="IndexDetalle"
+                                                asp-route-idEvaluacion="@Model.Solicitud!.IdSolicitud" asp-route-k="2" asp-route-proceso="VERIFICACION_CAMPO">
+                                                Medios de Verificación
+                                            </a>
+                                            @if(Model.Solicitud!.MostrarContinuidadVerificacionCampo){    
+                                                <a class="dropdown-item" asp-controller="SolicitudV2" asp-action="DetalleSolicitud" 
+                                                    asp-route-IdSolicitud="@Model.Solicitud!.IdSolicitud" asp-route-Rechazada="1">
+                                                    Rechazar Solicitud
+                                                </a>
+                                                <a class="dropdown-item" asp-controller="SolicitudV2"
+                                                    asp-action="CambioEtapaSolicitud" asp-route-IdSolicitud="@Model.Solicitud!.IdSolicitud"
+                                                    onclick="confirmarOperacion(event, this,`¿Desea enviar la solicitud @Model.Solicitud!.Codigo a @Model.Solicitud!.EstadoSolicitud.EstadoSolicitudSiguiente!.Nombre?`)">
+                                                    Enviar a etapa: @Model.Solicitud!.EstadoSolicitud.EstadoSolicitudSiguiente!.Nombre
+                                                </a>
+                                            }
+                                        }
+                                        @if ($"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:EVALUACION"]}"){
+                                            <a class="dropdown-item" asp-controller="Evaluacion" asp-action="ListaDetalle"
+                                                asp-route-idEvaluacion="@Model.Solicitud!.IdSolicitud" asp-route-k="2">
+                                                Gestionar Beneficiarios
+                                            </a>
+                                            <a class="dropdown-item" asp-controller="Evaluacion" asp-action="IndexDetalle"
+                                                asp-route-idEvaluacion="@Model.Solicitud!.IdSolicitud" asp-route-k="2">
+                                                Medios de Verificación
+                                            </a>
+                                            @if(Model.Solicitud!.Rechazada == 0){
+                                                <a class="dropdown-item" asp-controller="SolicitudV2" asp-action="RechazarSolicitud"
+                                                    asp-route-IdSolicitud="@Model.Solicitud!.IdSolicitud" onclick="confirmarOperacion(event, this,`¿Desea rechazar la solicitud?`)">
+                                                    Rechazar Solicitud
+                                                </a>
+                                            }
+                                            else if(Model.Solicitud!.Rechazada == 1){
+                                                <a class="dropdown-item" asp-controller="SolicitudV2" asp-action="HabilitarSolicitud"
+                                                    asp-route-IdSolicitud="@Model.Solicitud!.IdSolicitud" onclick="confirmarOperacion(event, this,`¿Desea habilitar la solicitud?`)">
+                                                    Habilitar Solicitud
+                                                </a>
+                                            }
+                                        }
+                                        @if ($"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:VALIDACION_DE_BENEFICIARIOS"]}"){
+                                            <a class="dropdown-item" asp-controller="Evaluacion" asp-action="IndexDetalle"
+                                                asp-route-idEvaluacion="@Model.Solicitud!.IdSolicitud" asp-route-k="2" asp-route-proceso="VALIDACION_BENEFI">
+                                                Medios de Verificación
+                                            </a>
+                                            <a class="dropdown-item" asp-controller="Evaluacion" asp-action="ListaDetalle" 
+                                                asp-route-idEvaluacion="@Model.Solicitud!.IdSolicitud" asp-route-k="2">
+                                                Gestionar Beneficiarios
+                                            </a>
+                                            <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#modalActualizarRaciones">
+                                                Actualizar Número de Raciones
+                                            </a>
+                                            @if(Model.Solicitud!.MostrarContinuidadValidacionBeneficiarios){    
+                                                <a class="dropdown-item" asp-controller="SolicitudV2"
+                                                    asp-action="CambioEtapaSolicitud" asp-route-IdSolicitud="@Model.Solicitud!.IdSolicitud"
+                                                    onclick="confirmarOperacion(event, this,`¿Desea enviar la solicitud @Model.Solicitud!.Codigo a @Model.Solicitud!.EstadoSolicitud.EstadoSolicitudSiguiente!.Nombre?`)">
+                                                    Enviar a etapa: @Model.Solicitud!.EstadoSolicitud.EstadoSolicitudSiguiente!.Nombre
+                                                </a>
+                                            }
+                                        }
+                                        @if ($"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:PROGRAMACION"]}"){
+                                            
+                                            <a class="dropdown-item" asp-controller="Programacion" asp-action="ListaDetalle"
+                                                asp-route-idProgramacion="@Model.Solicitud!.IdSolicitud" asp-route-k="2">
+                                                Gestionar Beneficiarios
+                                            </a>
+                                            <a class="dropdown-item" asp-controller="Evaluacion" asp-action="IndexDetalle"
+                                                asp-route-idEvaluacion="@Model.Solicitud!.IdSolicitud" asp-route-k="2" asp-route-proceso="PROGRAMACION">
+                                                Medios de Verificación
+                                            </a>
+                                            <a class="dropdown-item" asp-controller="SolicitudV2" asp-action="FormularioTecnicos"
+                                                    asp-route-IdSolicitud="@Model.Solicitud!.IdSolicitud">
+                                                    Datos de Entrega y Gestión de Técnicos
+                                                </a>
+                                            @if (Model.Solicitud!.MostrarDespachoEnProgramacion){
+                                                <a class="dropdown-item" asp-controller="SolicitudV2" asp-action="FormularioDespacho"
+                                                    asp-route-IdSolicitud="@Model.Solicitud!.IdSolicitud">
+                                                    Despacho
+                                                </a>
+                                            }
+                                            @if (Model.Solicitud!.AsignacionDeRacionesCompleta){
+                                                <a class="dropdown-item" asp-controller="SolicitudV2"
+                                                    asp-action="CambioEtapaSolicitud" asp-route-IdSolicitud="@Model.Solicitud!.IdSolicitud"
+                                                    onclick="confirmarOperacion(event, this,`¿Desea enviar la solicitud @Model.Solicitud!.Codigo a @Model.Solicitud!.EstadoSolicitud.EstadoSolicitudSiguiente!.Nombre?`)">
+                                                    Enviar a etapa: @Model.Solicitud!.EstadoSolicitud.EstadoSolicitudSiguiente!.Nombre
+                                                </a>
+                                            }
+                                        }
+                                        @if ($"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:GENERACION_DE_PLANILLAS"]}"){
+                                            <a class="dropdown-item" onclick="generacionPlantillasPDF('@Model.Solicitud!.IdSolicitud', `plantillas-sol-@Model.Solicitud!.Codigo`, '@descripcionDepartamento', '@descripcionMunicipio', '@Model.Solicitud!.Comunidad')">
+                                                Descargar plantillas
+                                            </a>
+                                        }
+                                        @if ($"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:EJECUCION"]}"){
+                                            <a class="dropdown-item" asp-controller="SolicitudV2" asp-action="FormularioDespacho"
+                                                asp-route-IdSolicitud="@Model.Solicitud!.IdSolicitud">
+                                                Despacho
+                                            </a>
+                                            <a class="dropdown-item" asp-controller="Ejecucion" asp-action="IndexDetalle"
+                                                asp-route-idEjecucion="@Model.Solicitud!.IdSolicitud" asp-route-k="2" asp-route-proceso="EJECUCION">
+                                                Gestionar Liquidación
+                                            </a>
+                                            <a class="dropdown-item" asp-controller="Programacion" asp-action="ListaDetalle"
+                                                asp-route-idProgramacion="@Model.Solicitud!.IdSolicitud" asp-route-k="2">
+                                                Gestionar Beneficiarios
+                                            </a>
+                                            <a class="dropdown-item" asp-controller="Evaluacion" asp-action="IndexDetalle"
+                                                asp-route-idEvaluacion="@Model.Solicitud!.IdSolicitud" asp-route-k="2" asp-route-proceso="EJECUCION">
+                                                Medios de Verificación
+                                            </a>
+                                        }
+                                        @if ($"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:REVISION_PARA_LIQUIDACION"]}"){
+                                            <a class="dropdown-item" asp-controller="Evaluacion" asp-action="IndexDetalle"
+                                                asp-route-idEvaluacion="@Model.Solicitud!.IdSolicitud" asp-route-k="2" asp-route-proceso="REVISION_LIQUIDACION">
+                                                Medios de Verificación
+                                            </a>
+                                            @if(Model.Solicitud!.MostrarContinuidadRevisionLiquidacion){    
+                                                <a class="dropdown-item" asp-controller="SolicitudV2"
+                                                    asp-action="CambioEtapaSolicitud" asp-route-IdSolicitud="@Model.Solicitud!.IdSolicitud"
+                                                    onclick="confirmarOperacion(event, this,`¿Desea enviar la solicitud @Model.Solicitud!.Codigo a @Model.Solicitud!.EstadoSolicitud.EstadoSolicitudSiguiente!.Nombre?`)">
+                                                    Enviar a etapa: @Model.Solicitud!.EstadoSolicitud.EstadoSolicitudSiguiente!.Nombre
+                                                </a>
+                                            }
+                                        }
+                                        @if ($"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:PREVIO_A_LIQUIDACION"]}"){
+                                            <a class="dropdown-item" asp-controller="Evaluacion" asp-action="IndexDetalle"
+                                                asp-route-idEvaluacion="@Model.Solicitud!.IdSolicitud" asp-route-k="2" asp-route-proceso="PREVIO_LIQUIDACION">
+                                                Medios de Verificación
+                                            </a>
+                                        }
+                                        
+                                        @if(Model.Solicitud!.EstadoSolicitud.EstadoSolicitudSiguiente != null &&
+                                            $"{Model.Solicitud!.IdEstadoSolicitud}" != $"{@Configuration["EtapasSolicitud:APA:VERIFICACION_DE_CAMPO"]}" &&
+                                            $"{Model.Solicitud!.IdEstadoSolicitud}" != $"{@Configuration["EtapasSolicitud:APA:VALIDACION_DE_BENEFICIARIOS"]}" &&
+                                            $"{Model.Solicitud!.IdEstadoSolicitud}" != $"{@Configuration["EtapasSolicitud:APA:REVISION_PARA_LIQUIDACION"]}" &&
+                                            $"{Model.Solicitud!.IdEstadoSolicitud}" != $"{@Configuration["EtapasSolicitud:APA:PROGRAMACION"]}"){
+                                            <a class="dropdown-item" asp-controller="SolicitudV2"
+                                                asp-action="CambioEtapaSolicitud" asp-route-IdSolicitud="@Model.Solicitud!.IdSolicitud"
+                                                onclick="confirmarOperacion(event, this,`¿Desea enviar la solicitud @Model.Solicitud!.Codigo a @Model.Solicitud!.EstadoSolicitud.EstadoSolicitudSiguiente!.Nombre?`)">
+                                                Enviar a etapa: @Model.Solicitud!.EstadoSolicitud.EstadoSolicitudSiguiente!.Nombre
+                                            </a>
+                                        }
+                                    }
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                @if(Rechazada == 1 && (
+                    $"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:VERIFICACION_DE_CAMPO"]}" ||
+                    $"{Model.Solicitud!.IdEstadoSolicitud}" == $"{@Configuration["EtapasSolicitud:APA:REVISION_ADMINISTRATIVA"]}"
+                )){
+                    <form asp-action="RechazarSolicitudConComentario" asp-controller="SolicitudV2" method="post">
+                        <div class="row my-3 g-3">
+                            <input type="hidden" asp-for="@Model.Solicitud.IdSolicitud" />
+                            <div class="col-md-12">
+                                <label for="txtComentarioRechazo" class="control-label">Comentario de rechazo</label>
+                                <input type="text" class="form-control" id="txtComentarioRechazo" asp-for="@Model.Solicitud!.ComentarioRechazo" required maxlength="255"></input>
+                                <span asp-validation-for="@Model.Solicitud!.ComentarioRechazo" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-12">
+                                <input type="submit" value="Rechazar y regresar etapa" class="btn btn-danger w-100 h-100" />
+                            </div>
+                        </div>
+                    </form>
+                }
+                @if(Model.Solicitud!.Rechazada == 1 && Model.Solicitud!.ComentarioRechazo != null){
+                    <div class="card text-white bg-danger mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title text-white">Comentario de rechazo</h5>
+                            <p class="card-text">@Model.Solicitud!.ComentarioRechazo</p>
+                        </div>
+                    </div>
+                }
+                @if(mostrarPrecondicion){
+                    <div class="card text-white bg-warning mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title text-white">Precondiciones de avance de estado</h5>
+                            <div class="card-text">
+                                <ul>
+                                    @Html.Raw(listaPrecondiciones)
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                }
+                <div class="row g-4">
+                    <div class="col-12 section-separator">
+                        <h3 class="fs-5 fw-bold text-dark">Información Básica</h3>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <dt>Departamento</dt>
+                        <dd class="fw-semibold">Alimentos por Acciones</dd>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <dt>No. Solicitud</dt>
+                        <dd>@Model.Solicitud!.Correlativo</dd>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <dt>Intervención</dt>
+                        <dd>@descripcionIntervencion</dd>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <dt>Proyecto</dt>
+                        <dd>@descripcionProyecto</dd>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <dt>No. de raciones</dt>
+                        <dd>@Model.Solicitud!.Raciones</dd>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <dt>Medio de verificación actual</dt>
+                        @if (extensionMedioConfirmacion == ".pdf" || extensionMedioConfirmacion == ".jpg" ||
+                                                extensionMedioConfirmacion == ".jpeg" ||
+                                                extensionMedioConfirmacion == ".png" || extensionMedioConfirmacion == ".gif" ||
+                                                extensionMedioConfirmacion == ".bmp")
+                        {
+                            <a href="@Url.Action("PreviewFile", "Solicitud", new { fileName = @Model.Solicitud!.Archivo })"
+                                target="_blank">
+                                @Model.Solicitud!.Archivo
+                            </a>
+                        }
+                        @if (extensionMedioConfirmacion == ".xls" || extensionMedioConfirmacion == ".xlsx" ||
+                                                extensionMedioConfirmacion == ".doc" ||
+                                                extensionMedioConfirmacion == ".docx" || extensionMedioConfirmacion == ".ppt" ||
+                                                extensionMedioConfirmacion == ".pptx")
+                        {
+                            <a href="@Url.Action("DownloadFile", "Solicitud", new { fileName = Model.Solicitud!.Archivo })">
+                                @Model.Solicitud!.Archivo
+                            </a>
+                        }
+                    </div>
+                    <div class="col-12 section-separator">
+                        <h3 class="fs-5 fw-bold text-dark">Fechas de referencia</h3>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <dt>Fecha de ingreso a despacho</dt>
+                        <dd>@Model.Solicitud!.FechaIngresoDespacho.Date.ToString("dd/MM/yyyy")</dd>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <dt>Fecha de ingreso a dirección</dt>
+                        <dd>@Model.Solicitud!.FechaIngresoDireccion.Date.ToString("dd/MM/yyyy")</dd>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <dt>Fecha de ingreso a departamento</dt>
+                        <dd>@Model.Solicitud!.FechaIngresoUnidad.Date.ToString("dd/MM/yyyy")</dd>
+                    </div>
+                    <div class="col-12 section-separator">
+                        <h3 class="fs-5 fw-bold text-dark">Ubicación</h3>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <dt>Departamento</dt>
+                        <dd>@descripcionDepartamento</dd>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <dt>Municipio</dt>
+                        <dd>@descripcionMunicipio</dd>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <dt>Comunidad</dt>
+                        <dd>@Model.Solicitud!.Comunidad</dd>
+                    </div>
+                    <div class="col-12 section-separator">
+                        <h3 class="fs-5 fw-bold text-dark">COCODE</h3>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <dt>Nombre</dt>
+                        <dd>@Model.Solicitud!.NombreCocode</dd>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <dt>Comunidad</dt>
+                        <dd>@Model.Solicitud!.ComunidadCocode</dd>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <dt>Teléfono</dt>
+                        <dd>@Model.Solicitud!.TelefonoCocode</dd>
+                    </div>
+                    <div class="col-12 section-separator">
+                        <h3 class="fs-5 fw-bold text-dark">Información de entrega</h3>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <dt>Fecha de inicio de entrega</dt>
+                        <dd>@Model.Solicitud!.FInicioEntrega?.Date.ToString("dd/MM/yyyy")</dd>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <dt>Fecha de fin de entrega</dt>
+                        <dd>@Model.Solicitud!.FFinEntrega?.Date.ToString("dd/MM/yyyy")</dd>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <dt>Observaciones de entrega</dt>
+                        <dd>@Model.Solicitud!.TecnicoObservaciones</dd>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para actualizar raciones -->
+<div class="modal fade" id="modalActualizarRaciones" tabindex="-1" aria-labelledby="modalActualizarRacionesLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header header-bg text-white">
+                <h5 class="modal-title" id="modalActualizarRacionesLabel">Actualizar Número de Raciones</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="formActualizarRaciones" method="post">
+                <div class="modal-body">
+                    <input type="hidden" id="IdSolicitud" name="IdSolicitud" value="@Model.Solicitud!.IdSolicitud" />
+                    <div class="mb-3">
+                        <label for="nuevasRaciones" class="form-label">Nuevo número de raciones:</label>
+                        <input type="number" class="form-control" id="nuevasRaciones" name="nuevasRaciones" 
+                               value="@Model.Solicitud!.Raciones" min="1" required />
+                        <div class="form-text">Raciones actuales: @Model.Solicitud!.Raciones</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Actualizar Raciones</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para actualizar raciones -->
+<div class="modal fade" id="modalActualizarRaciones" tabindex="-1" aria-labelledby="modalActualizarRacionesLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header header-bg text-white">
+                <h5 class="modal-title" id="modalActualizarRacionesLabel">Actualizar Número de Raciones</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="formActualizarRaciones" method="post">
+                <div class="modal-body">
+                    <input type="hidden" id="IdSolicitud" name="IdSolicitud" value="@Model.Solicitud!.IdSolicitud" />
+                    <div class="mb-3">
+                        <label for="nuevasRaciones" class="form-label">Nuevo número de raciones:</label>
+                        <input type="number" class="form-control" id="nuevasRaciones" name="nuevasRaciones" 
+                               value="@Model.Solicitud!.Raciones" min="1" required />
+                        <div class="form-text">Raciones actuales: @Model.Solicitud!.Raciones</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Actualizar Raciones</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+
+<script>
+
+    function confirmarOperacion(evento, elemento, mensaje){
+        evento.preventDefault();
+
+        Swal.fire({
+            title: "ATENCIÓN",
+            text: mensaje,
+            icon: "question",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Aceptar",
+            cancelButtonText: "Cancelar"
+        }).then((result) => {
+            if (result.isConfirmed) window.location.href = elemento.href;
+            else if (result.dismiss === Swal.DismissReason.cancel) evento.preventDefault();
+        });
+    }
+
+    function obtenerImagenBase64(url) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.setAttribute("crossOrigin", "anonymous");
+            img.onload = () => {
+                const canvas = document.createElement("canvas");
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext("2d");
+                ctx.drawImage(img, 0, 0);
+                const dataURL = canvas.toDataURL("image/png");
+                resolve(dataURL);
+            };
+            img.onerror = error => reject(error);
+            img.src = url;
+        });
+    }
+    
+    async function generacionPlantillasPDF(idSolicitud, nombre, departamento, municipio, comunidad) {
+        const magaBase64 = await obtenerImagenBase64('/LogoMAGA.jpg');
+        const guatemalaBase64 = await obtenerImagenBase64('/LogoVISAN.png');
+
+        const date = new Date();
+        const options = { day: '2-digit', month: 'short', year: '2-digit' };
+        const formatter = new Intl.DateTimeFormat('es-ES', options);
+        const fecha = formatter.format(date).replace(/\//g, '-').replace(/\./g, '-');
+
+        const response = await fetch('/SolicitudV2/GeneracionPlantillas?IdSolicitud=' + idSolicitud);
+        if (!response.ok) return;
+
+        let beneficiariosData = await response.json();
+
+        beneficiariosData = beneficiariosData.filter(beneficiario => beneficiario.idAnulacion == null);
+
+        let contadorFemenino = 0;
+        let contadorMasculino = 0;
+        beneficiariosData.forEach(b => b.genero === 'F' ? contadorFemenino++ : contadorMasculino++);
+
+        const chunkArray = (arr, size) => {
+            const chunks = [];
+            for (let i = 0; i < arr.length; i += size) {
+                chunks.push(arr.slice(i, i + size));
+            }
+            return chunks;
+        };
+
+        const beneficiariosSegmentados = chunkArray(beneficiariosData, 10);
+
+        const docDefinition = {
+            pageSize: 'LETTER',
+            // AJUSTE: Reducido de 360 a 310 para eliminar el espacio vacío
+            pageMargins: [40, 310, 40, 80],
+
+            header: function(currentPage, pageCount) {
+                return {
+                    margin: [40, 20, 40, 0],
+                    stack: [
+                        {
+                            table: {
+                                widths: ['auto', '*', 'auto'],
+                                body: [[
+                                    { image: guatemalaBase64, width: 80, height: 40, border: [false, false, false, false] },
+                                    {
+                                        stack: [
+                                            { text: 'MINISTERIO DE AGRICULTURA, GANADERIA Y ALIMENTACIÓN', fontSize: 10, bold: true, alignment: 'center' },
+                                            { text: 'Viceministerio de Seguridad Alimentaria y Nutricional', fontSize: 9, alignment: 'center' },
+                                            { text: 'ALIMENTOS POR ACCIONES', alignment: 'center', bold: true, fontSize: 10, margin: [0, 5, 0, 0] }
+                                        ],
+                                        border: [false, false, false, false]
+                                    },
+                                    {
+                                        stack: [
+                                            { image: magaBase64, width: 40, height: 40, alignment: 'right' },
+                                            { text: `Página ${currentPage} de ${pageCount}`, fontSize: 8, alignment: 'right', margin: [0, 5, 0, 0] }
+                                        ],
+                                        border: [false, false, false, false]
+                                    }
+                                ]]
+                            },
+                            layout: 'noBorders'
+                        },
+                        {
+                            table: {
+                                widths: [150, '*', 150, 'auto'],
+                                body: [[
+                                    { text: 'DESPACHO DE ALMACÉN No. ________', fontSize: 8 },
+                                    { text: '', border: [false, false, false, false] },
+                                    { text: 'FECHA DE IMPRESIÓN:', fontSize: 8 },
+                                    { text: fecha, fontSize: 8, bold: true }
+                                ]]
+                            },
+                            layout: 'noBorders',
+                            margin: [0, 5, 0, 5]
+                        },
+                        {
+                            columns: [
+                                {
+                                    width: '35%',
+                                    stack: [
+                                        { text: `Departamento: ${departamento}`, fontSize: 8, margin: [0, 1] },
+                                        { text: `Municipio: ${municipio}`, fontSize: 8, margin: [0, 1] },
+                                        { text: `Comunidad: ${comunidad}`, fontSize: 8, margin: [0, 1] },
+                                        { text: 'Fecha de Entrega: _____ / _____ / _______', fontSize: 8, margin: [0, 5, 0, 0] }
+                                    ]
+                                },
+                                {
+                                    width: '25%',
+                                    stack: [
+                                        { text: 'TIPO DE DISCAPACIDAD:', fontSize: 7, bold: true, margin: [0, 0, 0, 2] },
+                                        { text: '1. NO', fontSize: 7 },
+                                        { text: '2. VER', fontSize: 7 },
+                                        { text: '3. OIR', fontSize: 7 },
+                                        { text: '4. CAMINAR', fontSize: 7 },
+                                        { text: '5. RECORDAR', fontSize: 7 },
+                                        { text: '6. ASEARSE', fontSize: 7 },
+                                        { text: '7. COMUNICARSE', fontSize: 7 }
+                                    ]
+                                },
+                                {
+                                    width: '40%',
+                                    stack: [
+                                        { text: 'RACIÓN:', fontSize: 7, bold: true, margin: [0, 0, 0, 2] },
+                                        { text: '• 5 LBS ARROZ / 25 LBS MAÍZ BLANCO', fontSize: 7 },
+                                        { text: '• 1 BOTELLA ACEITE 800 ml', fontSize: 7 },
+                                        { text: '• 10 LBS FRIJOL / 1 BOLSA AZÚCAR 1kg', fontSize: 7 },
+                                        { text: '• 1 KG AVENA / 1 BOLSA SAL 460gr', fontSize: 7 },
+                                        { text: '• 1 BOLSA HARINA MAÍZ Y SOYA 900gr', fontSize: 7 }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            columns: [
+                                { width: '*', text: '' },
+                                {
+                                    width: 'auto',
+                                    table: {
+                                        widths: [50, 40],
+                                        body: [
+                                            [{ text: 'Hombres:', fontSize: 8, alignment: 'right', border: [false, false, false, false] }, { text: `${contadorMasculino}`, fontSize: 8, alignment: 'center', border: [true, true, true, true] }],
+                                            [{ text: 'Mujeres:', fontSize: 8, alignment: 'right', border: [false, false, false, false] }, { text: `${contadorFemenino}`, fontSize: 8, alignment: 'center', border: [true, true, true, true] }],
+                                            [{ text: 'ETNIA:', fontSize: 8, alignment: 'right', border: [false, false, false, false] }, { text: ``, fontSize: 8, alignment: 'center', border: [true, true, true, true] }]
+                                        ]
+                                    },
+                                    margin: [0, 5, 0, 0]
+                                }
+                            ]
+                        }
+                    ]
+                };
+            },
+
+            footer: function(currentPage, pageCount) {
+                return {
+                    columns: [
+                        {
+                            stack: [
+                                { canvas: [{ type: 'line', x1: 40, y1: 0, x2: 220, y2: 0, lineWidth: 1 }], margin: [0, 20, 0, 5] },
+                                { text: 'NOMBRE, FIRMA Y SELLO - COCODE', alignment: 'center', fontSize: 7, bold: true }
+                            ],
+                            margin: [40, 0, 0, 0]
+                        },
+                        {
+                            stack: [
+                                { canvas: [{ type: 'line', x1: 40, y1: 0, x2: 220, y2: 0, lineWidth: 1 }], margin: [0, 20, 0, 5] },
+                                { text: 'NOMBRE Y FIRMA - TÉCNICO MAGA', alignment: 'center', fontSize: 7, bold: true }
+                            ],
+                            margin: [0, 0, 40, 0]
+                        }
+                    ]
+                };
+            },
+
+            content: beneficiariosSegmentados.map((chunk, index) => {
+                return {
+                    stack: [
+                        {
+                            style: 'mainTableStyle',
+                            table: {
+                                headerRows: 1,
+                                widths: [20, '*', 90, 30, 40, 40, 100],
+                                body: buildBeneficiariesTable(chunk, index)
+                            },
+                            layout: {
+                                hLineWidth: (i, node) => 0.5,
+                                vLineWidth: (i, node) => 0.5,
+                                paddingTop: (i) => (i === 0 ? 1 : 1),
+                                paddingBottom: (i) => (i === 0 ? 4 : 12),
+                            }
+                        }
+                    ],
+                    pageBreak: (index < beneficiariosSegmentados.length - 1) ? 'after' : null
+                };
+            }),
+
+            styles: {
+                tableHeader: { bold: true, fontSize: 8, alignment: 'center', fillColor: '#EEEEEE' },
+                tableCell: { fontSize: 8 },
+                centerCell: { fontSize: 8, alignment: 'center' }
+            }
+        };
+
+        function buildBeneficiariesTable(data, index) {
+            const body = [[
+                { text: 'No.', style: 'tableHeader' },
+                { text: 'NOMBRE DEL BENEFICIARIO', style: 'tableHeader' },
+                { text: 'CUI', style: 'tableHeader' },
+                { text: 'EDAD', style: 'tableHeader' },
+                { text: 'RAC.', style: 'tableHeader' },
+                { text: 'DISC.', style: 'tableHeader' },
+                { text: 'FIRMA O HUELLA DIGITAL', style: 'tableHeader' }
+            ]];
+
+            data.forEach((item, i) => {
+                let nombreCompleto = [
+                    item.nombre1Esposa,
+                    item.nombre2Esposa,
+                    item.nombre3Esposa,
+                    item.apellido1Esposa,
+                    item.apellido2Esposa,
+                    item.apellidoCasada
+                ]
+                .filter(Boolean)
+                .join(' ');
+
+                body.push([
+                    { text: `${(i + 1) + ((index || 0) * 10)}`, style: 'centerCell' },
+                    { text: `${nombreCompleto}`, style: 'tableCell' },
+                    { text: `${item.cuiEsposa || ''}`, style: 'centerCell' },
+                    { text: '', style: 'centerCell' },
+                    { text: '1', style: 'centerCell' },
+                    { text: '', style: 'centerCell' },
+                    { text: '', style: 'centerCell' }
+                ]);
+            });
+            return body;
+        }
+
+        pdfMake.createPdf(docDefinition).download(`${nombre}.pdf`);
+    }
+
+
+    document.getElementById('formActualizarRaciones').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const idSolicitud = formData.get('IdSolicitud');
+        const nuevasRaciones = formData.get('nuevasRaciones');
+        
+        // Mostrar confirmación
+        Swal.fire({
+            title: "¿Confirmar actualización?",
+            text: `¿Desea actualizar el número de raciones a ${nuevasRaciones}?`,
+            icon: "question",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Sí, actualizar",
+            cancelButtonText: "Cancelar"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Llamar al método del controlador
+                actualizarRaciones(idSolicitud, nuevasRaciones);
+            }
+        });
+    });
+
+    function actualizarRaciones(idSolicitud, nuevasRaciones) {
+        fetch('@Url.Action("ActualizarRaciones", "SolicitudV2")', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+            },
+            body: JSON.stringify({
+                IdSolicitud: parseInt(idSolicitud),
+                Raciones: parseInt(nuevasRaciones)
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Error en la respuesta del servidor');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                Swal.fire({
+                    title: "¡Éxito!",
+                    text: data.message,
+                    icon: "success",
+                    confirmButtonColor: "#3085d6"
+                }).then(() => {
+                    // Cerrar modal y recargar la página
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('modalActualizarRaciones'));
+                    modal.hide();
+                    location.reload();
+                });
+            } else {
+                Swal.fire({
+                    title: "Error",
+                    text: data.message,
+                    icon: "error",
+                    confirmButtonColor: "#d33"
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Swal.fire({
+                title: "Error",
+                text: "Ocurrió un error al actualizar las raciones",
+                icon: "error",
+                confirmButtonColor: "#d33"
+            });
+        });
+    }
+</script>

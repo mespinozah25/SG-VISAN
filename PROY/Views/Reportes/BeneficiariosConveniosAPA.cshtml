@@ -1,0 +1,194 @@
+@model PROY.ViewModels.ConvenioVM;
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
+
+<head>
+</head>
+@{
+
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@{
+    ViewData["Title"] = "Listado Beneficiarios Por Convenio";
+}
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Mensaje"]
+    </div>
+}
+
+
+<h2 class="float-start">Reporte Listado de Beneficiarios por Convenios</h2>
+<p><br /></p>
+
+<br />
+
+@await Html.PartialAsync("_CriteriosDeBusquedaAPA")
+
+<!-- Aquí puedes agregar una tabla para mostrar los resultados -->
+<div class="row mt-4">
+    <div class="col">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Resultados</h5>
+                <div id="tablaResultados">
+                    <!-- Los resultados se cargarán aquí -->
+                    <p class="text-muted">Use los criterios de búsqueda para mostrar resultados.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+@section Scripts {
+    <!-- Agregar DataTables CSS y JS -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+    <script>
+        var tipoReporte = 14;
+        var nombreReporte = "Listado Beneficiarios Por Convenio";
+        var dataTable = null; // Variable global para DataTable
+
+        $(document).ready(function () {
+            HabilitarBusquedas();
+        });
+
+        function HabilitarBusquedas() {
+            $('#divCriteriosBusqueda').show();
+            $('#divConvenio').show();
+        }
+
+        function LimpiarCriterios() {
+            $('#_frmBusqueda')[0].reset();
+            // Limpiar DataTable si existe
+            if (dataTable !== null) {
+                dataTable.destroy();
+                $('#tablaResultados').empty();
+            }
+            return false;
+        }
+
+        function Buscar() {
+            // Obtener los valores del formulario
+            var idConvenio = $('#cbIdConvenio').val();
+
+            // Mostrar loading
+            $('#tablaResultados').html('<div class="text-center p-5"><div class="spinner-border" role="status"><span class="visually-hidden">Cargando...</span></div></div>');
+
+            var filtros = {
+                IdConvenio: idConvenio ? parseInt(idConvenio) : null
+            };
+            
+            // Llamada AJAX
+            $.ajax({
+                url: '@Url.Action("BuscarBeneficiariosConveniosAPA", "Reportes")',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(filtros),
+                success: function (response) {
+                    if (response.success) {
+                        // Actualizar la tabla con los resultados usando DataTables
+                        ActualizarTablaResultados(response.data);
+                    } else {
+                        alert('Error: ' + response.message);
+                        $('#tablaResultados').html('<div class="alert alert-danger text-center">Error al realizar la búsqueda</div>');
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error en AJAX:', error);
+                    alert('Error al conectar con el servidor');
+                    $('#tablaResultados').html('<div class="alert alert-danger text-center">Error de conexión</div>');
+                }
+            });
+
+            return false;
+        }
+
+        // Función para actualizar la tabla con DataTables
+        function ActualizarTablaResultados(datos) {
+            if (!datos || datos.length === 0) {
+                $('#tablaResultados').html('<div class="alert alert-info text-center">No se encontraron resultados con los criterios especificados.</div>');
+                return;
+            }
+
+            console.log(datos);
+
+            // Limpiar DataTable anterior si existe
+            if (dataTable !== null) {
+                dataTable.destroy();
+            }
+
+            // Crear estructura de tabla para DataTables
+            var tablaHTML = `
+                <div class="table-responsive">
+                    <table id="tablaResultadosDataTable" class="table table-striped table-hover" style="width:100%">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>CUI</th>
+                                <th>Nombre</th>
+                                <th>Apellido</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                    `;
+
+            // Agregar filas con datos
+            datos.forEach(function (item) {
+                tablaHTML += `
+                    <tr>
+                        <td>${item.cuiEsposa || ''}</td>
+                        <td>${item.nombre1Esposa || ''} ${item.nombre2Esposa || ''}</td>
+                        <td>${item.apellido1Esposa || ''} ${item.apellido2Esposa || ''}</td>
+                    </tr>`;
+            });
+
+            tablaHTML += `
+                        </tbody>
+                    </table>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <small class="text-muted">Total registros: ${datos.length}</small>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <small class="text-muted">Consulta generada: ${new Date().toLocaleString()}</small>
+                        </div>
+                    </div>
+                </div>`;
+
+            $('#tablaResultados').html(tablaHTML);
+
+            // Inicializar DataTable
+            dataTable = $('#tablaResultadosDataTable').DataTable({
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json"
+                },
+                "pageLength": 10,
+                "lengthMenu": [10, 25, 50, 100],
+                "order": [[0, "asc"]],
+                "responsive": true,
+                "dom": '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+                       '<"row"<"col-sm-12"tr>>' +
+                       '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+                "initComplete": function(settings, json) {
+                    console.log('DataTable inicializado con', json.length, 'registros');
+                }
+            });
+        }
+
+    </script>
+}
+
+<script src="~/js/reportes.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+@* CDN para la creación del archivo xlsx *@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+@* CDN para la creación del archivo PDF *@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>

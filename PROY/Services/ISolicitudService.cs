@@ -12,11 +12,15 @@ namespace PROY.Services
         Task<List<Solicitud>> GetAllSolicitudesAPA();
         Task<List<Solicitud>> GetSolicitudesProgramacion();
         Task ActualizarEstadoEgreso(Int64 idSolicitud, int nuevoEstado);
+
+        Task<List<DetalleSolicitudAPA>> GetAllDetalleSolicitudSinFiltro();
         Task<List<DetalleSolicitud>> GetAllDetalleSolicitud(Int64 id);
         Task<List<DetalleSolicitudAPA>> GetAllDetalleSolicitudAPA(Int64 id);
+        Task<List<DetalleSolicitudAPA>> GetAllDetalleSolicitudAPACodigo(Int64 id);
         List<SelectListItem> GetComunidades(Int64 id);
         List<SelectListItem> GetComunidadesAPA(Int64 id);
         Task<Solicitud> GetSolicitud(Int64 id);
+         
         Task<DetalleSolicitud> GetDetalleSolicitud(Int64 id);
         Task<DetalleSolicitud> GetDetalleSolicitudByCUI(Int64 id, string paramCUI);
         Task<DetalleSolicitudAPA> GetDetalleSolicitudByCUIAPA(Int64 id, string paramCUI);
@@ -31,6 +35,7 @@ namespace PROY.Services
         Task<ServiceResponse<DetalleSolicitudAPA>> UpdateListaDetalleSolicitudAPA(List<Models.ExcelRowAPA> datos);
         Task<ServiceResponse<Solicitud>> UpdateSolicitud(Solicitud modelo);
         Task<ServiceResponse<Solicitud>> UpdateEstado(Solicitud modelo);
+        Task<ServiceResponse<Solicitud>> UpdateEstadoARevAdministrativa(Solicitud modelo);
         Task<ServiceResponse<DetalleSolicitud>> UpdateDetalleSolicitud(DetalleSolicitud modelo, string proceso);
         Task<ServiceResponse<DetalleSolicitudAPA>> UpdateDetalleSolicitudAPA(DetalleSolicitudAPA modelo);
         Task<ServiceResponse<Solicitud>> DeleteSolicitud(Int64 id);

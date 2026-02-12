@@ -1,0 +1,147 @@
+﻿@inject IHttpContextAccessor HttpContextAccessor
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
+
+<style>
+    .modal-header .btn-close {
+        color: white !important;
+        opacity: 1;
+        -webkit-filter: invert(1);
+    }
+
+    .table .dropdown-menu {
+        z-index: 1050;
+    }
+</style>
+
+
+@model PROY.ViewModels.SolicitudesVM
+
+@{
+    ViewData["Title"] = "Index";
+    ViewData["rutaApp"] = @Model.rutaApp;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@{
+    int? IdEstado = ViewData["IdEstado"] as int?;
+    string Offset4 = $"{IdEstado}" == $"{@Configuration["EtapasSolicitud:APA:CREADA"]}" ||
+                    $"{IdEstado}" == $"{@Configuration["EtapasSolicitud:APA:REVISION_ADMINISTRATIVA"]}" ||
+                    $"{IdEstado}" == $"{@Configuration["EtapasSolicitud:APA:EVALUACION"]}" ? "" : "offset-4";
+}
+
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Mensaje"]
+    </div>
+}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="display-6">Solicitudes de Alimentos Por Acciones</h1>
+        </div>
+    </div>
+    <div class="row my-3">
+        <div class="col-md-4">
+            <div class="dropdown">
+                <button class="btn btn-secondary w-100 dropdown-toggle" type="button" id="dropdownEstadosSolicitud"
+                    data-bs-toggle="dropdown" aria-expanded="false" data-bs-container="body">
+                    Estados de la solicitud
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="dropdownEstadosSolicitud">
+                    @foreach (EstadoSolicitud estadoSolicitud in Model.EstadosSolicitud)
+                    {
+                        <li>
+                            <a class="dropdown-item" asp-controller="SolicitudV2" asp-action="Index"
+                                asp-route-IdEstado="@estadoSolicitud.IdEstadoSolicitud">
+                                @estadoSolicitud.Nombre
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+        @if ($"{IdEstado}" == $"{@Configuration["EtapasSolicitud:APA:CREADA"]}" ||
+            $"{IdEstado}" == $"{@Configuration["EtapasSolicitud:APA:REVISION_ADMINISTRATIVA"]}" ||
+            $"{IdEstado}" == $"{@Configuration["EtapasSolicitud:APA:EVALUACION"]}"){
+            <div class="col-md-4">
+                <div class="btn-group w-100" role="group" aria-label="EstadosEvaluacion">
+                    <a type="button" class="btn btn-secondary" asp-controller="SolicitudV2" asp-action="Index"
+                        asp-route-IdEstado="@IdEstado">
+                        Habilitadas
+                    </a>
+                    <a type="button" class="btn btn-danger" asp-controller="SolicitudV2" asp-action="Index"
+                        asp-route-IdEstado="@IdEstado" asp-route-Rechazada="1">
+                        Rechazadas
+                    </a>
+                </div>
+            </div>
+        }
+        <div class="col-md-4 @Offset4">
+            <a class="btn btn-secondary w-100" asp-controller="SolicitudV2" asp-action="FormularioSolicitud">
+                Nueva solicitud
+            </a>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12">
+            <div class="table-responsive">
+                <table class="table p-5">
+                    <thead>
+                        <tr>
+                            <th>CODIGO</th>
+                            <th>No. SOLICITUD</th>
+                            <th>PROYECTO</th>
+                            <th>INTERVENCION</th>
+                            <th>FECHA INGRESO A DESPACHO</th>
+                            <th>FECHA INGRESO A DIRECCIÓN</th>
+                            <th>FECHA INGRESO A DEPARTAMENTO</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (Solicitud item in Model.Solicitudes)
+                        {
+                            string descripcionProyecto = item.IdProyecto.HasValue
+                            ? Model.ProyectoDict.TryGetValue(item.IdProyecto.Value, out var descProy)
+                            ? descProy : "Proyecto no encontrado"
+                            : "IdProyecto no especificado";
+
+                            string descripcionIntervencion = Model.IntervencionDict.TryGetValue(item.IdIntervencion, out var descInter)
+                            ? descInter
+                            : "Intervención no encontrada";
+
+                            <tr>
+                                <td>
+                                    <a type="button" class="btn btn-link" asp-controller="SolicitudV2" asp-action="DetalleSolicitud"
+                                        asp-route-IdSolicitud="@item.IdSolicitud">@item.Codigo</a>
+                                </td>
+                                <td style="max-width: 250px;">
+                                    @item.Correlativo
+                                    @if(item.Rechazada == 1 && item.ComentarioRechazo != null){
+                                        <br />
+                                        <p class="text-danger text-truncate">@item.ComentarioRechazo</p>
+                                    }
+                                </td>
+                                <td class="text-truncate" style="max-width: 250px;">@descripcionProyecto</td>
+                                <td>@descripcionIntervencion</td>
+                                <td>@item.FechaIngresoDespacho.Date.ToString("dd/MM/yyyy")</td>
+                                <td>@item.FechaIngresoDireccion.Date.ToString("dd/MM/yyyy")</td>
+                                <td>@item.FechaIngresoUnidad.Date.ToString("dd/MM/yyyy")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>

@@ -93,5 +93,6 @@ namespace PROY.Services
         Task<ServiceResponse<Bitacora>> SaveBitacora(Bitacora modelo);
 
         #endregion
+
     }
 }

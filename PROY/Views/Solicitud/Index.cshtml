@@ -183,7 +183,7 @@ else if (idDepto == "2")
                         string descripcionProyecto = item.IdProyecto.HasValue 
                                     ? Model.ProyectoDict.TryGetValue(item.IdProyecto.Value, out var descProy) 
                                     ? descProy : "Proyecto no encontrada" 
-                                               : "IdProyecto no especificado";
+                                                : "IdProyecto no especificado";
                     }
                     @descripcionProyecto
                 </td>   
@@ -306,13 +306,13 @@ else if (idDepto == "2")
                 
                 @if (rol == "Admin")
                 {
-                    <a class="btn btn-gray btn-sm" asp-action="EnviarSolicitud" asp-route-id="@item.IdSolicitud" asp-route-k="@condicion" onclick="confirmarEnvio(event,'@item.Codigo', this)" title="Enviar solicitud a status de evaluación"><i class="fas fa-bolt"></i> Enviar</a>
+                    <a class="btn btn-gray btn-sm" asp-action="EnviarSolicitud" asp-route-id="@item.IdSolicitud" asp-route-k="@condicion" onclick="confirmarEnvio(event,'@item.Codigo', this, @idDepto)" title="Enviar solicitud a status de evaluación"><i class="fas fa-bolt"></i> Enviar</a>
                 }                
                 else
                 {
                     if (usr == item.UsuarioRegistro)
                     {
-                         <a class="btn btn-gray btn-sm" asp-action="EnviarSolicitud" asp-route-id="@item.IdSolicitud" onclick="confirmarEnvio(event,'@item.Codigo', this)" title="Enviar solicitud a status de evaluación"><i class="fas fa-bolt"></i> Enviar</a>     
+                         <a class="btn btn-gray btn-sm" asp-action="EnviarSolicitud" asp-route-id="@item.IdSolicitud" onclick="confirmarEnvio(event,'@item.Codigo', this, @idDepto)" title="Enviar solicitud a status de evaluación"><i class="fas fa-bolt"></i> Enviar</a>     
                     }
                     else
                     {
@@ -444,16 +444,36 @@ else if (idDepto == "2")
                         {
                             <div class="col">
                                 <label for="txtraciones" class="control-label">No. de raciones</label>
-                                <input asp-for="@Model.Solicitud.Raciones" id="txtraciones" value="1" class="form-control" type="number" required disabled/>
+                                <input asp-for="@Model.Solicitud.Raciones" id="txtraciones" value="1" class="form-control" type="number" required />
                                 <span asp-validation-for="@Model.Solicitud.Raciones" class="text-danger"></span>
                             </div>
                         }                        
                     </div>
-                    <div>
+                    @if (idDepto == "2")
+                    {
+                        <div class="row">
+                            <div class="col">
+                                <label for="txtNombreCocode" class="control-label">Nombre COCODE</label>
+                                <input type="text" class="form-control" id="txtNombreCocode" asp-for="@Model.Solicitud.NombreCocode" required maxlength="100"></input>
+                                <span asp-validation-for="@Model.Solicitud.NombreCocode" class="text-danger"></span>
+                            </div>
+                            <div class="col">
+                                <label for="txtComunidadCocode" class="control-label">Comunidad COCODE</label>
+                                <input type="text" class="form-control" id="txtComunidadCocode" asp-for="@Model.Solicitud.ComunidadCocode" required maxlength="150"></input>
+                                <span asp-validation-for="@Model.Solicitud.ComunidadCocode" class="text-danger"></span>
+                            </div>
+                            <div class="col">
+                                <label for="txtTelefonoCocode" class="control-label">Teléfono COCODE</label>
+                                <input type="text" class="form-control" id="txtTelefonoCocode" asp-for="@Model.Solicitud.TelefonoCocode" required maxlength="10"></input>
+                                <span asp-validation-for="@Model.Solicitud.TelefonoCocode" class="text-danger"></span>
+                            </div>
+                        </div>   
+                    }
+                    @* <div>
                         <label for="txtdescripcion" class="control-label">Descripcion</label>
                         <input asp-for="@Model.Solicitud.Descripcion" id="txtdescripcion" class="form-control" type="text"/>
                         <span asp-validation-for="@Model.Solicitud.Descripcion" class="text-danger"></span>
-                    </div>
+                    </div> *@
                     @*<div class="form-group">
                         <label for="cbunidad" class="control-label">Unidad</label>
                         <select class="form-select" id="cbunidad" asp-for="@Model.Solicitud.IdUnidad" asp-items="ViewBag.Unidades" required></select>
@@ -608,6 +628,10 @@ else if (idDepto == "2")
             $('#funidad').val(year + "-" + month + "-" + day);
             $('#cbunidad').val('');
             $('#txtdescripcion').val('');
+            $('#txtComunidad').val('');
+            $('#txtNombreCocode').val('');
+            $('#txtComunidadCocode').val('');
+            $('#txtTelefonoCocode').val('');
             $('#cbTipoAsistAlim').val(idDepto);
             $('#oldfile').val('');
             if (idDepto=="1"){
@@ -673,6 +697,9 @@ else if (idDepto == "2")
                 $('#cbDepartamento').val(data.departamento);
                 $('#cbMunicipio').val(data.municipio);
                 $('#txtComunidad').val(data.comunidad);
+                $('#txtNombreCocode').val(data.nombreCocode);
+                $('#txtComunidadCocode').val(data.comunidadCocode);
+                $('#txtTelefonoCocode').val(data.telefonoCocode);
                 ///cargarIntervenciones();
 
                 var ventanaTitle = document.getElementById("lblModalTitle");
@@ -736,7 +763,7 @@ else if (idDepto == "2")
         //return false;        
     }
 
-    function confirmarEnvio(e,code, element){
+    function confirmarEnvio(e,code, element, idDepto){
         /*var envio = confirm("¿Desea enviar la solicitud " + code + " a un status de evaluación?");
         if (envio) return true;
         if (envio == false) e.preventDefault();*/        
@@ -745,7 +772,7 @@ else if (idDepto == "2")
 
         Swal.fire({
             title: "ATENCIÓN",
-            text: "¿Desea enviar la solicitud " + code + " a un status de evaluación?",
+            text: idDepto == "2" ? "¿Desea enviar la solicitud " + code + " a un status de revisión administrativa?" : "¿Desea enviar la solicitud " + code + " a un status de evaluación?",
             icon: "question",
             showCancelButton: true,
             confirmButtonColor: "#3085d6",

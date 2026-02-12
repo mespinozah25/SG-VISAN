@@ -19,7 +19,7 @@
 
 
 <h2 class="float-start">Ingreso de Juntas Receptoras</h2>
-@if (Model.Rol == "Operador de Logística" || Model.Rol == "Admin")
+@if (Model.Rol == "Operador de Logistica" || Model.Rol == "Admin")
 {
     <a class="btn btn-primary btn-sm float-end" asp-controller="JuntaDeRecepcion" asp-action="JuntaReceptora" asp-route-id="0"><i class="fas fa-plus-square"></i> Crear Junta Receptora</a>
 }
@@ -59,7 +59,7 @@
                     </td>
                     <td class="text-center">
 
-                        @if (Model.Rol == "Operador de Logística" || Model.Rol == "Admin") // 1: Iniciada
+                        @if (Model.Rol == "Operador de Logistica" || Model.Rol == "Admin") // 1: Iniciada
                         {
                             <a class="btn btn-info btn-sm" asp-controller="JuntaDeRecepcion" asp-action="JuntaReceptora" asp-route-id="@item.IdJuntaReceptora" asp-route-type="1"><i class="fas fa-edit"></i> Editar</a>
                             <a class="btn btn-danger btn-sm" asp-controller="JuntaDeRecepcion" asp-action="Eliminar" asp-route-id="@item.IdJuntaReceptora" onclick="confirmar(event, this)"><i class="fas fa-trash"></i> Eliminar</a>

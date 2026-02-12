@@ -18,7 +18,7 @@ namespace PROY.Services
 
         #region Consultas
 
-        
+
 
         public async Task<List<EstadoIngresos>> GetAllEstadoIngresos()
         {
@@ -486,7 +486,7 @@ namespace PROY.Services
         /// </summary>
         /// <param name="id">INGRESO_ALIMENTOS_ID</param>
         /// <returns></returns>
-        public async Task<List<DetalleWaybill>  > GetDetalleWaybillDeIngreso(Int64 id)
+        public async Task<List<DetalleWaybill>> GetDetalleWaybillDeIngreso(Int64 id)
         {
             List<DetalleWaybill> modelo = await _ingresoAlimentosRepository.GetDetalleWaybillDeIngreso(id);
 
@@ -967,7 +967,7 @@ namespace PROY.Services
 
                         await _ingresoAlimentosRepository.SaveMovimientosProductos(objMPDB);
                     }
-                    else 
+                    else
                     {
                         // Al encontrar el registro, se actualiza la existencia.
                         var nuevaExistencia = objMov.Existencias + obj.CantidadRecibir;
@@ -977,7 +977,7 @@ namespace PROY.Services
                         await _ingresoAlimentosRepository.UpdateMovimientosProductos(objMov);
                     }
                 }
-                
+
 
                 response.Data = (int)id;
                 response.Message = "Movimiento de Productos realizado exitosamente";

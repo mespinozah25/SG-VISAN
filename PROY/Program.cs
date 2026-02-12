@@ -22,9 +22,9 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddDistributedMemoryCache(); // Necesario para usar sesiones
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromMinutes(20); // Duración de la sesión inactiva
-    options.Cookie.HttpOnly = true; // Hace que la cookie de sesión sea accesible solo desde el servidor
-    options.Cookie.IsEssential = true; // Requerido para cumplir con las políticas de GDPR si usas cookies esenciales
+    options.IdleTimeout = TimeSpan.FromMinutes(20); // Duracion de la sesion inactiva
+    options.Cookie.HttpOnly = true; // Hace que la cookie de sesion sea accesible solo desde el servidor
+    options.Cookie.IsEssential = true; // Requerido para cumplir con las poloticas de GDPR si usas cookies esenciales
 });
 //------------------------------
 
@@ -38,6 +38,14 @@ builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 builder.Services.AddScoped<ISolicitudRepository, SolicitudRepository>();
 builder.Services.AddScoped<ISolicitudService, SolicitudService>();
+builder.Services.AddScoped<IAsignaRacionRepository, AsignaRacionRepository>();
+builder.Services.AddScoped<IAsignaRacionService, AsignaRacionService>();
+builder.Services.AddScoped<IAsignaTecnicoRepository, AsignaTecnicoRepository>();
+builder.Services.AddScoped<IAsignaTecnicoService, AsignaTecnicoService>();
+builder.Services.AddScoped<ISolicitudV2Repository, SolicitudV2Repository>();
+builder.Services.AddScoped<IDetalleSolicitudAPARepository, DetalleSolicitudAPARepository>();
+builder.Services.AddScoped<IDetalleEvaluacionAPARepository, DetalleEvaluacionAPARepository>();
+builder.Services.AddScoped<ISolicitudV2Service, SolicitudV2Service>();
 builder.Services.AddScoped<ICatalogoRepository, CatalogoRepository>();
 builder.Services.AddScoped<ICatalogoService, CatalogoService>();
 builder.Services.AddScoped<ITecnicoRepository, TecnicoRepository>();
@@ -55,7 +63,10 @@ builder.Services.AddScoped<IDespachoService, DespachoService>();
 builder.Services.AddScoped<ITableroDeDatosRepository, TableroDeDatosRepository>();
 builder.Services.AddScoped<ITableroDeDatosService, TableroDeDatosService>();
 
-// Módulo de Catálogos
+builder.Services.AddScoped<ITableroDeDatosAPARepository, TableroDeDatosAPARepository>();
+builder.Services.AddScoped<ITableroDeDatosAPAService, TableroDeDatosAPAService>();
+
+// Modulo de Catalogos
 builder.Services.AddScoped<IBodegaRepository, BodegaRepository>();
 builder.Services.AddScoped<IBodegaService, BodegaService>();
 builder.Services.AddScoped<IProgramaRepository, ProgramaRepository>();
@@ -90,6 +101,10 @@ builder.Services.AddScoped<IPilotoRepository, PilotoRepository>();
 builder.Services.AddScoped<IPilotoService, PilotoService>();
 builder.Services.AddScoped<ITipoAsistenciaRepository, TipoAsistenciaRepository>();
 builder.Services.AddScoped<ITipoAsistenciaService, TipoAsistenciaService>();
+builder.Services.AddScoped<ITipoIntervencionRepository, TipoIntervencionRepository>();
+builder.Services.AddScoped<ITipoIntervencionService, TipoIntervencionService>();
+builder.Services.AddScoped<IEstadoSolicitudRepository, EstadoSolicitudRepository>();
+builder.Services.AddScoped<IEstadoSolicitudService, EstadoSolicitudService>();
 builder.Services.AddScoped<IUsuarioPersonaRepository, UsuarioPersonaRepository>();
 builder.Services.AddScoped<IUsuarioPersonaService, UsuarioPersonaService>();
 builder.Services.AddScoped<IProveedorRepository, ProveedorRepository>();
@@ -97,7 +112,7 @@ builder.Services.AddScoped<IProveedorService, ProveedorService>();
 builder.Services.AddScoped<IProyectoRepository, ProyectoRepository>();
 builder.Services.AddScoped<IProyectoService, ProyectoService>();
 
-// Módulo de Procesos
+// Mï¿½dulo de Procesos
 builder.Services.AddScoped<IIngresoAlimentosRepository, IngresoAlimentosRepository>();
 builder.Services.AddScoped<IIngresoAlimentosService, IngresoAlimentosService>();
 builder.Services.AddScoped<IEgresoAlimentosRepository, EgresoAlimentosRepository>();
@@ -107,7 +122,7 @@ builder.Services.AddScoped<IReingresoAlimentosService, ReingresoAlimentosService
 builder.Services.AddScoped<IJuntaDeRecepcionRepository, JuntaDeRecepcionRepository>();
 builder.Services.AddScoped<IJuntaDeRecepcionService, JuntaDeRecepcionService>();
 
-// Módulo de Reportes
+// Mï¿½dulo de Reportes
 builder.Services.AddScoped<IReporteRepository, ReporteRepository>();
 builder.Services.AddScoped<IReporteService, ReporteService>();
 
@@ -129,7 +144,7 @@ var app = builder.Build();
 
 app.UseWebSockets(new WebSocketOptions
 {
-    KeepAliveInterval = TimeSpan.FromSeconds(120), // Ajustar el tiempo de keep-alive según sea necesario
+    KeepAliveInterval = TimeSpan.FromSeconds(120), // Ajustar el tiempo de keep-alive segï¿½n sea necesario
 });
 
 //--------------------------------------
@@ -176,7 +191,7 @@ app.MapControllerRoute(
         if (context.WebSockets.IsWebSocketRequest)
         {
             var webSocket = await context.WebSockets.AcceptWebSocketAsync();
-            // Lógica para manejar la conexión WebSocket
+            // Lï¿½gica para manejar la conexiï¿½n WebSocket
         }
         else
         {

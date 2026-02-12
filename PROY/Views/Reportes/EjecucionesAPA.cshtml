@@ -1,0 +1,273 @@
+@model PROY.ViewModels.BodegaVM;
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">
+
+<head>
+</head>
+@{
+
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@{
+    ViewData["Title"] = "Reporte de Ejecuciones APA";
+}
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Mensaje"]
+    </div>
+}
+
+<h2 class="float-start">Reporte de Ejecuciones APA</h2>
+<p><br /></p>
+
+<br />
+
+@await Html.PartialAsync("_CriteriosDeBusquedaAPA")
+
+<!-- Aquí puedes agregar una tabla para mostrar los resultados -->
+<div class="row mt-4">
+    <div class="col">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Resultados</h5>
+                <div id="tablaResultados">
+                    <!-- Los resultados se cargarán aquí -->
+                    <p class="text-muted">Use los criterios de búsqueda para mostrar resultados.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+
+    <script>
+
+        var tipoReporte = 11;
+        var nombreReporte = "Ejecuciones por Fecha y Ubicación";
+
+        $(document).ready(function () {
+            HabilitarBusquedas();
+        });
+
+        function HabilitarBusquedas() {
+            $('#divCriteriosBusqueda').show();
+            $('#divFechaMovimientoInicio').show(); // Habilita los criterios
+            $('#divFechaMovimientoFin').show();
+            $('#divIdDepartamento').show();
+            $('#divIdMunicipio').show();
+        }
+
+        function LimpiarCriterios() {
+            $('#_frmBusqueda')[0].reset();
+            return false;
+        }
+
+        function Buscar() {
+            // Obtener los valores del formulario
+            var fechaInicio = $('#txtFechaInicio').val();
+            var fechaFin = $('#txtFechaFin').val();
+            var idDepartamento = $('#cbIdDepartamento').val();
+            var idMunicipio = $('#cbIdMunicipio').val();
+
+            // Mostrar loading
+            $('#tablaResultados').html('<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Cargando...</span></div></div>');
+
+            var filtros = {
+                FechaInicio: fechaInicio ? new Date(fechaInicio).toISOString() : null,
+                FechaFin: fechaFin ? new Date(fechaFin).toISOString() : null,
+                IdDepartamento: idDepartamento ? parseInt(idDepartamento) : null,
+                IdMunicipio: idMunicipio ? parseInt(idMunicipio) : null
+            };
+            // Llamada AJAX
+            $.ajax({
+                url: '@Url.Action("BuscarEjecucionesAPA", "Reportes")',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(filtros),
+                success: function (response) {
+                    if (response.success) {
+                        // Actualizar la tabla con los resultados
+                        ActualizarTablaResultados(response.data);
+                    } else {
+                        alert('Error: ' + response.message);
+                        $('#tablaResultados').html('<p class="text-danger">Error al realizar la búsqueda</p>');
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error en AJAX:', error);
+                    alert('Error al conectar con el servidor');
+                    $('#tablaResultados').html('<p class="text-danger">Error de conexión</p>');
+                }
+            });
+
+            return false;
+        }
+
+        // Función para actualizar la tabla con resultados (ejemplo)
+        function ActualizarTablaResultados(datos) {
+            if (!datos || datos.length === 0) {
+                $('#tablaResultados').html('<div class="alert alert-info text-center">No se encontraron resultados con los criterios especificados.</div>');
+                return;
+            }
+
+            var tablaHTML = `
+                            <div class="table-responsive">
+                                <table class="table" style="width:100%; position:relative; z-index:2;">
+                                    <thead>
+                                        <tr>
+                                            <th>Departamento</th>
+                                            <th>Municipio</th>
+                                            <th>Comunidad</th>
+                                            <th>Raciones Entregadas</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>`;
+
+            // Generar tabla con totales
+            var tablaHTML = generarTablaConTotales(datos);
+
+            var tablaCompleta = `
+                <div class="table-responsive">
+                    <table class="table table-striped table-bordered" style="width:100%; position:relative; z-index:2;">
+                        <thead>
+                            <tr>
+                                <th>Departamento</th>
+                                <th>Municipio</th>
+                                <th class="text-center">Comunidades</th>
+                                <th class="text-center">Raciones Entregadas</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tablaHTML}
+                        </tbody>
+                    </table>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <small class="text-muted">Consulta generada: ${new Date().toLocaleString()}</small>
+                        </div>
+                    </div>
+                </div>`;
+
+            $('#tablaResultados').html(tablaCompleta);
+        }
+
+        function generarTablaConTotales(datos) {
+            let tablaHTML = '';
+            let totalGeneralComunidades = 0;
+            let totalGeneralRaciones = 0;
+            let departamentoActual = '';
+            let subtotalDepartamentoComunidades = 0;
+            let subtotalDepartamentoRaciones = 0;
+            let esPrimerRegistro = true;
+
+            datos.forEach(function (item, index) {
+                // Si cambia el departamento, agregar subtotal del departamento anterior
+                if (departamentoActual !== item.departamento && !esPrimerRegistro) {
+                    // Agregar fila de subtotal del departamento anterior
+                    tablaHTML += `
+                            <tr class="subtotal-departamento" style="background: #BDD7EE; font-weight: bold; color: #000">
+                                <td colspan="2" style="text-align: center; color: #000 !important">TOTAL</td>
+                                <td class="text-center" style="color: #000 !important">${subtotalDepartamentoComunidades}</td>
+                                <td class="text-center" style="color: #000 !important">${subtotalDepartamentoRaciones}</td>
+                            </tr>`;
+
+                    // Reiniciar subtotales para el nuevo departamento
+                    subtotalDepartamentoComunidades = 0;
+                    subtotalDepartamentoRaciones = 0;
+                }
+
+                // Si es un nuevo departamento o el primer registro
+                if (departamentoActual !== item.departamento || esPrimerRegistro) {
+                    departamentoActual = item.departamento;
+                    esPrimerRegistro = false;
+                }
+
+                // Agregar fila normal de datos
+                tablaHTML += `
+                        <tr>
+                            <td>${item.departamento || 'N/A'}</td>
+                            <td>${item.municipio || 'N/A'}</td>
+                            <td class="text-center">${item.cantidadComunidades || 0}</td>
+                            <td class="text-center">${item.totalRaciones || 0}</td>
+                        </tr>`;
+
+                // Acumular subtotales del departamento
+                subtotalDepartamentoComunidades += item.cantidadComunidades || 0;
+                subtotalDepartamentoRaciones += item.totalRaciones || 0;
+
+                // Acumular totales generales
+                totalGeneralComunidades += item.cantidadComunidades || 0;
+                totalGeneralRaciones += item.totalRaciones || 0;
+
+                // Si es el último registro, agregar subtotal del último departamento
+                if (index === datos.length - 1) {
+                    tablaHTML += `
+                            <tr class="subtotal-departamento" style="background: #BDD7EE; font-weight: bold; color: #000">
+                                <td colspan="2" style="text-align: center; color: #000 !important">TOTAL</td>
+                                <td class="text-center" style="color: #000 !important">${subtotalDepartamentoComunidades}</td>
+                                <td class="text-center" style="color: #000 !important">${subtotalDepartamentoRaciones}</td>
+                            </tr>`;
+                }
+            });
+
+            // Agregar fila de TOTAL GENERAL
+            if (datos.length > 0) {
+                tablaHTML += `
+                        <tr class="total-general"  style="background: #BDD7EE; font-weight: bold; font-size: 1.1em; color: #000">
+                            <td colspan="2" style="text-align: center; color: #000 !important">TOTAL GENERAL</td>
+                            <td class="text-center" style="color: #000 !important">${totalGeneralComunidades}</td>
+                            <td class="text-center" style="color: #000 !important">${totalGeneralRaciones}</td>
+                        </tr>`;
+            }
+
+            return tablaHTML;
+        }
+
+        function cambio() {
+            //var opcionSeleccionada = $(this).val();
+            var opcionSeleccionada = $('#cbIdDepartamento').val();
+            //console.log('Opción seleccionada:', opcionSeleccionada);
+            //alert(opcionSeleccionada);
+            var catalogoSelect = $('#cbIdMunicipio');
+            catalogoSelect.empty(); // Limpiar el select antes de agregar nuevas opciones
+
+            $.ajax({
+                url: `@ViewData["rutaApp"]/Solicitud/GetOrdenDepto/${opcionSeleccionada}`, // URL para obtener los datos
+                type: 'GET',
+                success: function (data) {
+                    var orden = data;
+                    //alert(orden);
+
+                    //console.log('Cargando intervenciones para DAAN');
+                    $.getJSON('@Url.Action("GetMunicipios", "Solicitud")', { id: orden },
+
+                        function (data) {
+                            //console.log('Datos devueltos:', data);
+                            var items = data.value.value;
+                            $.each(items, function (index, item) {
+                                catalogoSelect.append('<option value="' + item.id + '">' + item.descripcion + '</option>');
+                            });
+                        });
+
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error al obtener los datos de la solicitud:', error);
+                }
+            });
+        }
+    </script>
+}
+
+<script src="~/js/reportes.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+@* CDN para la creación del archivo xlsx *@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+@* CDN para la creación del archivo PDF *@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>

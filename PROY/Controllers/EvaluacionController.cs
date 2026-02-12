@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.StaticFiles;
@@ -8,6 +8,12 @@ using PROY.Models;
 using PROY.Services;
 using PROY.ViewModels;
 using System.Security.Claims;
+using System.Text;
+using System.IO;
+using ExcelRow = PROY.Models.ExcelRow;
+using NPOI.HSSF.UserModel;
+using System.Globalization;
+using System.Text;
 
 namespace PROY.Controllers
 {
@@ -94,7 +100,7 @@ namespace PROY.Controllers
                                                     //Solicitudes = await _solicitudService.GetAllSolicitudes(),
                         Solicitudes = await _evaluacionService.GetAllEvaluaciones(),
                         SolicitudesRechazadas = await _evaluacionService.GetAllEvaluacionesRechazadas(),
-                        AnulacionDict =anulacionDict,
+                        AnulacionDict = anulacionDict,
                         UnidadDict = unidadDict,
                         IntervencionDict = intervencionDict,
                         InstitucionDict = institucionDict,
@@ -116,7 +122,7 @@ namespace PROY.Controllers
                         SolicitudesRechazadas = await _evaluacionService.GetAllEvaluacionesRechazadas(),
                         UnidadDict = unidadDict,
                         IntervencionDict = intervencionDict,
-                        AnulacionDict= anulacionDict,
+                        AnulacionDict = anulacionDict,
                         InstitucionDict = institucionDict,
                         ValidacionDict = validacionDict
                     };
@@ -235,7 +241,7 @@ namespace PROY.Controllers
         {
             //var filePath = Path.Combine(Server.MapPath("~/Archivos"), fileName);
             //var filePath = Path.Combine(_webHostEnvironment.WebRootPath, "evaluaciones", fileName);
-            var filePath = Path.Combine(Directory.GetCurrentDirectory(),"wwwroot", "evaluaciones", fileName);
+            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "evaluaciones", fileName);
 
             if (!System.IO.File.Exists(filePath))
             {
@@ -255,7 +261,7 @@ namespace PROY.Controllers
             {
                 case ".xls":
                     return "application/vnd.ms-excel";
-                case ".xlsx":                    
+                case ".xlsx":
                     return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
                 case ".doc":
                 case ".docx":
@@ -339,7 +345,7 @@ namespace PROY.Controllers
                     solicitudVM = new SolicitudesVM()
                     {
                         Solicitud = await _solicitudService.GetSolicitud((long)idEvaluacion),
-                        Solicitudes = await _solicitudService.GetAllSolicitudes(),
+                        Solicitudes = [],
                         listaDetallesEvaluacionAPA = await _evaluacionService.GetAllDetalleEvaluacionAPA((long)idEvaluacion),
                         DetalleEvaluacionAPA = new DetalleEvaluacionAPA(),
                         //IntervencionDict = intervencionDict,
@@ -350,9 +356,9 @@ namespace PROY.Controllers
                         ValidacionDict = validacionDict
                     };
 
-                }                
+                }
 
-                ViewBag.AbrirModalEditar = "new";                
+                ViewBag.AbrirModalEditar = "new";
                 return View(solicitudVM);
             }
             else
@@ -433,13 +439,13 @@ namespace PROY.Controllers
                         //Solicitud = new Solicitud(),//await _solicitudService.GetSolicitud(1),
                         Solicitud = await _solicitudService.GetSolicitud((long)idEvaluacion),
                         //Solicitudes = await _solicitudService.GetAllSolicitudes(),
-                        DetalleSolicitudAPA=await _solicitudService.GetDetalleSolicitudAPA((long)idDetalleEvaluacion),
+                        DetalleSolicitudAPA = await _solicitudService.GetDetalleSolicitudAPA((long)idDetalleEvaluacion),
                         DetalleEvaluacionAPA = await _evaluacionService.GetDetalleEvaluacionIDAPA((long)idDetalleEvaluacion),
                         /*DetalleSolicitud = new DetalleSolicitud()
                         {
                             IdSolicitud=(long)idSolicitud
                         },*/
-                        listaDetallesSolicitudAPA=await _solicitudService.GetAllDetalleSolicitudAPA((long)idEvaluacion),
+                        listaDetallesSolicitudAPA = await _solicitudService.GetAllDetalleSolicitudAPA((long)idEvaluacion),
                         listaDetallesEvaluacionAPA = await _evaluacionService.GetAllDetalleEvaluacionAPA((long)idEvaluacion),
                         ///IntervencionDict = intervencionDict,
                         DepartamentoDict = departamentoDict,
@@ -460,7 +466,7 @@ namespace PROY.Controllers
         {
             // Datos de ejemplo
             var datos = (await _solicitudService.GetAllDetalleSolicitud((long)idSolicitud))
-                        .Where(d => d.IdAnulacion==67 || d.IdAnulacion==0 || d.IdAnulacion is null);
+                        .Where(d => d.IdAnulacion == 67 || d.IdAnulacion == 0 || d.IdAnulacion is null);
 
             // Configuración para EPPlus
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
@@ -692,7 +698,7 @@ namespace PROY.Controllers
                     UsuarioRegistro = User.FindFirst("Usuario")?.Value //modeloVM.DetalleEvaluacion.UsuarioRegistro
                 };
             }
-            else if (condicion == "2") 
+            else if (condicion == "2")
             {
                 modelo2 = new DetalleEvaluacionAPA()
                 {
@@ -707,12 +713,12 @@ namespace PROY.Controllers
                     UsuarioRegistro = User.FindFirst("Usuario")?.Value //modeloVM.DetalleEvaluacion.UsuarioRegistro
                 };
             }
-            
+
             //if (ModelState.IsValid)
-            if (condicion=="1")
+            if (condicion == "1")
             {
                 if (modelo1.IdDetalleEvaluacion == 0)
-                {                  
+                {
                     var result = await _evaluacionService.SaveDetalleEvaluacion(modelo1, varProceso);
 
                     if (result.Success && result.Data != null)
@@ -752,10 +758,10 @@ namespace PROY.Controllers
                             TempData["Mensaje"] = result.Message;
                             return RedirectToAction("ListaDetalle", "Programacion", new { idProgramacion = idEvaluacion, k = condicion });
                         }*/
-                        
+
                         TempData["Mensaje"] = result.Message;
                         //return View(modeloVM);
-                        return RedirectToAction("IndexDetalle", "Evaluacion", new { idEvaluacion = idEvaluacion, k=condicion, returnController=varRetorno });
+                        return RedirectToAction("IndexDetalle", "Evaluacion", new { idEvaluacion = idEvaluacion, k = condicion, returnController = varRetorno });
                     }
                     else
                     {
@@ -780,9 +786,9 @@ namespace PROY.Controllers
                         {
                             //----------------------------Renombrar archivo viejo---------------------------------
                             var pathActual = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/evaluaciones");
-                            string oldArchivo="";
-                            if (modelo1.Archivo!="")
-                                oldArchivo= modelo1.Archivo.Insert(modelo1.Archivo.IndexOf("."), "_" + DateTime.Now.Date.ToString("dd-MM-yyyy") + "_" + DateTime.Now.Hour.ToString() + DateTime.Now.Minute.ToString() + DateTime.Now.Second.ToString());
+                            string oldArchivo = "";
+                            if (modelo1.Archivo != "")
+                                oldArchivo = modelo1.Archivo.Insert(modelo1.Archivo.IndexOf("."), "_" + DateTime.Now.Date.ToString("dd-MM-yyyy") + "_" + DateTime.Now.Hour.ToString() + DateTime.Now.Minute.ToString() + DateTime.Now.Second.ToString());
 
                             if (System.IO.File.Exists(pathActual + "/" + modelo1.Archivo))
                                 System.IO.File.Move(pathActual + "/" + modelo1.Archivo, pathActual + "/" + oldArchivo);
@@ -819,7 +825,7 @@ namespace PROY.Controllers
                         }*/
 
                         TempData["Mensaje"] = result.Message;
-                        return RedirectToAction("IndexDetalle", "Evaluacion", new { idEvaluacion = idEvaluacion, k=condicion, returnController=varRetorno });
+                        return RedirectToAction("IndexDetalle", "Evaluacion", new { idEvaluacion = idEvaluacion, k = condicion, returnController = varRetorno });
                     }
                 }
                 return View(modelo1);
@@ -870,7 +876,7 @@ namespace PROY.Controllers
 
                         TempData["Mensaje"] = result.Message;
                         //return View(modeloVM);
-                        return RedirectToAction("IndexDetalle", "Evaluacion", new { idEvaluacion = idEvaluacion, k = condicion, returnController=varRetorno });
+                        return RedirectToAction("IndexDetalle", "Evaluacion", new { idEvaluacion = idEvaluacion, k = condicion, proceso = varProceso });
                     }
                     else
                     {
@@ -934,7 +940,7 @@ namespace PROY.Controllers
                         }*/
 
                         TempData["Mensaje"] = result.Message;
-                        return RedirectToAction("IndexDetalle", "Evaluacion", new { idEvaluacion = idEvaluacion, k = condicion, returnController=varRetorno });
+                        return RedirectToAction("IndexDetalle", "Evaluacion", new { idEvaluacion = idEvaluacion, k = condicion, returnController = varRetorno });
                     }
                 }
                 return View(modelo2);
@@ -963,7 +969,7 @@ namespace PROY.Controllers
                 observaciones = detalleEvaluacion.Observaciones, // Proporciona un valor por defecto si es null                
                 Archivo = detalleEvaluacion.Archivo,
                 fechaRegistro = detalleEvaluacion.FechaRegistro,
-                usuarioRegistro=detalleEvaluacion.UsuarioRegistro
+                usuarioRegistro = detalleEvaluacion.UsuarioRegistro
             });
         }
 
@@ -989,6 +995,7 @@ namespace PROY.Controllers
             });
         }
 
+        [HttpGet]
         public async Task<IActionResult> EliminarDetalleEvaluacion(Int64 idEvaluacion, Int64 idDetalleEvaluacion)
         {
             var result = await _evaluacionService.DeleteDetalleEvaluacion(idDetalleEvaluacion);
@@ -1051,17 +1058,17 @@ namespace PROY.Controllers
                 if (condicion == "1")
                 {
                     solicitudVM = new SolicitudesVM()
-                    { 
+                    {
                         Solicitud = await _solicitudService.GetSolicitud((long)idEvaluacion),
                         Solicitudes = await _solicitudService.GetAllSolicitudes(),
                         listaDetallesSolicitud = await _solicitudService.GetAllDetalleSolicitud((long)idEvaluacion),
-                        DetalleSolicitud = new DetalleSolicitud(), 
+                        DetalleSolicitud = new DetalleSolicitud(),
                         //IntervencionDict = intervencionDict,
                         DepartamentoDict = departamentoDict,
                         MunicipioDict = municipioDict,
                         EstadoCivilDict = estadocivilDict,
                         GrupoEtnicoDict = grupoetnicoDict,
-                        AnulacionDict= anulacionDict
+                        AnulacionDict = anulacionDict
                     };
 
                 }
@@ -1073,7 +1080,7 @@ namespace PROY.Controllers
                         Solicitudes = await _solicitudService.GetAllSolicitudesAPA(),
                         listaDetallesSolicitudAPA = await _solicitudService.GetAllDetalleSolicitudAPA((long)idEvaluacion),
                         DetalleSolicitudAPA = new DetalleSolicitudAPA(),
-                        
+
                         //IntervencionDict = intervencionDict,
                         DepartamentoDict = departamentoDict,
                         MunicipioDict = municipioDict,
@@ -1151,9 +1158,9 @@ namespace PROY.Controllers
                         ///IntervencionDict = intervencionDict,
                         DepartamentoDict = departamentoDict,
                         MunicipioDict = municipioDict,
-                        EstadoCivilDict=estadocivilDict,
-                        GrupoEtnicoDict=grupoetnicoDict,
-                        AnulacionDict=anulacionDict
+                        EstadoCivilDict = estadocivilDict,
+                        GrupoEtnicoDict = grupoetnicoDict,
+                        AnulacionDict = anulacionDict
                     };
                 }
                 else if (condicion == "2")
@@ -1266,5 +1273,591 @@ namespace PROY.Controllers
 
         }
 
+        public async Task<IActionResult> EliminarDetalleSolicitud(Int64 idSolicitud, Int64 idDetalle, string condicion)
+        {
+
+
+            if (condicion == "1")
+            {
+                var result = await _solicitudService.DeleteDetalleSolicitud(idDetalle);
+
+                if (result.Success && result.Data != null)
+                {
+                    TempData["Mensaje"] = result.Message;
+                    return RedirectToAction("ListaDetalle", "Evaluacion", new
+                    {
+                        idEvaluacion = idSolicitud,
+                        k = condicion
+                    });
+                }
+                else
+                {
+                    TempData["Mensaje"] = result.Message;
+                    return RedirectToAction("IndexDetalle", "Evaluacion");
+                }
+            }
+            else if (condicion == "2")
+            {
+                var result = await _solicitudService.DeleteDetalleSolicitudAPA(idDetalle);
+
+                if (result.Success && result.Data != null)
+                {
+                    TempData["Mensaje"] = result.Message;
+                    return RedirectToAction("ListaDetalle", "Evaluacion", new
+                    {
+                        idEvaluacion = idSolicitud,
+                        k = condicion
+                    });
+                }
+                else
+                {
+                    TempData["Mensaje"] = result.Message;
+                    return RedirectToAction("IndexDetalle", "Evaluacion");
+                }
+            }
+            else
+            {
+                return Unauthorized(); // Si el claim no existe o el valor no coincide
+            }
+        }
+
+        public async Task<IActionResult> ExportarExcelRENAP(Int64? idSolicitud)
+        {
+            Solicitud solicitud = await _solicitudService.GetSolicitud((long)idSolicitud);
+
+            var datos = (await _solicitudService.GetAllDetalleSolicitudAPA((long)idSolicitud))
+                        .Where(d => d.IdAnulacion == 67 || d.IdAnulacion == 0 || d.IdAnulacion is null);
+
+            var paramDepto = await _catalogoService.GetCatalogo(solicitud.Departamento ?? 0);
+
+            var departamento = System.Text.RegularExpressions.Regex.Replace(
+                            paramDepto.Descripcion ?? string.Empty,
+                            @"\s+",
+                            "_"
+                        );
+
+            var anio = solicitud.FechaIngresoDespacho.Year;
+
+
+            var comunidad = System.Text.RegularExpressions.Regex.Replace(
+                solicitud.Comunidad ?? string.Empty,
+                @"\s+",
+                "_"
+            );
+
+            using (var workbook = new NPOI.HSSF.UserModel.HSSFWorkbook())
+            {
+                var hoja = workbook.CreateSheet("CONSULTAS");
+
+                // Crear estilo para encabezados
+                var estiloEncabezado = workbook.CreateCellStyle();
+                var fuente = workbook.CreateFont();
+                fuente.IsBold = true;
+                estiloEncabezado.SetFont(fuente);
+
+                // Encabezados
+                var filaEncabezado = hoja.CreateRow(0);
+                filaEncabezado.CreateCell(0).SetCellValue("CUI");
+                filaEncabezado.CreateCell(1).SetCellValue("Referencia");
+
+                // Aplicar estilo
+                filaEncabezado.GetCell(0).CellStyle = estiloEncabezado;
+                filaEncabezado.GetCell(1).CellStyle = estiloEncabezado;
+
+                // Llenar datos
+                int fila = 1;
+                foreach (var ii in datos)
+                {
+                    var paramGrupoEtnico = await _catalogoService.GetCatalogo(ii.GrupoEtnico);
+
+                    var filaActual = hoja.CreateRow(fila);
+                    filaActual.CreateCell(0).SetCellValue(ii.CuiEsposa?.ToString() ?? "");
+                    filaActual.CreateCell(1).SetCellValue($"EXP-APA-{solicitud.Codigo}-{anio}_{departamento}_{comunidad}");
+
+                    fila++;
+                }
+
+                // Establecer ancho de columnas manualmente
+                hoja.SetColumnWidth(0, 20 * 256); // Columna CUI - 20 caracteres
+                hoja.SetColumnWidth(1, 40 * 256); // Columna Referencia - 40 caracteres
+
+                // GENERAR ARCHIVO 
+                var stream = new MemoryStream();
+                workbook.Write(stream);
+                stream.Position = 0;
+
+                var fecha = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                var nombreArchivo = $"EXP-APA-{solicitud.Codigo}-{anio}_{departamento}_{comunidad}_{fecha}.xls";
+
+                // El stream será manejado automáticamente por File() de ASP.NET Core
+                return File(stream, "application/vnd.ms-excel", nombreArchivo);
+            }
+        }
+
+        public async Task<IActionResult> ExportarGuatenominas(Int64? idSolicitud)
+        {
+            Solicitud solicitud = await _solicitudService.GetSolicitud((long)idSolicitud);
+            // Datos de ejemplo
+            var datos = (await _solicitudService.GetAllDetalleSolicitudAPA((long)idSolicitud))
+                        .Where(d => d.IdAnulacion == 67 || d.IdAnulacion == 0 || d.IdAnulacion is null);
+
+            // Crear contenido del archivo TXT
+            var contenidoTxt = new StringBuilder();
+
+            var paramDepto = await _catalogoService.GetCatalogo(solicitud.Departamento ?? 0);
+
+            var departamento = CleanText(paramDepto.Descripcion ?? "");
+            var comunidad = CleanText(solicitud.Comunidad ?? "");
+
+            var anio = solicitud.FechaIngresoDespacho.Year;
+
+
+            // Llenar datos
+            foreach (var ii in datos)
+            {
+                var paramGrupoEtnico = await _catalogoService.GetCatalogo(ii.GrupoEtnico);
+
+                contenidoTxt.AppendLine($"{ii.CuiEsposa}|\t");
+            }
+
+            // Convertir a array de bytes
+            var stream = new MemoryStream();
+            var writer = new StreamWriter(stream, Encoding.UTF8);
+            await writer.WriteAsync(contenidoTxt.ToString());
+            await writer.FlushAsync();
+            stream.Position = 0;
+
+            // Descargar archivo
+            var fecha = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+
+            var nombreArchivo = $"EXP-APA-{solicitud.Codigo}-{anio}_{departamento}_{comunidad}_{fecha}.txt";
+
+            return File(stream, "text/plain", nombreArchivo);
+        }
+
+        private string CleanText(string input)
+        {
+            if (string.IsNullOrWhiteSpace(input))
+                return string.Empty;
+
+            // Eliminar tildes
+            var normalized = input.Normalize(NormalizationForm.FormD);
+            var withoutDiacritics = new string(
+                normalized.Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+                          .ToArray()
+            ).Normalize(NormalizationForm.FormC);
+
+            // Reemplazar espacios y limpiar
+            return System.Text.RegularExpressions.Regex.Replace(
+                withoutDiacritics,
+                @"[^\w]+",
+                "_"
+            ).Trim('_');
+        }
+
+        //Carga Masiva Anulacion
+        [HttpPost]
+        public async Task<IActionResult> cargarValidacionRenapAPA(IFormFile fileExcel, Int64 id)
+        {
+
+            var depto = User.FindFirst("depto")?.Value;
+            var rol = User.FindFirst(ClaimTypes.Role)?.Value;
+
+            var valorK = HttpContext?.Request.Query["k"].ToString();
+            bool tieneValorK = !string.IsNullOrEmpty(valorK);
+            var condicion = "";
+
+            if ((depto == "DAAN" && rol != "Admin") || (tieneValorK && valorK == "1" && rol == "Admin"))
+                condicion = "1";
+            else if ((depto == "DAPA" && rol != "Admin") || (tieneValorK && valorK == "2" && rol == "Admin"))
+                condicion = "2";
+
+            if (condicion != "2")
+            {
+                return Unauthorized();
+            }
+
+            if (fileExcel == null || fileExcel.Length == 0)
+            {
+                return BadRequest("Archivo no válido o vacío");
+            }
+
+            // Validar extensión del archivo
+            var extension = Path.GetExtension(fileExcel.FileName).ToLower();
+
+            if (extension != ".xls" && extension != ".xlsx")
+            {
+                return BadRequest("Formato de archivo no válido. Solo se aceptan .xls o .xlsx");
+            }
+
+            try
+            {
+                ProcesamientoResultado resultado;
+
+                if (extension == ".xlsx")
+                {
+                    resultado = await ProcesarArchivoXlsx(fileExcel, id);
+                }
+                else // .xls
+                {
+                    resultado = await ProcesarArchivoXls(fileExcel, id);
+                }
+
+                return Json(new
+                {
+                    estadisticas = new
+                    {
+                        totalDifuntosEnArchivo = resultado.TotalDifuntosEnArchivo,
+                        cuisDifuntosEncontrados = resultado.CuisDifuntosEncontrados,
+                        cuisDifuntosNoEncontrados = resultado.CuisDifuntosNoEncontrados,
+                        totalRegistrosProcesados = resultado.TotalRegistrosProcesados,
+                        // Estadísticas de la segunda hoja
+
+                        totalCUISinInfo = resultado.TotalCUISinInfo,
+                        cuisEncontradosSinInfo = resultado.CuisEncontradosSinInfo,
+                        cuisNoEncontradosSinInfo = resultado.CuisNoEncontradosSinInfo
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error al procesar el archivo: {ex.Message}");
+            }
+        }
+
+        public class ProcesamientoResultado
+        {
+            public List<ExcelRowAPA> ExcelData { get; set; } = new List<ExcelRowAPA>();
+            public List<ExcelRowAPA> ExcelDataSegundaHoja { get; set; } = new List<ExcelRowAPA>();
+            public int TotalDifuntosEnArchivo { get; set; }
+            public int CuisDifuntosEncontrados { get; set; }
+            public int CuisDifuntosNoEncontrados { get; set; }
+            public int TotalRegistrosProcesados { get; set; }
+            // Estadísticas para la segunda hoja
+            public int TotalCUISinInfo { get; set; }
+            public int CuisEncontradosSinInfo { get; set; }
+            public int CuisNoEncontradosSinInfo { get; set; }
+        }
+
+        private async Task<ProcesamientoResultado> ProcesarArchivoXlsx(IFormFile fileExcel, long id)
+        {
+            var resultado = new ProcesamientoResultado();
+
+            using (var stream = new MemoryStream())
+            {
+                await fileExcel.CopyToAsync(stream);
+                stream.Position = 0;
+
+                ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
+                using (var package = new ExcelPackage(stream))
+                {
+                    // Procesar PRIMERA HOJA (difuntos)
+                    if (package.Workbook.Worksheets.Count > 0)
+                    {
+                        var worksheet = package.Workbook.Worksheets[0];
+                        var rowCount = worksheet.Dimension?.Rows ?? 0;
+                        resultado.TotalRegistrosProcesados = rowCount - 1; // Restar encabezados
+
+                        for (int row = 2; row <= rowCount; row++)
+                        {
+                            string cuiValue = worksheet.Cells[row, 2]?.Text ?? "";
+                            string difuntoValue = worksheet.Cells[row, 10]?.Text ?? "";
+
+                            // Contar difuntos en el archivo
+                            if (difuntoValue.ToUpper() == "SI")
+                            {
+                                resultado.TotalDifuntosEnArchivo++;
+                            }
+
+                            await ProcesarFilaDifuntos(cuiValue, difuntoValue, id, resultado);
+                        }
+                    }
+
+                    // Procesar SEGUNDA HOJA (Columna B -> IdAnulacion = 65)
+                    if (package.Workbook.Worksheets.Count > 1)
+                    {
+                        var segundaHoja = package.Workbook.Worksheets[1];
+                        var rowCountSegundaHoja = segundaHoja.Dimension?.Rows ?? 0;
+
+                        for (int row = 1; row <= rowCountSegundaHoja; row++) // Empezar en fila 1 (posible encabezado)
+                        {
+                            string cuiValue = segundaHoja.Cells[row, 2]?.Text?.Trim() ?? ""; // Columna B
+
+                            if (!string.IsNullOrEmpty(cuiValue))
+                            {
+                                resultado.TotalCUISinInfo++;
+                                await ProcesarFilaSinInfo(cuiValue, id, resultado);
+                            }
+                        }
+                    }
+                }
+            }
+
+            return resultado;
+        }
+
+        private async Task<ProcesamientoResultado> ProcesarArchivoXls(IFormFile fileExcel, long id)
+        {
+            var resultado = new ProcesamientoResultado();
+
+            using (var stream = new MemoryStream())
+            {
+                await fileExcel.CopyToAsync(stream);
+                stream.Position = 0;
+
+                using (var workbook = new NPOI.HSSF.UserModel.HSSFWorkbook(stream))
+                {
+                    // Procesar PRIMERA HOJA (difuntos)
+                    if (workbook.NumberOfSheets > 0)
+                    {
+                        var worksheet = workbook.GetSheetAt(0);
+                        if (worksheet != null)
+                        {
+                            var rowCount = worksheet.LastRowNum + 1;
+                            resultado.TotalRegistrosProcesados = rowCount - 1; // Restar encabezados
+
+                            for (int row = 1; row < rowCount; row++)
+                            {
+                                var currentRow = worksheet.GetRow(row);
+                                if (currentRow == null) continue;
+
+                                var cuiCell = currentRow.GetCell(1);
+                                var difuntoCell = currentRow.GetCell(9);
+
+                                string cuiValue = GetCellValueAsString(cuiCell);
+                                string difuntoValue = GetCellValueAsString(difuntoCell);
+
+                                // Contar difuntos en el archivo
+                                if (difuntoValue.ToUpper() == "SI")
+                                {
+                                    resultado.TotalDifuntosEnArchivo++;
+                                }
+
+                                await ProcesarFilaDifuntos(cuiValue, difuntoValue, id, resultado);
+                            }
+                        }
+                    }
+
+                    // Procesar SEGUNDA HOJA (Columna B -> IdAnulacion = 65)
+                    if (workbook.NumberOfSheets > 1)
+                    {
+                        var segundaHoja = workbook.GetSheetAt(1);
+                        if (segundaHoja != null)
+                        {
+                            var rowCountSegundaHoja = segundaHoja.LastRowNum + 1;
+
+                            for (int row = 0; row < rowCountSegundaHoja; row++)
+                            {
+                                var currentRow = segundaHoja.GetRow(row);
+                                if (currentRow == null) continue;
+
+                                var cuiCell = currentRow.GetCell(1); // Columna B (0-indexed = 1)
+                                string cuiValue = GetCellValueAsString(cuiCell)?.Trim() ?? "";
+
+                                if (!string.IsNullOrEmpty(cuiValue))
+                                {
+                                    resultado.TotalCUISinInfo++;
+                                    await ProcesarFilaSinInfo(cuiValue, id, resultado);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            return resultado;
+        }
+
+
+        private async Task ProcesarFilaDifuntos(string cuiValue, string difuntoValue, long id, ProcesamientoResultado resultado)
+        {
+            if (string.IsNullOrEmpty(cuiValue)) return;
+
+            // Solo procesar si es difunto
+            if (difuntoValue.ToUpper() != "SI") return;
+
+            DetalleSolicitudAPA detInfo = await _solicitudService.GetDetalleSolicitudByCUIAPA(id, cuiValue);
+
+            if (detInfo != null)
+            {
+                // CUI difunto encontrado
+                resultado.CuisDifuntosEncontrados++;
+
+                detInfo.IdAnulacion = 63; // Difuntos
+                await _solicitudService.UpdateDetalleSolicitudAPA(detInfo);
+
+                var rowData = new ExcelRowAPA
+                {
+                    Columna1 = detInfo.IdDetalleSolicitud.ToString(),
+                    Columna2 = detInfo.Nombre1Esposa,
+                    Columna3 = detInfo.Nombre2Esposa,
+                    Columna4 = detInfo.Nombre3Esposa,
+                    Columna5 = detInfo.Apellido1Esposa,
+                    Columna6 = detInfo.Apellido2Esposa,
+                    Columna7 = detInfo.ApellidoCasada,
+                    Columna8 = detInfo.CuiEsposa,
+                    Columna9 = (await _catalogoService.GetCatalogo(detInfo.GrupoEtnico))?.Descripcion ?? "",
+                    Columna10 = difuntoValue,
+                    Columna11 = "Difunto"
+                };
+
+                resultado.ExcelData.Add(rowData);
+            }
+            else
+            {
+                // CUI difunto NO encontrado
+                resultado.CuisDifuntosNoEncontrados++;
+            }
+        }
+
+        private async Task ProcesarFilaSinInfo(string cuiValue, long id, ProcesamientoResultado resultado)
+        {
+            if (string.IsNullOrEmpty(cuiValue)) return;
+
+            DetalleSolicitudAPA detInfo = await _solicitudService.GetDetalleSolicitudByCUIAPA(id, cuiValue);
+
+            if (detInfo != null)
+            {
+                // CUI encontrado en segunda hoja
+                resultado.CuisEncontradosSinInfo++;
+
+                detInfo.IdAnulacion = 65; // Valor para segunda hoja
+                await _solicitudService.UpdateDetalleSolicitudAPA(detInfo);
+
+                var rowData = new ExcelRowAPA
+                {
+                    Columna1 = detInfo.IdDetalleSolicitud.ToString(),
+                    Columna2 = detInfo.Nombre1Esposa,
+                    Columna3 = detInfo.Nombre2Esposa,
+                    Columna4 = detInfo.Nombre3Esposa,
+                    Columna5 = detInfo.Apellido1Esposa,
+                    Columna6 = detInfo.Apellido2Esposa,
+                    Columna7 = detInfo.ApellidoCasada,
+                    Columna8 = detInfo.CuiEsposa,
+                    Columna9 = (await _catalogoService.GetCatalogo(detInfo.GrupoEtnico))?.Descripcion ?? "",
+                    Columna10 = "N/A",
+                    Columna11 = "Segunda Hoja" // Indicar que viene de segunda hoja
+                };
+
+                resultado.ExcelDataSegundaHoja.Add(rowData);
+            }
+            else
+            {
+                // CUI NO encontrado en segunda hoja
+                resultado.CuisNoEncontradosSinInfo++;
+            }
+        }
+
+        private string GetCellValueAsString(NPOI.SS.UserModel.ICell cell)
+        {
+            if (cell == null) return string.Empty;
+
+            switch (cell.CellType)
+            {
+                case NPOI.SS.UserModel.CellType.String:
+                    return cell.StringCellValue;
+                case NPOI.SS.UserModel.CellType.Numeric:
+                    if (NPOI.SS.UserModel.DateUtil.IsCellDateFormatted(cell))
+                        return cell.DateCellValue.ToString();
+                    else
+                        return cell.NumericCellValue.ToString();
+                case NPOI.SS.UserModel.CellType.Boolean:
+                    return cell.BooleanCellValue.ToString();
+                case NPOI.SS.UserModel.CellType.Formula:
+                    return cell.StringCellValue;
+                default:
+                    return string.Empty;
+            }
+        }
+
+        public async Task<IActionResult> cargarValidacionGuatenominasAPA(IFormFile fileTxt, Int64 id)
+        {
+            var depto = User.FindFirst("depto")?.Value;
+            var rol = User.FindFirst(ClaimTypes.Role)?.Value;
+            var valorK = HttpContext?.Request.Query["k"].ToString();
+            bool tieneValorK = !string.IsNullOrEmpty(valorK);
+            var condicion = "";
+
+            if ((depto == "DAAN" && rol != "Admin") || (tieneValorK && valorK == "1" && rol == "Admin"))
+                condicion = "1";
+            else if ((depto == "DAPA" && rol != "Admin") || (tieneValorK && valorK == "2" && rol == "Admin"))
+                condicion = "2";
+
+            if (condicion != "2")
+            {
+                return Unauthorized();
+            }
+
+            if (fileTxt == null || fileTxt.Length == 0)
+            {
+                return BadRequest("Archivo no válido");
+            }
+
+            // Opcional: Validar que sea archivo txt
+            var extension = Path.GetExtension(fileTxt.FileName).ToLower();
+            if (extension != ".txt")
+            {
+                return BadRequest("Solo se permiten archivos .txt");
+            }
+
+            // Lista para almacenar los datos leídos
+            var excelData = new List<Models.ExcelRowAPA>();
+
+            using (var stream = new MemoryStream())
+            {
+                await fileTxt.CopyToAsync(stream);
+                stream.Position = 0; // Resetear la posición del stream
+
+                // Leer el archivo como texto
+                using (var reader = new StreamReader(stream))
+                {
+                    string line;
+                    int row = 0;
+
+                    while ((line = await reader.ReadLineAsync()) != null)
+                    {
+                        row++;
+                        if (string.IsNullOrWhiteSpace(line))
+                            continue;
+
+                        // Dividir la línea por el pipe '|'
+                        var columns = line.Split('|');
+
+                        // Verificar que tenga al menos 2 columnas
+                        if (columns.Length < 2)
+                            continue;
+
+                        var cui = columns[0].Trim(); // Columna 2 es el CUI
+
+                        // Buscar el detalle por CUI
+                        DetalleSolicitudAPA detInfo = await _solicitudService.GetDetalleSolicitudByCUIAPA(id, cui);
+
+                        if (detInfo != null)
+                        {
+                            try
+                            {
+                                // Verificar si es difunto (columna 10 según tu comentario)
+                                detInfo.IdAnulacion = 66;
+                                await _solicitudService.UpdateDetalleSolicitudAPA(detInfo);
+                            }
+                            catch (Exception ex)
+                            {
+                                // Log del error si es necesario
+                                Console.WriteLine($"Error procesando línea {row}: {ex.Message}");
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Devolver los datos procesados
+            return Json(excelData);
+        }
+
+
     }
+
+
+
 }

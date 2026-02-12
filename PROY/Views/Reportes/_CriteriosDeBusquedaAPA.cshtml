@@ -1,0 +1,70 @@
+<div class="col">
+    <div class="card">
+        <div class="card-body" id="divCriteriosBusqueda" style="display:none">
+            <h5 class="card-title">Criterios de Búsqueda</h5>
+            <div class="row">
+                <form id="_frmBusqueda">
+                    <div class="row">
+                        <div class="col-3" id="divConvenio" style="display:none;">
+                            <label for="cbConvenio" class="control-label">Convenio</label>
+                            <select class="form-select" id="cbIdConvenio" name="IdConvenio"
+                                asp-items="ViewBag.Programas">
+                                @foreach (var convenio in ViewBag.Convenios)
+                                {
+                                    <option value="@convenio.Value">Convenio @convenio.Text</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-3" id="divNoSolicitud" style="display:none;">
+                            <label for="txtNoSolicitud" class="control-label">No. Solicitud</label>
+                            <input type="text" class="form-control" id="txtNoSolicitud" name="NoSolicitud">
+                        </div>
+                        <div class="col-3" id="divFechaMovimientoInicio" style="display:none;">
+                            <label for="txtFechaInicio" class="control-label">Fecha Inicio</label>
+                            <input type="date" class="form-control" id="txtFechaInicio" name="FechaInicio">
+                        </div>
+                        <div class="col-3" id="divFechaMovimientoFin" style="display:none;">
+                            <label for="txtFechaFin" class="control-label">Fecha Fin</label>
+                            <input type="date" class="form-control" id="txtFechaFin" name="FechaFin">
+                        </div>
+                        <div class="col-3" id="divIdDepartamento" style="display:none;">
+                            <label for="cbIdDepartamento" class="control-label">Departamento</label>
+                            <select class="form-select" id="cbIdDepartamento" name="IdDepartamento"  onchange="cambio()"
+                                asp-items="ViewBag.Programas">
+                                <option value="">-- Seleccione --</option>
+                                @foreach (var departamento in ViewBag.Departamentos)
+                                {
+                                    <option value="@departamento.Value">@departamento.Text</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-3" id="divIdMunicipio" style="display:none;">
+                            <label for="cbIdMunicipio" class="control-label">Municipio</label>
+                            <select class="form-select" id="cbIdMunicipio" name="IdMunicipio"
+                                asp-items="ViewBag.Municipio">
+                                <option value="">-- Seleccione --</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <br />
+            <div class="row">
+                <div class="col">
+                    <a type="button" href="#" class="btn btn-secondary" onclick="return LimpiarCriterios();">Limpiar</a>
+                    <a type="button" href="#" class="btn btn-primary" onclick="return Buscar();">Buscar</a>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer" id="card-footer">
+            <a class="btn btn-danger btn-sm float-end ms-3"
+                onclick="GenerarReporte('@Url.Action("GeneraReporte", "Reportes")', 'pdf')">
+                <i class="fas fa-file-pdf"></i> Descargar PDF
+            </a>
+            <a class="btn btn-success btn-sm float-end"
+                onclick="GenerarReporte('@Url.Action("GeneraReporte", "Reportes")', 'excel')">
+                <i class="fas fa-table"></i> Descargar Excel
+            </a>
+        </div>
+    </div>
+</div>

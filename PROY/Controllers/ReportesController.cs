@@ -6,6 +6,15 @@ using Newtonsoft.Json.Linq;
 using PROY.Models;
 using PROY.Services;
 using PROY.ViewModels;
+using OfficeOpenXml;
+using OfficeOpenXml.Style;
+using System.Drawing;
+using System.Text;
+using System.IO;
+using ExcelRow = PROY.Models.ExcelRow;
+using NPOI.HSSF.UserModel;
+using System.Globalization;
+using System.Text;
 
 namespace PROY.Controllers
 {
@@ -30,10 +39,14 @@ namespace PROY.Controllers
         private readonly IPuestoService _puestoService;
         private readonly IRacionService _racionService;
         private readonly IEgresoAlimentosService _egresoAlimentosService;
+        private readonly ISolicitudV2Service _solicitudV2Service;
+        private readonly ISolicitudService _solicitudService;
 
-        public ReportesController(IReporteService reporteService, 
-                                  IBodegaService bodegaService, 
-                                  ICatalogoService catalogoService, 
+        private readonly IEstadoSolicitudService _estadoSolicitudService;
+
+        public ReportesController(IReporteService reporteService,
+                                  IBodegaService bodegaService,
+                                  ICatalogoService catalogoService,
                                   ITipoBodegaService tipoBodegaService,
                                   IProductoAlimenticioService productoAlimenticio,
                                   IConvenioService convenioService,
@@ -47,7 +60,10 @@ namespace PROY.Controllers
                                   IRenglonPresupuestarioService renglonPresupuestarioService,
                                   IPuestoService puestoService,
                                   IRacionService racionService,
-                                  IEgresoAlimentosService egresoAlimentosService)
+                                  IEgresoAlimentosService egresoAlimentosService,
+                                  ISolicitudV2Service solicitudV2Service,
+                                  ISolicitudService solicitudService,
+                                  IEstadoSolicitudService estadoSolicitudService)
         {
             _reporteService = reporteService;
             _bodegaService = bodegaService;
@@ -66,6 +82,9 @@ namespace PROY.Controllers
             _puestoService = puestoService;
             _racionService = racionService;
             _egresoAlimentosService = egresoAlimentosService;
+            _solicitudV2Service = solicitudV2Service;
+            _solicitudService = solicitudService;
+            _estadoSolicitudService = estadoSolicitudService;
         }
 
         #endregion
@@ -191,7 +210,7 @@ namespace PROY.Controllers
                     Bodega = await _bodegaService.GetBodega((int)idBodega),
                     listaBodegas = await _bodegaService.GetAll(),
                 };
-                
+
                 return View(bodegaVM);
             }
         }
@@ -572,5 +591,439 @@ namespace PROY.Controllers
         }
 
         #endregion
+
+
+        public async Task<IActionResult> ProgramacionesAPA()
+        {
+
+            // Obtener catálogos
+            var departamentos = await _catalogoService.GetCatalogo("DEPARTAMENTO");
+            var municipios = await _catalogoService.GetCatalogo("MUNICIPIO");
+
+            // Preparar SelectLists para la vista
+            ViewBag.Convenios = new SelectList(new List<object>(), "IdCatalogo", "Descripcion");
+            ViewBag.Departamentos = new SelectList(departamentos, "IdCatalogo", "Descripcion");
+            ViewBag.Municipios = new SelectList(municipios, "IdCatalogo", "Descripcion");
+
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> BuscarProgramacionesAPA([FromBody] FiltrosReportesDTO filtros)
+        {
+            try
+            {
+                var configuration = HttpContext.RequestServices.GetRequiredService<IConfiguration>();
+                var id_estado_str = configuration["EtapasSolicitud:APA:PROGRAMACION"];
+
+                if (!int.TryParse(id_estado_str, out int id_estado))
+                {
+                    id_estado = 0;
+                }
+
+                // Aquí implementas la lógica de búsqueda con los filtros
+                var resultados = await _solicitudV2Service.ObtenerSolicitudesConFiltros(
+                    idEstado: id_estado,
+                    idDepto: 2, // Este es el parámetro fijo
+                    idDepartamento: filtros.IdDepartamento, // Este es el filtro opcional
+                    idMunicipio: filtros.IdMunicipio,
+                    fechaInicio: filtros.FechaInicio,
+                    fechaFin: filtros.FechaFin,
+                    rechazada: 0
+                );
+
+                // Obtener catálogos para mapear IDs a nombres
+                var departamentos = await _catalogoService.GetCatalogo("DEPARTAMENTO");
+                var municipios = await _catalogoService.GetCatalogo("MUNICIPIO");
+
+                // Crear objetos anónimos con nombres en lugar de IDs
+                var resultadosConNombres = resultados.Select(s => new
+                {
+                    s.IdSolicitud,
+                    s.Codigo,
+                    s.Correlativo,
+                    DepartamentoNombre = departamentos.FirstOrDefault(d => d.IdCatalogo == s.Departamento)?.Descripcion ?? "No especificado",
+                    MunicipioNombre = municipios.FirstOrDefault(m => m.IdCatalogo == s.Municipio)?.Descripcion ?? "No especificado",
+                    s.Comunidad,
+                    FechaRegistro = s.FechaRegistro.ToString("dd/MM/yyyy"),
+                    s.Raciones,
+                    s.Descripcion,
+                    s.Estado,
+                    // Mantener los IDs originales por si los necesitas
+                    DepartamentoId = s.Departamento,
+                    MunicipioId = s.Municipio
+                }).ToList();
+
+
+                return Json(new { success = true, data = resultadosConNombres });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        public async Task<IActionResult> EjecucionesAPA()
+        {
+            // Obtener catálogos
+            var departamentos = await _catalogoService.GetCatalogo("DEPARTAMENTO");
+            var municipios = await _catalogoService.GetCatalogo("MUNICIPIO");
+
+            // Preparar SelectLists para la vista
+            ViewBag.Convenios = new SelectList(new List<object>(), "IdCatalogo", "Descripcion");
+            ViewBag.Departamentos = new SelectList(departamentos, "IdCatalogo", "Descripcion");
+            ViewBag.Municipios = new SelectList(municipios, "IdCatalogo", "Descripcion");
+
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> BuscarEjecucionesAPA([FromBody] FiltrosReportesDTO filtros)
+        {
+
+            try
+            {
+
+                // Aquí implementas la lógica de búsqueda con los filtros
+                var resultados = await _solicitudV2Service.ObtenerEjecucionesAPAConFiltros(
+                    idDepartamento: filtros.IdDepartamento, // Este es el filtro opcional
+                    idMunicipio: filtros.IdMunicipio,
+                    fechaInicio: filtros.FechaInicio,
+                    fechaFin: filtros.FechaFin
+                );
+
+                return Json(new { success = true, data = resultados });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        public async Task<IActionResult> DespachosAPA()
+        {
+
+            var departamentos = await _catalogoService.GetCatalogo("DEPARTAMENTO");
+            var municipios = await _catalogoService.GetCatalogo("MUNICIPIO");
+
+            // Preparar SelectLists para la vista
+            ViewBag.Convenios = new SelectList(new List<object>(), "IdCatalogo", "Descripcion");
+            ViewBag.Departamentos = new SelectList(departamentos, "IdCatalogo", "Descripcion");
+            ViewBag.Municipios = new SelectList(municipios, "IdCatalogo", "Descripcion");
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> BuscarDespachosAPA([FromBody] FiltrosReportesDTO filtros)
+        {
+            try
+            {
+                // Aquí implementas la lógica de búsqueda con los filtros
+                var resultados = await _solicitudV2Service.ObtenerDespachosAPAConFiltros(
+                    idDepartamento: filtros.IdDepartamento, // Este es el filtro opcional
+                    idMunicipio: filtros.IdMunicipio,
+                    fechaInicio: filtros.FechaInicio,
+                    fechaFin: filtros.FechaFin
+                );
+
+                return Json(new { success = true, data = resultados });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        public async Task<IActionResult> BeneficiariosConveniosAPA()
+        {
+            var convenios = (await _convenioService.GetAll()).Where(d => d.Descripcion.Contains("APA"));
+            var departamentos = await _catalogoService.GetCatalogo("DEPARTAMENTO");
+            var municipios = await _catalogoService.GetCatalogo("MUNICIPIO");
+
+
+            // Preparar SelectLists para la vista
+            ViewBag.Convenios = new SelectList(convenios, "IdConvenio", "NombreConvenio");
+            ViewBag.Departamentos = new SelectList(departamentos, "IdCatalogo", "Descripcion");
+            ViewBag.Municipios = new SelectList(municipios, "IdCatalogo", "Descripcion");
+
+
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> BuscarBeneficiariosConveniosAPA([FromBody] FiltrosReportesDTO filtros)
+        {
+            try
+            {
+                var resultados = await _solicitudService.GetAllDetalleSolicitudSinFiltro();
+
+
+                // Obtener catálogos para mapear IDs a nombres
+                var departamentos = await _catalogoService.GetCatalogo("DEPARTAMENTO");
+                var municipios = await _catalogoService.GetCatalogo("MUNICIPIO");
+
+                var resultadosConNombres = resultados.Select(s => new
+                {
+                    CuiEsposa = s.CuiEsposa ?? "",
+                    Nombre1Esposa = s.Nombre1Esposa ?? "",
+                    Nombre2Esposa = s.Nombre2Esposa ?? "",
+                    Nombre3Esposa = s.Nombre3Esposa ?? "",
+                    Apellido1Esposa = s.Apellido1Esposa ?? "",
+                    Apellido2Esposa = s.Apellido2Esposa ?? "",
+                    ApellidoCasada = s.ApellidoCasada ?? "",
+
+                }).ToList();
+
+                // Crear objetos anónimos con nombres en lugar de IDs
+                return Json(new { success = true, data = resultados });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+
+        public async Task<IActionResult> ProcesosAPA()
+        {
+            var departamentos = await _catalogoService.GetCatalogo("DEPARTAMENTO");
+            var municipios = await _catalogoService.GetCatalogo("MUNICIPIO");
+
+            // Preparar SelectLists para la vista
+            ViewBag.Convenios = new SelectList(new List<object>(), "IdCatalogo", "Descripcion");
+            ViewBag.Departamentos = new SelectList(departamentos, "IdCatalogo", "Descripcion");
+            ViewBag.Municipios = new SelectList(municipios, "IdCatalogo", "Descripcion");
+            return View();
+        }
+
+
+        [HttpPost]
+        public async Task<IActionResult> BuscarProcesosAPA([FromBody] FiltrosReportesDTO filtros)
+        {
+
+            try
+            {
+                var configuration = HttpContext.RequestServices.GetRequiredService<IConfiguration>();
+
+                // Aquí implementas la lógica de búsqueda con los filtros
+                var resultados = await _solicitudV2Service.ObtenerSolicitudesTotalesConFiltros(
+                    idEstado: 1,
+                    idDepto: 2, // Este es el parámetro fijo
+                    idDepartamento: filtros.IdDepartamento, // Este es el filtro opcional
+                    idMunicipio: filtros.IdMunicipio,
+                    fechaInicio: filtros.FechaInicio,
+                    fechaFin: filtros.FechaFin,
+                    rechazada: 0
+                );
+
+                // Obtener catálogos para mapear IDs a nombres
+                var departamentos = await _catalogoService.GetCatalogo("DEPARTAMENTO");
+                var municipios = await _catalogoService.GetCatalogo("MUNICIPIO");
+                var estadosSolicitud = await _estadoSolicitudService.ObtenerTodos();
+
+                // Crear objetos anónimos con nombres en lugar de IDs
+                var resultadosConNombres = resultados.Select(s => new
+                {
+                    s.IdSolicitud,
+                    s.Codigo,
+                    s.Correlativo,
+                    DepartamentoNombre = departamentos.FirstOrDefault(d => d.IdCatalogo == s.Departamento)?.Descripcion ?? "No especificado",
+                    MunicipioNombre = municipios.FirstOrDefault(m => m.IdCatalogo == s.Municipio)?.Descripcion ?? "No especificado",
+                    s.Comunidad,
+                    FechaRegistro = s.FechaRegistro.ToString("dd/MM/yyyy"),
+                    s.Raciones,
+                    s.Descripcion,
+                    EstadoNombre = estadosSolicitud?.FirstOrDefault(e => e.IdEstadoSolicitud == s.IdEstadoSolicitud)?.Nombre ?? "No especificado",
+                    // Mantener los IDs originales por si los necesitas
+                    DepartamentoId = s.Departamento,
+                    MunicipioId = s.Municipio
+                }).ToList();
+
+
+                return Json(new { success = true, data = resultadosConNombres });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+
+        public async Task<IActionResult> RenapAPA()
+        {
+            ViewBag.Convenios = new SelectList(new List<object>(), "IdCatalogo", "Descripcion");
+            ViewBag.Departamentos = new SelectList(new List<object>(), "IdCatalogo", "Descripcion");
+            ViewBag.Municipios = new SelectList(new List<object>(), "IdCatalogo", "Descripcion");
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> BuscarRenapAPA([FromBody] FiltrosReportesDTO filtros)
+        {
+
+
+            var datos = (await _solicitudService.GetAllDetalleSolicitudAPACodigo((long)filtros.IdSolicitud))
+                        .Where(d => d.IdAnulacion == 67 || d.IdAnulacion == 0 || d.IdAnulacion is null);
+
+            if (!datos.Any())
+            {
+                // Manejar el caso cuando no hay datos
+                return BadRequest("No hay datos disponibles");
+            }
+
+            var primerDato = datos.FirstOrDefault();
+            Solicitud solicitud = await _solicitudService.GetSolicitud((long)primerDato.IdSolicitud);
+
+            var paramDepto = await _catalogoService.GetCatalogo(solicitud.Departamento ?? 0);
+
+            var departamento = System.Text.RegularExpressions.Regex.Replace(
+                            paramDepto.Descripcion ?? string.Empty,
+                            @"\s+",
+                            "_"
+                        );
+
+            var anio = solicitud.FechaIngresoDespacho.Year;
+
+
+            var comunidad = System.Text.RegularExpressions.Regex.Replace(
+                solicitud.Comunidad ?? string.Empty,
+                @"\s+",
+                "_"
+            );
+
+            using (var workbook = new NPOI.HSSF.UserModel.HSSFWorkbook())
+            {
+                var hoja = workbook.CreateSheet("CONSULTAS");
+
+                // Crear estilo para encabezados
+                var estiloEncabezado = workbook.CreateCellStyle();
+                var fuente = workbook.CreateFont();
+                fuente.IsBold = true;
+                estiloEncabezado.SetFont(fuente);
+
+                // Encabezados
+                var filaEncabezado = hoja.CreateRow(0);
+                filaEncabezado.CreateCell(0).SetCellValue("CUI");
+                filaEncabezado.CreateCell(1).SetCellValue("Referencia");
+
+                // Aplicar estilo
+                filaEncabezado.GetCell(0).CellStyle = estiloEncabezado;
+                filaEncabezado.GetCell(1).CellStyle = estiloEncabezado;
+
+                // Llenar datos
+                int fila = 1;
+                foreach (var ii in datos)
+                {
+                    var paramGrupoEtnico = await _catalogoService.GetCatalogo(ii.GrupoEtnico);
+
+                    var filaActual = hoja.CreateRow(fila);
+                    filaActual.CreateCell(0).SetCellValue(ii.CuiEsposa?.ToString() ?? "");
+                    filaActual.CreateCell(1).SetCellValue($"EXP-APA-{solicitud.Codigo}-{anio}_{departamento}_{comunidad}");
+
+                    fila++;
+                }
+
+                // Establecer ancho de columnas manualmente
+                hoja.SetColumnWidth(0, 20 * 256); // Columna CUI - 20 caracteres
+                hoja.SetColumnWidth(1, 40 * 256); // Columna Referencia - 40 caracteres
+
+                // GENERAR ARCHIVO 
+                var stream = new MemoryStream();
+                workbook.Write(stream);
+                stream.Position = 0;
+
+                var fecha = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                var nombreArchivo = $"EXP-APA-{solicitud.Codigo}-{anio}_{departamento}_{comunidad}_{fecha}.xls";
+
+                // El stream será manejado automáticamente por File() de ASP.NET Core
+                return File(stream, "application/vnd.ms-excel", nombreArchivo);
+            }
+        }
+
+        public async Task<IActionResult> GuatenominasAPA()
+        {
+            ViewBag.Convenios = new SelectList(new List<object>(), "IdCatalogo", "Descripcion");
+            ViewBag.Departamentos = new SelectList(new List<object>(), "IdCatalogo", "Descripcion");
+            ViewBag.Municipios = new SelectList(new List<object>(), "IdCatalogo", "Descripcion");
+            return View();
+        }
+
+        public async Task<IActionResult> ExportarGuatenominas([FromBody] FiltrosReportesDTO filtros)
+        {
+            // Datos de ejemplo
+            var datos = (await _solicitudService.GetAllDetalleSolicitudAPACodigo((long)filtros.IdSolicitud))
+                        .Where(d => d.IdAnulacion == 67 || d.IdAnulacion == 0 || d.IdAnulacion is null);
+
+                    
+            if (!datos.Any())
+            {
+                // Manejar el caso cuando no hay datos
+                return BadRequest("No hay datos disponibles");
+            }
+
+            var primerDato = datos.FirstOrDefault();
+            Solicitud solicitud = await _solicitudService.GetSolicitud((long)primerDato.IdSolicitud);
+
+            var paramDepto = await _catalogoService.GetCatalogo(solicitud.Departamento ?? 0);
+
+            var departamento = CleanText(paramDepto.Descripcion ?? "");
+            var comunidad = CleanText(solicitud.Comunidad ?? "");
+
+            var anio = solicitud.FechaIngresoDespacho.Year;
+
+            // Crear contenido del archivo TXT
+            var contenidoTxt = new StringBuilder();
+
+            // Llenar datos
+            foreach (var ii in datos)
+            {
+                var paramGrupoEtnico = await _catalogoService.GetCatalogo(ii.GrupoEtnico);
+
+                contenidoTxt.AppendLine($"{ii.CuiEsposa}|\t");
+            }
+
+            // Convertir a array de bytes
+            var stream = new MemoryStream();
+            var writer = new StreamWriter(stream, Encoding.UTF8);
+            await writer.WriteAsync(contenidoTxt.ToString());
+            await writer.FlushAsync();
+            stream.Position = 0;
+
+            // Descargar archivo
+            var fecha = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+            var nombreArchivo = $"EXP-APA-{solicitud.Codigo}-{anio}_{departamento}_{comunidad}_{fecha}.txt";
+            return File(stream, "text/plain", nombreArchivo);
+        }
+
+        public async Task<IActionResult> PlanillaAPA()
+        {
+            ViewBag.Convenios = new SelectList(new List<object>(), "IdCatalogo", "Descripcion");
+            ViewBag.Departamentos = new SelectList(new List<object>(), "IdCatalogo", "Descripcion");
+            ViewBag.Municipios = new SelectList(new List<object>(), "IdCatalogo", "Descripcion");
+            return View();
+        }
+
+        private string CleanText(string input)
+        {
+            if (string.IsNullOrWhiteSpace(input))
+                return string.Empty;
+
+            // Eliminar tildes
+            var normalized = input.Normalize(NormalizationForm.FormD);
+            var withoutDiacritics = new string(
+                normalized.Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+                          .ToArray()
+            ).Normalize(NormalizationForm.FormC);
+
+            // Reemplazar espacios y limpiar
+            return System.Text.RegularExpressions.Regex.Replace(
+                withoutDiacritics,
+                @"[^\w]+",
+                "_"
+            ).Trim('_');
+        }
+
     }
+
+
 }

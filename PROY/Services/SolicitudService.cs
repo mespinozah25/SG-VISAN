@@ -148,6 +148,12 @@ namespace PROY.Services
 
         //-----------------------------------------------------------------
 
+        public async Task<List<DetalleSolicitudAPA>> GetAllDetalleSolicitudSinFiltro()
+        {
+            List<DetalleSolicitudAPA> listado = await _solicitudRepository.GetAllDetalleSolicitudSinFiltro();
+
+            return listado;
+        }
         public async Task<List<DetalleSolicitud>> GetAllDetalleSolicitud(long id)
         {
             List<DetalleSolicitud> listado = await _solicitudRepository.GetAllDetalleSolicitud(id);
@@ -161,12 +167,21 @@ namespace PROY.Services
 
             return listado;
         }
+
+        public async Task<List<DetalleSolicitudAPA>> GetAllDetalleSolicitudAPACodigo(long id)
+        {
+            List<DetalleSolicitudAPA> listado = await _solicitudRepository.GetAllDetalleSolicitudAPACodigo(id);
+
+            return listado;
+        }
+
         public async Task<Solicitud> GetSolicitud(long id)
         {
             Solicitud solicitud_encontrada = await _solicitudRepository.GetSolicitud(id);
 
             return solicitud_encontrada;
         }
+
 
         public async Task<DetalleSolicitud> GetDetalleSolicitud(long id)
         {
@@ -235,7 +250,10 @@ namespace PROY.Services
                     IdProyecto = modelo.Depto == "2" ? modelo.IdProyecto : null,
                     Departamento = modelo.Depto == "2" ? modelo.Departamento : null,
                     Municipio = modelo.Depto == "2" ? modelo.Municipio : null,
-                    Comunidad = modelo.Depto == "2" ? modelo.Comunidad : null
+                    Comunidad = modelo.Depto == "2" ? modelo.Comunidad : null,
+                    NombreCocode = modelo.Depto == "2" ? modelo.NombreCocode : null,
+                    ComunidadCocode = modelo.Depto == "2" ? modelo.ComunidadCocode : null,
+                    TelefonoCocode = modelo.Depto == "2" ? modelo.TelefonoCocode : null,
                 };
 
                 // Guardar solicitud en la base de datos
@@ -497,7 +515,7 @@ namespace PROY.Services
             return response;
         }
 
-        public async Task<ServiceResponse<DetalleSolicitud>> SaveListaDetalleSolicitudxIntervencion(List<ExcelRowDinamic> datos,int IdInteraccion)
+        public async Task<ServiceResponse<DetalleSolicitud>> SaveListaDetalleSolicitudxIntervencion(List<ExcelRowDinamic> datos, int IdInteraccion)
         {
             var response = new ServiceResponse<DetalleSolicitud>();
 
@@ -512,7 +530,7 @@ namespace PROY.Services
 
 
                     await _solicitudRepository.SaveDetalleSolicitud(detSolicitud);
-                    
+
                     response.Data = detSolicitud;
                     response.Success = true;
                     response.Message = "Detalle Solicitud creado exitosamente";
@@ -736,7 +754,7 @@ namespace PROY.Services
                         NombreCompletoPersona2 = dato.Columna6,
                         CuiPersona2 = dato.Columna7,
                         EdadPersona2 = short.TryParse(dato.Columna8, out var ep2) ? ep2 : 0,
-                        
+
                         GeneroPersona2 = dato.Columna9,
 
                         IdDepartamento = await catalogo.GetDepartamento(dato.Columna10),
@@ -849,7 +867,7 @@ namespace PROY.Services
                         string apellido2 = dato.GetType().GetProperty($"Columna{baseCol + 4}")?.GetValue(dato)?.ToString();
                         string cui = dato.GetType().GetProperty($"Columna{baseCol + 5}")?.GetValue(dato)?.ToString();
                         string fechaNacimiento = dato.GetType().GetProperty($"Columna{baseCol + 6}")?.GetValue(dato)?.ToString();
-                        
+
                         if (!string.IsNullOrWhiteSpace(nombre1) || !string.IsNullOrWhiteSpace(apellido1))
                         {
                             listaNinos.Add(new Nino
@@ -913,7 +931,8 @@ namespace PROY.Services
         public async Task<ServiceResponse<DetalleSolicitudAPA>> SaveListaDetalleSolicitudAPA(List<Models.ExcelRowAPA> datos)
         {
             var response = new ServiceResponse<DetalleSolicitudAPA>();
-
+            var datos_error = 0;
+            var datos_error_string = new System.Text.StringBuilder("Error al guardar. ");
             //DetalleSolicitud detSolicitud;
 
             try
@@ -926,21 +945,7 @@ namespace PROY.Services
                     {
                         IdDetalleSolicitud = await _solicitudRepository.CuentaDetalleAPA(),
                         IdSolicitud = Convert.ToInt32(dato.Columna1), //modelo.IdSolicitud,
-                        //IdDetalleSolicitud=modelo.IdDetalleSolicitud,
-                        //Correlativo = modelo.Correlativo,
-                        //Codigo = DateTime.Now.Year + "-" + modelo.Correlativo,
-                        ///IdIntervencion = modelo.IdIntervencion,
-                        ///IdDepartamento = await _catalogoRepository.GetDepartamento(dato.Columna2),
-                        ///IdMunicipio = await _catalogoRepository.GetMunicipio(dato.Columna2, dato.Columna3),
-                        ///Comunidad = dato.Columna4,
 
-                        ///Nombre1Esposo = dato.Columna5,
-                        ///Nombre2Esposo = dato.Columna6,
-                        ///Nombre3Esposo = dato.Columna7,
-                        ///Apellido1Esposo = dato.Columna8,
-                        ///Apellido2Esposo = dato.Columna9,
-                        ///CuiEsposo = dato.Columna10,
-                        ///FNacimientoEsposo = DateTime.TryParse(dato.Columna11, out DateTime fechaNacimientoEsposo) ? fechaNacimientoEsposo.Date : (DateTime?)null,
                         Nombre1Esposa = dato.Columna2,
                         Nombre2Esposa = dato.Columna3,
                         Nombre3Esposa = dato.Columna4,
@@ -949,40 +954,28 @@ namespace PROY.Services
                         ApellidoCasada = dato.Columna7,
                         CuiEsposa = dato.Columna8,
 
-                        ///FNacimientoEsposa = DateTime.TryParse(dato.Columna19, out DateTime fechaNacimientoEsposa) ? fechaNacimientoEsposa.Date : (DateTime?)null,
-                        ///EstadoCivil = await _catalogoRepository.GetItemCatalogo(dato.Columna20, "ESTADO CIVIL"),//Int16.TryParse(dato.Columna20, out Int16 estadocivil) ? estadocivil: 0,
-                        //EstadoCivil = Int16.TryParse(dato.Columna20, out Int16 estadocivil) ? estadocivil : 0,
-                        ///Embarazada = dato.Columna21,
-                        ///NiñoDA = dato.Columna22,
                         Genero = dato.Columna9,
                         GrupoEtnico = await _catalogoRepository.GetItemCatalogo(dato.Columna10, "GRUPO ETNICO"),
 
-                        //GrupoEtnico = Int16.TryParse(dato.Columna23, out Int16 grupoetnico) ? grupoetnico : 0,
-                        ///Hombre0a2Años = Int16.TryParse(dato.Columna24, out Int16 hombre0a2años) ? hombre0a2años : 0,
-                        ///Mujer0a2Años = Int16.TryParse(dato.Columna25, out Int16 mujer0a2años) ? mujer0a2años : 0,
-                        ///Hombre2a5Años = Int16.TryParse(dato.Columna26, out Int16 hombre2a5años) ? hombre2a5años : 0,
-                        ///Mujer2a5Años = Int16.TryParse(dato.Columna27, out Int16 mujer2a5años) ? mujer2a5años : 0,
-                        ///Hombre6a17Años = Int16.TryParse(dato.Columna28, out Int16 hombre6a17años) ? hombre6a17años : 0,
-                        ///Mujer6a17Años = Int16.TryParse(dato.Columna29, out Int16 mujer6a17años) ? mujer6a17años : 0,
-                        ///TipoPersona = Int16.TryParse(dato.Columna30, out Int16 tipopersona) ? tipopersona : 0,
-                        ///AreaMaiz = Decimal.TryParse(dato.Columna31, out Decimal areamaiz) ? areamaiz : 0,
-                        ///QuintalesMaiz = Decimal.TryParse(dato.Columna32, out Decimal quintalesmaiz) ? quintalesmaiz : 0,
-                        ///AreaFrijol = Decimal.TryParse(dato.Columna33, out Decimal areafrijol) ? areafrijol : 0,
-                        ///QuintalesFrijol = Decimal.TryParse(dato.Columna34, out Decimal quintalesfrijol) ? quintalesfrijol : 0,
-                        ///TipoAgriculturaPractica = Int16.TryParse(dato.Columna35, out Int16 tipoagriculturapractica) ? tipoagriculturapractica : 0,
-                        ///NombreCOCODE = dato.Columna36,
-                        ///NombrePersonaRegistro = dato.Columna37,
-                        ///InstitucionRepresenta = dato.Columna38,
                         Restrictiva = 0,
                         Estado = "CREADO"
                     };
 
-                    await _solicitudRepository.SaveDetalleSolicitudAPA(detSolicitud);
-
-                    response.Data = detSolicitud;
-                    response.Success = true;
-                    response.Message = "Detalle Solicitud creado exitosamente";
+                    try
+                    {
+                        await _solicitudRepository.SaveDetalleSolicitudAPA(detSolicitud);
+                        response.Data = detSolicitud;
+                        response.Success = true;
+                        response.Message = "Detalle Solicitud creado exitosamente";
+                    }
+                    catch (Exception ex)
+                    {
+                        datos_error_string.Append($" {dato.Columna8} <br>");
+                        datos_error++;
+                    }
                 }
+                response.Success = datos_error == 0;
+                response.Message = datos_error == 0 ? "Detalle Solicitud creado exitosamente" : datos_error_string.ToString();
             }
             catch (Exception ex)
             {
@@ -1071,6 +1064,9 @@ namespace PROY.Services
                 solicitud_encontrada.Municipio = modelo.Depto == "2" ? !string.IsNullOrEmpty(modelo.Municipio.ToString()) ? modelo.Municipio : solicitud_encontrada.Municipio : null;
                 //solicitud_encontrada.Comunidad = modelo.Depto == "2" ? solicitud_encontrada.Comunidad : modelo.Comunidad;
                 solicitud_encontrada.Comunidad = modelo.Depto == "2" ? !string.IsNullOrEmpty(modelo.Comunidad.ToString()) ? modelo.Comunidad : solicitud_encontrada.Comunidad : null;
+                solicitud_encontrada.NombreCocode = modelo.Depto == "2" ? !string.IsNullOrEmpty(modelo.NombreCocode.ToString()) ? modelo.NombreCocode : solicitud_encontrada.NombreCocode : null;
+                solicitud_encontrada.ComunidadCocode = modelo.Depto == "2" ? !string.IsNullOrEmpty(modelo.ComunidadCocode.ToString()) ? modelo.ComunidadCocode : solicitud_encontrada.ComunidadCocode : null;
+                solicitud_encontrada.TelefonoCocode = modelo.Depto == "2" ? !string.IsNullOrEmpty(modelo.TelefonoCocode.ToString()) ? modelo.TelefonoCocode : solicitud_encontrada.TelefonoCocode : null;
                 await _solicitudRepository.UpdateSolicitud(solicitud_encontrada);
 
                 response.Data = solicitud_encontrada;
@@ -1094,6 +1090,30 @@ namespace PROY.Services
             try
             {
                 solicitud_encontrada.Estado = "EVALUACION";
+
+                await _solicitudRepository.UpdateSolicitud(solicitud_encontrada);
+
+                response.Data = solicitud_encontrada;
+                response.Success = true;
+                response.Message = "Solicitud enviada exitosamente";
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = $"Error al enviar la solicitud: {ex.Message}";
+            }
+
+            return response;
+        }
+
+        public async Task<ServiceResponse<Solicitud>> UpdateEstadoARevAdministrativa(Solicitud modelo)
+        {
+            var response = new ServiceResponse<Solicitud>();
+            Solicitud solicitud_encontrada = await _solicitudRepository.GetSolicitud(modelo.IdSolicitud);
+
+            try
+            {
+                solicitud_encontrada.Estado = "REV ADMINISTRATIVA";
 
                 await _solicitudRepository.UpdateSolicitud(solicitud_encontrada);
 
@@ -1540,7 +1560,7 @@ namespace PROY.Services
         public async Task<int?> GetIntervencionBySolicitudId(Int64? idSolicitud)
         {
             var idintervencion = await _solicitudRepository.GetIntervencionBySolicitudId(idSolicitud);
-        return idintervencion;
+            return idintervencion;
         }
 
         //public Task<ServiceResponse<DetalleSolicitud>> SaveListaDetalleSolicitud(List<Services.ExcelRow> datos)

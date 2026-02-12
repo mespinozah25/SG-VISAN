@@ -7,6 +7,7 @@ namespace PROY.Models
     {
         public Int64 IdSolicitud { get; set; }
         
+        [Required(ErrorMessage = "Esta campo es requerido")]
         public string Correlativo { get; set; }  //Correlativo interno de los memos
         public string? Codigo { get; set; }
 
@@ -24,7 +25,12 @@ namespace PROY.Models
         public int IdIntervencion { get; set; }
         public string? Archivo {  get; set; }
         public int Restrictiva {  get; set; }
-        public string Estado {  get; set; }
+        public string Estado { get; set; }
+        
+        [NotMapped]
+        public int? Validos { get; set; }
+        [NotMapped]
+        public int? NoAplica { get; set; }
         public int? Fallecidos { get; set; }
         public int? Duplicados { get; set; }
         public int? SinDatos { get; set; }
@@ -42,6 +48,8 @@ namespace PROY.Models
         public int Raciones { get; set; }
         public int ? Departamento { get; set; }
         public int ? Municipio { get; set; }
+
+        [Required(ErrorMessage = "Esta campo es requerido")]
         public string ? Comunidad { get; set; }
         public DateTime FechaRegistro { get; set; }
         public string UsuarioRegistro { get; set; }
@@ -51,6 +59,37 @@ namespace PROY.Models
         public List<DetalleEvaluacionAPA> DetallesEvaluacionAPA { get; set; }
         //public List<AsignaTecnico> AsignaTecnicos { get; set; }
         [NotMapped]
-        public Boolean ? BotonDespacho { get; set; }
+        public Boolean? BotonDespacho { get; set; }
+
+        [NotMapped]
+        public bool MostrarContinuidadVerificacionCampo { get; set; } = false;
+
+        [NotMapped]
+        public bool MostrarContinuidadValidacionBeneficiarios { get; set; } = false;
+
+        [NotMapped]
+        public bool MostrarContinuidadRevisionLiquidacion { get; set; } = false;
+
+        [NotMapped]
+        public bool MostrarDespachoEnProgramacion { get; set; } = false;
+
+        [NotMapped]
+        public bool MostrarDespachoEnEjecucion { get; set; } = false;
+
+        [NotMapped]
+        public bool AsignacionDeRacionesCompleta { get; set; } = false;
+
+        [Required(ErrorMessage = "Esta campo es requerido")]
+        public string? NombreCocode { get; set; }
+
+        [Required(ErrorMessage = "Esta campo es requerido")]
+        public string? ComunidadCocode { get; set; }
+
+        [Required(ErrorMessage = "Esta campo es requerido")]
+        public string? TelefonoCocode { get; set; }
+        public int IdEstadoSolicitud { get; set; } = 1;
+        public EstadoSolicitud EstadoSolicitud { get; set; }
+        public int Rechazada { get; set; } = 0;
+        public string? ComentarioRechazo { get; set; }
     }
 }

@@ -394,21 +394,23 @@ else if (condicion == "2")
     <input type="hidden" name="idSOL" value="@Model.Solicitud.IdSolicitud" />
     <h2 class="float-start">BENEFICIARIOS DE SOLICITUD @Model.Solicitud.Codigo</h2>
     @*<a class="btn btn-warning btn-sm btn-fixed-end" style="margin-right:300px;" asp-controller="Programacion" asp-action="Index" asp-route-k="2"><i class="fas fa-undo"></i> Regresar</a>*@
-    @if (valorRetorno == "Ejecucion" || ViewBag.RC == "Ejecucion")
+    @* @if (valorRetorno == "Ejecucion" || ViewBag.RC == "Ejecucion")
     {
         <a class="btn btn-warning btn-sm btn-fixed-end" style="margin-right:545px; position:absolute; z-index:1;" asp-controller="Ejecucion" asp-action="Index" asp-route-k="2"><i class="fas fa-undo"></i> Regresar</a>
     }
     else
     {
         <a class="btn btn-warning btn-sm btn-fixed-end" style="margin-right:545px; position:absolute; z-index:1;" asp-controller="Programacion" asp-action="Index" asp-route-k="2"><i class="fas fa-undo"></i> Regresar</a>
-    }
+    } *@
+    <a class="btn btn-warning btn-sm btn-fixed-end" style="margin-right:674px; position:absolute; z-index:1;" asp-controller="SolicitudV2" asp-action="DetalleSolicitud" asp-route-IdSolicitud="@Model.Solicitud.IdSolicitud"><i class="fas fa-undo"></i> Regresar</a>
 
-    <a class="btn btn-success btn-sm btn-fixed-end" style="margin-right:405px; position:absolute; z-index:1;" data-bs-toggle="modal" data-bs-target="#wCargaExcelAPA" onclick="limpiarINFO_APA()"><i class="fas fa-plus-square"></i> Cargar Excel</a>
-    <a class="btn btn-primary btn-sm btn-fixed-end" style="margin-right:270px; position:absolute; z-index:1;" onclick="abrirModalYActualizarUrlAPA(@Model.Solicitud.IdSolicitud,0,'@Model.Solicitud.Codigo')"><i class="fas fa-plus-square"></i> Beneficiario</a>
-    <a class="btn btn-info btn-sm btn-fixed-end" style="margin-right:135px; position:absolute; z-index:1;" asp-action="ExportarExcelDAPA" asp-controller="Programacion" asp-route-idSolicitud="@Model.Solicitud.IdSolicitud">Exportar datos</a>
-    <a class="btn btn-danger btn-sm btn-fixed-end" style="margin-right:15px; position:absolute; z-index:1;" data-bs-toggle="modal" data-bs-target="#wAnulacionMasivaAPA" onclick="limpiarAnulacionINFOAPA()"><i class="fas fa-plus-square"></i> Anulacion</a>
+    <a class="btn btn-success btn-sm btn-fixed-end" style="margin-right:536px; position:absolute; z-index:1;" data-bs-toggle="modal" data-bs-target="#wCargaExcelAPA" onclick="limpiarINFO_APA()"><i class="fas fa-plus-square"></i> Cargar Excel</a>
+    <a class="btn btn-primary btn-sm btn-fixed-end" style="margin-right:403px; position:absolute; z-index:1;" onclick="abrirModalYActualizarUrlAPA(@Model.Solicitud.IdSolicitud,0,'@Model.Solicitud.Codigo')"><i class="fas fa-plus-square"></i> Beneficiario</a>
+    <a class="btn btn-info btn-sm btn-fixed-end" style="margin-right:267px; position:absolute; z-index:1;" asp-action="ExportarExcelDAPA" asp-controller="Programacion" asp-route-idSolicitud="@Model.Solicitud.IdSolicitud">Exportar datos</a>
+    <a class="btn btn-danger btn-sm btn-fixed-end" style="margin-right:148px; position:absolute; z-index:1;" data-bs-toggle="modal" data-bs-target="#wAnulacionMasivaAPA" onclick="limpiarAnulacionINFOAPA()"><i class="fas fa-plus-square"></i> Anulacion</a>
     //<a class="btn btn-success btn-sm btn-fixed-end" style="margin-right:160px;" data-bs-toggle="modal" data-bs-target="#wCargaExcel" onclick="limpiarINFO()"><i class="fas fa-plus-square"></i> Cargar Excel</a>
     //<a class="btn btn-primary btn-sm btn-fixed-end" style="margin-right:60px;" onclick="abrirModalYActualizarUrlAPA(@Model.Solicitud.IdSolicitud,0)"><i class="fas fa-plus-square"></i> Nuevo</a>
+    <a class="btn btn-danger btn-sm btn-fixed-end" style="margin-right:15px; position:absolute; z-index:1;" onclick="eliminarInfoBeneficiariosAPA(event, @Model.Solicitud.IdSolicitud)">Eliminar Datos</a>
     <p><br /></p>
     <div>
         <table class="table" style="width:100%; position:relative; z-index:2;">
@@ -2086,7 +2088,35 @@ else if (condicion == "2")
     }
 
     function cargarINFO_APA() {
-        //alert('ENTRO');
+        var fileInput = $("#fileExcel")[0].files[0];
+    
+        if (!fileInput) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Archivo requerido',
+                text: 'Por favor, seleccione un archivo Excel para cargar.',
+                confirmButtonText: 'Aceptar',
+                confirmButtonColor: '#3085d6'
+            });
+            return; // Detener la ejecución
+        }
+
+        var nombreArchivo = fileInput.name.toLowerCase();
+        
+        // Validar que sea un archivo Excel
+        var extensionesValidas = ['.xlsx', '.xls', '.csv'];
+        var esArchivoValido = extensionesValidas.some(ext => nombreArchivo.endsWith(ext));
+        
+        if (!esArchivoValido) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Tipo de archivo no válido',
+                text: 'Por favor, seleccione un archivo Excel (.xlsx, .xls)',
+                confirmButtonText: 'Aceptar',
+                confirmButtonColor: '#d33'
+            });
+            return;
+        }
 
         var table = $('#excelDataTableAPA').DataTable();
 
@@ -2123,8 +2153,31 @@ else if (condicion == "2")
                     //$("#excelDataTable tbody").append(rowHtml);
                 });
             },
-            error: function () {
-                alert("Error al cargar el archivo Excel.");
+            error: function (xhr, status, error) {
+                var errorMessage = "Error al cargar el archivo Excel.";
+                if (xhr.responseText) {
+                    try {
+                        var response = JSON.parse(xhr.responseText);
+                        if (response && response.Mensaje) {
+                            errorMessage = response.Mensaje;
+                        } else if (response && typeof response === 'string') {
+                            errorMessage = response;
+                        }
+                    } catch (e) {
+                        errorMessage = xhr.responseText;
+                    }
+                }
+                
+                listoAPA();
+
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error en el archivo Excel',
+                    html: errorMessage,
+                    confirmButtonText: 'Aceptar',
+                    confirmButtonColor: '#d33',
+                    width: '600px'
+                });
             },
             complete: function (){
                 listoAPA();
@@ -2365,6 +2418,40 @@ else if (condicion == "2")
         if (res == false) e.preventDefault();
 
         //return false;
+    }
+
+    function eliminarInfoBeneficiariosAPA(evento, idSolicitud) {
+        evento.preventDefault();
+
+        Swal.fire({
+            title: "ATENCIÓN",
+            text: "¿Esta seguro que desea eliminar la información?",
+            icon: "question",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Aceptar",
+            cancelButtonText: "Cancelar"
+        }).then((result) => {
+            if (result.isConfirmed) {
+
+                $.ajax({
+                    url: "@ViewData["rutaApp"]/SolicitudV2/EliminarRegistrosSolicitud?IdSolicitud=" + idSolicitud,
+                    type: "GET",
+                    success: function (data) {                
+                        location.reload()
+                    },
+                    error: function (data) {
+                        console.log(data)
+                        location.reload()
+                    },
+                    complete: function () {
+                        location.reload()
+                    }
+                });
+            }
+            else if (result.dismiss === Swal.DismissReason.cancel) evento.preventDefault();
+        });
     }
 
 </script>

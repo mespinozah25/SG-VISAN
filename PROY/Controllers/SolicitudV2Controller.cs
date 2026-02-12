@@ -1,0 +1,391 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using PROY.Models;
+using PROY.Services;
+using PROY.ViewModels;
+
+using System.Security.Claims;
+
+namespace PROY.Controllers
+{
+    [Authorize]
+    public class SolicitudV2Controller : Controller
+    {
+        private readonly ICatalogoService _catalogoService;
+        private readonly ISolicitudV2Service _solicitudV2Service;
+        private readonly IEstadoSolicitudService _estadoSolicitudService;
+        private readonly IAsignaRacionService _asignaRacionService;
+        private readonly IAsignaTecnicoService _asignaTecnicoService;
+        private readonly ITecnicoService _tecnicoService;
+        private readonly IUsuarioService _usuarioService;
+        private readonly ISolicitudService _solicitudService;
+
+        public SolicitudV2Controller(ICatalogoService catalogoService, ISolicitudV2Service solicitudV2Service, IEstadoSolicitudService estadoSolicitudService, IAsignaRacionService AsignaRacionService, IAsignaTecnicoService AsignaTecnicoService, ITecnicoService TecnicoService, ISolicitudService solicitudService, IUsuarioService usuarioService)
+        {
+            _catalogoService = catalogoService;
+            _solicitudV2Service = solicitudV2Service;
+            _estadoSolicitudService = estadoSolicitudService;
+            _asignaRacionService = AsignaRacionService;
+            _asignaTecnicoService = AsignaTecnicoService;
+            _tecnicoService = TecnicoService;
+            _solicitudService = solicitudService;
+            _usuarioService = usuarioService;
+        }
+
+        public async Task<IActionResult> Index(int? IdEstado, int Rechazada = 0)
+        {
+            string? departamento = User.FindFirst("depto")?.Value;
+            string? rol = User.FindFirst(ClaimTypes.Role)?.Value;
+
+            if (rol != "Admin" && (departamento == "DAAN" || string.IsNullOrEmpty(departamento)))
+                return Unauthorized();
+
+            SolicitudesVM solicitudVM = new SolicitudesVM();
+
+            if (IdEstado != null) solicitudVM.Solicitudes = await _solicitudV2Service.ObtenerSolicitudesSegunEstado((int)IdEstado, 2, Rechazada);
+            else solicitudVM.Solicitudes = new List<Solicitud>();
+
+            solicitudVM.IntervencionDict = (await _catalogoService.GetCatalogo("INTERVENCIONES"))
+                .ToDictionary(i => i.IdCatalogo, i => i.Descripcion);
+
+            solicitudVM.ProyectoDict = (await _catalogoService.GetCatalogo("PROYECTO"))
+                .ToDictionary(i => i.IdCatalogo, i => i.Descripcion);
+
+            solicitudVM.EstadosSolicitud = await _estadoSolicitudService.ObtenerTodos();
+
+            ViewData["IdEstado"] = IdEstado;
+
+            return View(solicitudVM);
+        }
+
+        public async Task<IActionResult> DetalleSolicitud(int IdSolicitud, int Rechazada = 0)
+        {
+            string? departamento = User.FindFirst("depto")?.Value;
+            string? rol = User.FindFirst(ClaimTypes.Role)?.Value;
+
+            if (rol != "Admin" && (departamento == "DAAN" || string.IsNullOrEmpty(departamento)))
+                return Unauthorized();
+
+            SolicitudesVM solicitudVM = new SolicitudesVM();
+
+            solicitudVM.Solicitud = await _solicitudV2Service.ObtenerSolicitudSegunIdSolicitud(IdSolicitud);
+
+            if (solicitudVM.Solicitud == null)
+                return Unauthorized();
+
+            solicitudVM.IntervencionDict = (await _catalogoService.GetCatalogo("INTERVENCIONES"))
+                .ToDictionary(i => i.IdCatalogo, i => i.Descripcion);
+            solicitudVM.ProyectoDict = (await _catalogoService.GetCatalogo("PROYECTO"))
+                .ToDictionary(i => i.IdCatalogo, i => i.Descripcion);
+            solicitudVM.DepartamentoDict = (await _catalogoService.GetCatalogo("DEPARTAMENTO"))
+                .ToDictionary(i => i.IdCatalogo, i => i.Descripcion);
+            solicitudVM.MunicipioDict = (await _catalogoService.GetCatalogo("MUNICIPIO"))
+                .ToDictionary(i => i.IdCatalogo, i => i.Descripcion);
+
+            ViewData["Rechazada"] = Rechazada;
+
+            return View(solicitudVM);
+        }
+
+        public async Task<ActionResult> CambioEtapaSolicitud(int IdSolicitud)
+        {
+            TempData["Mensaje"] = await _solicitudV2Service.AvanzarASiguienteEtapa(IdSolicitud); ;
+
+            await CrearBitacora(IdSolicitud, 2, "Se realiza el cambio de estado de la solicitud");
+
+            return RedirectToAction("DetalleSolicitud", "SolicitudV2", new { IdSolicitud });
+        }
+
+        public async Task<IActionResult> FormularioSolicitud(int? IdSolicitud)
+        {
+            string? departamento = User.FindFirst("depto")?.Value;
+            string? rol = User.FindFirst(ClaimTypes.Role)?.Value;
+
+            if (rol != "Admin" && (departamento == "DAAN" || string.IsNullOrEmpty(departamento)))
+                return Unauthorized();
+
+            SolicitudesVM solicitudVM = new SolicitudesVM();
+
+            solicitudVM.Solicitud = new Solicitud();
+
+            if (IdSolicitud != null) solicitudVM.Solicitud = await _solicitudV2Service.ObtenerSolicitudSegunIdSolicitud((int)IdSolicitud);
+
+            solicitudVM.IntervencionDict = (await _catalogoService.GetCatalogo("INTERVENCIONES"))
+                .ToDictionary(i => i.IdCatalogo, i => i.Descripcion);
+            solicitudVM.ProyectoDict = (await _catalogoService.GetCatalogo("PROYECTO"))
+                .ToDictionary(i => i.IdCatalogo, i => i.Descripcion);
+            solicitudVM.DepartamentoDict = (await _catalogoService.GetCatalogo("DEPARTAMENTO"))
+                .ToDictionary(i => i.IdCatalogo, i => i.Descripcion);
+            solicitudVM.MunicipioDict = (await _catalogoService.GetCatalogo("MUNICIPIO"))
+                .ToDictionary(i => i.IdCatalogo, i => i.Descripcion);
+
+            ViewBag.Departamentos = new SelectList(await _catalogoService.GetCatalogo("DEPARTAMENTO"), "IdCatalogo", "Descripcion");
+            ViewBag.Municipios = new SelectList(await _catalogoService.GetCatalogo("MUNICIPIO"), "IdCatalogo", "Descripcion");
+            ViewBag.Proyectos = new SelectList(await _catalogoService.GetCatalogo("PROYECTO"), "IdCatalogo", "Descripcion");
+            ViewBag.Intervenciones = new SelectList(await _catalogoService.GetCatalogo("INTERVENCIONES"), "IdCatalogo", "Descripcion");
+
+            return View(solicitudVM);
+        }
+
+        public async Task<ActionResult> EliminarSolicitud(int IdSolicitud)
+        {
+            TempData["Mensaje"] = await _solicitudV2Service.EliminarSolicitud(IdSolicitud); ;
+
+            await CrearBitacora(IdSolicitud, 3, "Se elimina la solicitud");
+
+            return RedirectToAction("Index", "SolicitudV2");
+        }
+
+        public async Task<ActionResult> RechazarSolicitud(int IdSolicitud)
+        {
+            TempData["Mensaje"] = await _solicitudV2Service.RechazarSolicitud(IdSolicitud); ;
+
+            await CrearBitacora(IdSolicitud, 2, "Se rechaza la solicitud");
+
+            return RedirectToAction("DetalleSolicitud", "SolicitudV2", new { IdSolicitud });
+        }
+
+        [HttpPost]
+        public async Task<ActionResult> RechazarSolicitudConComentario(SolicitudesVM modeloVM)
+        {
+            TempData["Mensaje"] = await _solicitudV2Service.RegresarAEtapaAnterior((int)modeloVM.Solicitud!.IdSolicitud, modeloVM.Solicitud!.ComentarioRechazo);
+
+            await CrearBitacora((int)modeloVM.Solicitud!.IdSolicitud, 2, "Se rechaza la solicitud" + modeloVM.Solicitud!.ComentarioRechazo);
+
+            return RedirectToAction("DetalleSolicitud", "SolicitudV2", new { modeloVM.Solicitud!.IdSolicitud });
+        }
+
+        public async Task<ActionResult> HabilitarSolicitud(int IdSolicitud)
+        {
+            TempData["Mensaje"] = await _solicitudV2Service.HabilitarSolicitud(IdSolicitud); ;
+
+            await CrearBitacora(IdSolicitud, 1, "Se habilita la solicitud");
+
+            return RedirectToAction("DetalleSolicitud", "SolicitudV2", new { IdSolicitud });
+        }
+
+        public async Task<IActionResult> FormularioDespacho(int IdSolicitud)
+        {
+            string? departamento = User.FindFirst("depto")?.Value;
+            string? rol = User.FindFirst(ClaimTypes.Role)?.Value;
+
+            if (rol != "Admin" && (departamento == "DAAN" || string.IsNullOrEmpty(departamento)))
+                return Unauthorized();
+
+            SolicitudesVM solicitudVM = new SolicitudesVM();
+
+            solicitudVM.Solicitud = await _solicitudV2Service.ObtenerSolicitudSegunIdSolicitud(IdSolicitud);
+
+            solicitudVM.DetalleRacionesV2 = await _asignaRacionService.ObtenerAsignacionesRacion(IdSolicitud);
+
+            solicitudVM.AsignaRacionV2 = new AsignaRacionV2()
+            {
+                Comunidad = solicitudVM.Solicitud!.Comunidad!,
+                UsuarioRegistro = User.FindFirst("Usuario")?.Value!
+            };
+
+            solicitudVM.DepartamentoDict = (await _catalogoService.GetCatalogo("DEPARTAMENTO"))
+                .ToDictionary(i => i.IdCatalogo, i => i.Descripcion);
+            solicitudVM.MunicipioDict = (await _catalogoService.GetCatalogo("MUNICIPIO"))
+                .ToDictionary(i => i.IdCatalogo, i => i.Descripcion);
+
+            ViewBag.Departamentos = new SelectList(await _catalogoService.GetCatalogo("DEPARTAMENTO"), "IdCatalogo", "Descripcion");
+            ViewBag.Municipios = new SelectList(await _catalogoService.GetCatalogo("MUNICIPIO"), "IdCatalogo", "Descripcion");
+
+            return View(solicitudVM);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AgregarAsignacionRacion(SolicitudesVM modeloVM)
+        {
+            int totalRaciones = modeloVM.Solicitud!.Raciones * ((int)modeloVM.Solicitud!.Validos! + (int)modeloVM.Solicitud!.NoAplica!);
+
+            int totalAsignado = await _asignaRacionService.ObtenerTotalRacionesAsignadasSegunSolicitud((int)modeloVM.Solicitud!.IdSolicitud);
+
+            int saldoRaciones = totalRaciones - (totalAsignado + modeloVM.AsignaRacionV2!.RacionAsignada!);
+
+            if (saldoRaciones < 0)
+            {
+                TempData["Mensaje"] = "Ración asignada supera el total de raciones";
+
+                return RedirectToAction("FormularioDespacho", "SolicitudV2", new { modeloVM.Solicitud!.IdSolicitud });
+            }
+
+            modeloVM.AsignaRacionV2!.IdSolicitud = (int)modeloVM.Solicitud!.IdSolicitud;
+            modeloVM.AsignaRacionV2!.IdDepartamento = (int)modeloVM.Solicitud!.Departamento!;
+            modeloVM.AsignaRacionV2!.IdMunicipio = (int)modeloVM.Solicitud!.Municipio!;
+            modeloVM.AsignaRacionV2!.Comunidad = modeloVM.Solicitud!.Comunidad!;
+            modeloVM.AsignaRacionV2!.RacionSaldo = saldoRaciones;
+
+            TempData["Mensaje"] = await _asignaRacionService.GuardarAsignacionRacion(modeloVM.AsignaRacionV2!); ;
+
+            await CrearBitacora((int)modeloVM.Solicitud!.IdSolicitud, 1, "Se crea la asignación de Ración");
+
+            return RedirectToAction("FormularioDespacho", "SolicitudV2", new { modeloVM.Solicitud!.IdSolicitud });
+        }
+
+        public async Task<IActionResult> EliminarAsignacionRacion(int IdSolicitud, int IdAsignaRacion)
+        {
+            TempData["Mensaje"] = await _asignaRacionService.EliminarAsignacionRacion(IdAsignaRacion); ;
+
+            await CrearBitacora(IdSolicitud, 3, "Se elimina la asignación de Ración");
+
+            return RedirectToAction("FormularioDespacho", "SolicitudV2", new { IdSolicitud });
+        }
+
+        public async Task<IActionResult> FormularioTecnicos(int IdSolicitud)
+        {
+            string? departamento = User.FindFirst("depto")?.Value;
+            string? rol = User.FindFirst(ClaimTypes.Role)?.Value;
+
+            if (rol != "Admin" && (departamento == "DAAN" || string.IsNullOrEmpty(departamento)))
+                return Unauthorized();
+
+            SolicitudesVM solicitudVM = new SolicitudesVM();
+
+            solicitudVM.Solicitud = await _solicitudV2Service.ObtenerSolicitudSegunIdSolicitud(IdSolicitud);
+
+            solicitudVM.ListDetalleTecnicos = await _asignaTecnicoService.ObtenerAsignacionesTecnico(IdSolicitud);
+
+            solicitudVM.AsignaRacionV2 = new AsignaRacionV2()
+            {
+                Comunidad = solicitudVM.Solicitud!.Comunidad!,
+                UsuarioRegistro = User.FindFirst("Usuario")?.Value!
+            };
+
+            solicitudVM.DepartamentoDict = (await _catalogoService.GetCatalogo("DEPARTAMENTO"))
+                .ToDictionary(i => i.IdCatalogo, i => i.Descripcion);
+            solicitudVM.MunicipioDict = (await _catalogoService.GetCatalogo("MUNICIPIO"))
+                .ToDictionary(i => i.IdCatalogo, i => i.Descripcion);
+            solicitudVM.TecnicoDict = (await _tecnicoService.GetAll())
+                .ToDictionary(i => (int)i.IdTecnico, i => i.Nombre);
+
+            ViewBag.Departamentos = new SelectList(await _catalogoService.GetCatalogo("DEPARTAMENTO"), "IdCatalogo", "Descripcion");
+            ViewBag.Municipios = new SelectList(await _catalogoService.GetCatalogo("MUNICIPIO"), "IdCatalogo", "Descripcion");
+            ViewBag.Tecnicos = new SelectList(await _tecnicoService.GetAll(), "IdTecnico", "Nombre");
+
+            return View(solicitudVM);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ActualizarFechasEntregaSolicitud(SolicitudesVM modeloVM)
+        {
+            TempData["Mensaje"] = await _solicitudV2Service.ActualizarFechasEntregaSolicitud((int)modeloVM.Solicitud!.IdSolicitud, (DateTime)modeloVM.Solicitud!.FInicioEntrega!, (DateTime)modeloVM.Solicitud!.FFinEntrega!, modeloVM.Solicitud!.TecnicoObservaciones); ;
+
+            await CrearBitacora((int)modeloVM.Solicitud!.IdSolicitud, 2, "Se actualiza la fecha de entrega de la solicitud");
+
+            return RedirectToAction("FormularioTecnicos", "SolicitudV2", new { modeloVM.Solicitud!.IdSolicitud, });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AgregarAsignacionTecnico(SolicitudesVM modeloVM)
+        {
+            modeloVM.AsignaTecnicoV2!.IdSolicitud = (int)modeloVM.Solicitud!.IdSolicitud;
+            modeloVM.AsignaTecnicoV2!.IdDepartamento = (int)modeloVM.Solicitud!.Departamento!;
+            modeloVM.AsignaTecnicoV2!.IdMunicipio = (int)modeloVM.Solicitud!.Municipio!;
+
+            TempData["Mensaje"] = await _asignaTecnicoService.GuardarAsignacionTecnico(modeloVM.AsignaTecnicoV2!); ;
+
+            await CrearBitacora(modeloVM.AsignaTecnicoV2!.IdSolicitud, 1, "Se creó la asignación de Técnico");
+
+            return RedirectToAction("FormularioTecnicos", "SolicitudV2", new { modeloVM.Solicitud!.IdSolicitud });
+        }
+
+        [HttpGet]
+        public async Task<ActionResult> EliminarRegistrosSolicitud(int IdSolicitud)
+        {
+            await _solicitudV2Service.EliminarRegistrosSolicitud(IdSolicitud);
+
+            return Ok("Datos limpiados");
+        }
+
+        public async Task<IActionResult> EliminarAsignacionTecnico(int IdSolicitud, int IdAsignaTecnico)
+        {
+            TempData["Mensaje"] = await _asignaTecnicoService.EliminarAsignacionTecnico(IdAsignaTecnico); ;
+
+            await CrearBitacora(IdSolicitud, 3, "Se elimina la asignación de Técnico");
+
+            return RedirectToAction("FormularioTecnicos", "SolicitudV2", new { IdSolicitud });
+        }
+
+        public async Task<IActionResult> GeneracionPlantillas(int IdSolicitud)
+        {
+            List<DetalleSolicitudAPA> listaDetalleSolicitudAPA = await _solicitudService.GetAllDetalleSolicitudAPA((long)IdSolicitud);
+
+            return Ok(listaDetalleSolicitudAPA);
+        }
+
+
+        [HttpPost]
+        public async Task<JsonResult> ActualizarRaciones([FromBody] ActualizarRacionesModel model)
+        {
+            try
+            {
+                string? departamento = User.FindFirst("depto")?.Value;
+                string? rol = User.FindFirst(ClaimTypes.Role)?.Value;
+
+                if (rol != "Admin" && (departamento == "DAAN" || string.IsNullOrEmpty(departamento)))
+                    return Json(new { success = false, message = "No autorizado" });
+
+                // Validar que el estado sea VALIDACION_DE_BENEFICIARIOS
+                var solicitud = await _solicitudV2Service.ObtenerSolicitudSegunIdSolicitud(model.IdSolicitud);
+
+                if (solicitud == null)
+                    return Json(new { success = false, message = "Solicitud no encontrada" });
+
+                // Actualizar las raciones
+                var resultado = await _solicitudV2Service.ActualizarRaciones(model.IdSolicitud, model.Raciones);
+
+                await CrearBitacora(model.IdSolicitud, 2, "Se actualiza la cantidad de raciones");
+
+                return Json(new { success = true, message = resultado });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"Error: {ex.Message}" });
+            }
+        }
+
+        public async Task<IActionResult> HistorialSolicitud(Int64? idSolicitud)
+        {
+
+            var solicitud = await _solicitudV2Service.ObtenerSolicitudSegunIdSolicitud((int)idSolicitud);
+            var historial = await _solicitudV2Service.GetAllBitacora((int)idSolicitud);
+
+            ViewBag.Usuarios = await _usuarioService.GetAll();
+
+            var model = new HistorialSolicitudVM
+            {
+                Solicitud = solicitud,
+                Historial = historial
+            };
+
+            return View(model);
+        }
+
+        private async Task CrearBitacora(int idSolicitud, int estado, string? comentario)
+        {
+
+            var idUsuarioClaim = User.FindFirst("IDuser")?.Value;
+            if (string.IsNullOrEmpty(idUsuarioClaim) || !int.TryParse(idUsuarioClaim, out int idUsuario))
+            {
+                return;
+            }
+
+            Bitacora modelBitacora = new Bitacora()
+            {
+                IdBitacora = 0,
+                Accion = estado,
+                IdRegistro = idSolicitud,
+                NombreTabla = "SOLICITUD",
+                IdUsuario = idUsuario,
+                FechaHora = DateTime.Now,
+                Estado = 0,
+                Comentario = comentario
+            };
+
+            await _solicitudV2Service.SaveBitacora(modelBitacora);
+        }
+    }
+}

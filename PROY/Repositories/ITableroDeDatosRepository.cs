@@ -1,10 +1,14 @@
-﻿namespace PROY.Repositories
+﻿using PROY.Models.TableroDeDatos;
+
+namespace PROY.Repositories
 {
     public interface ITableroDeDatosRepository
     {
         #region Consultas Charts
-        List<dynamic> ChartBodegasExistenciaProductos();
-        List<dynamic> ChartRaciones();
+        List<TableroConvenio> ChartRacionesDisponibles();
+        List<TableroConvenioAvance> ChartRacionesAvance();
+        List<TableroBodegaProducto> ChartBodegasExistenciaProductos();
+        List<TableroRacion> ChartRaciones();
 
         #endregion
     }

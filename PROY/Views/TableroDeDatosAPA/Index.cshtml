@@ -1,0 +1,583 @@
+<div class="col">
+    <div class="card">
+        <div style="display:block; justify-content:center; align-items:center; position: relative;">
+            <div style="width:100%; text-align:center;">
+                <img src="~/LogoVISAN.png" style="width:400px;" />
+            </div>
+        </div>
+
+        <div class="mt-2" style="width:100%; text-align:center;">
+            <p style="font-size:45px; font-weight:800;">
+                Solicitudes Alimentos Por Acciones
+            </p>
+        </div>
+        <div class="charts-container">
+            <div class="chart chart-1">
+                <div class="chart-title">Solicitudes Atendidas</div>
+                <div class="chart-circle">
+                    <div class="chart-bg"></div>
+                    <div class="chart-arc"></div>
+                    <div class="chart-inner">
+                        <div class="chart-number">@Model.TotalSolicitudes</div>
+                        <div class="chart-description">Solicitudes</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart chart-2">
+                <div class="chart-title">Beneficiarios Atendidos</div>
+                <div class="chart-circle">
+                    <div class="chart-bg"></div>
+                    <div class="chart-arc"></div>
+                    <div class="chart-inner">
+                        <div class="chart-number">@Model.TotalBeneficiarios</div>
+                        <div class="chart-description">Beneficiarios</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .charts-container {
+        display: flex;
+        gap: 40px;
+        justify-content: center;
+        align-items: center;
+        padding: 40px;
+        font-family: Arial, sans-serif;
+    }
+
+    .chart {
+        text-align: center;
+        width: 200px;
+    }
+
+    .chart-circle {
+        position: relative;
+        width: 180px;
+        height: 180px;
+        margin: 0 auto 20px;
+    }
+
+    .chart-bg {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: #f0f0f0;
+        position: absolute;
+        top: 0;
+        left: 0;
+    }
+
+    .chart-arc {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        position: absolute;
+        top: 0;
+        left: 0;
+        background: conic-gradient(#4CAF50 0deg 270deg, #f0f0f0 270deg 360deg);
+    }
+
+    .chart-2 .chart-arc {
+        background: conic-gradient(#2196F3 0deg 216deg, #f0f0f0 216deg 360deg);
+    }
+
+    .chart-inner {
+        position: absolute;
+        width: 140px;
+        height: 140px;
+        background: white;
+        border-radius: 50%;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .chart-number {
+        font-size: 2.5em;
+        font-weight: bold;
+        color: #333;
+        line-height: 1;
+    }
+
+    .chart-description {
+        font-size: 0.9em;
+        color: #666;
+        margin-top: 5px;
+        text-align: center;
+        line-height: 1.2;
+    }
+
+    .chart-title {
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 10px;
+        font-size: 1.1em;
+    }
+</style>
+
+<div>
+    <div class="col">
+        <div class="card">
+            <div class="card-body" id="divCriteriosBusqueda">
+                <h5 class="card-title">Criterios de Búsqueda</h5>
+                <div class="row">
+                    <form id="_frmBusqueda">
+                        <div class="row">
+                            <div class="col-3" id="divFechaMovimientoInicio">
+                                <label for="Fecha" class="control-label">Fecha Inicio</label>
+                                <input type="date" class="form-control" id="txtFechaInicio" name="FechaInicio">
+                            </div>
+                            <div class="col-3" id="divFechaMovimientoFin">
+                                <label for="Fecha" class="control-label">Fecha Fin</label>
+                                <input type="date" class="form-control" id="txtFechaFin" name="FechaFin">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <br />
+                <div class="row">
+                    <div class="col">
+                        <a type="button" href="#" class="btn btn-secondary"
+                            onclick="return LimpiarCriterios();">Limpiar</a>
+                        <a type="button" href="#" class="btn btn-primary" onclick="return Buscar();">Buscar</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-2">
+    <div class="col-6" style="width: 48%; margin-left: 15px; border: black 1px solid;">
+        <div class="card">
+            <div class="card-body">
+                <div id="chart_departamento" style="width: 100%; height: 500px;"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6" style="width: 48%; margin-left: 25px; border: black 1px solid;">
+        <div class="card">
+            <div class="card-body">
+                <div id="chart_municipio" style="width: 100%; height: 500px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="row mb-2">
+    <div class="col-12" style="width: 98%; margin-left: 15px; border: black 1px solid;">
+        <div class="card">
+            <div class="card-body">
+                <div id="chart_proyecto_departamento" style="width: 100%; height: 500px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="row">
+    <div class="col-6" style="width: 48%; margin-left: 25px; border: black 1px solid;">
+        <div class="card">
+            <div class="card-body">
+                <div id="chart_beneficiarios_departamento" style="width: 100%; height: 500px;"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6" style="width: 48%; margin-left: 15px; border: black 1px solid;">
+        <div class="card">
+            <div class="card-body">
+                <div id="chart_beneficiarios_proyecto" style="width: 100%; height: 500px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://www.gstatic.com/charts/loader.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Establecer fechas por defecto (últimos 30 días)
+            var fechaFin = new Date();
+            var fechaInicio = new Date();
+            fechaInicio.setDate(fechaInicio.getDate() - 30);
+
+            document.getElementById('txtFechaInicio').valueAsDate = fechaInicio;
+            document.getElementById('txtFechaFin').valueAsDate = fechaFin;
+
+            // Cargar Google Charts y datos iniciales
+            google.charts.load('current', { 'packages': ['corechart', 'bar'] });
+            google.charts.setOnLoadCallback(function () {
+                ChartDepartamentos();
+                ChartMunicipios();
+                ChartProyectoDepartamento();
+                ChartBeneficiariosDepartamento();
+                ChartBeneficiariosProyecto();
+            });
+        });
+
+        // Paleta de colores azules y rojos
+
+
+        // Función para buscar con filtros
+        function Buscar() {
+            var fechaInicio = document.getElementById('txtFechaInicio').value;
+            var fechaFin = document.getElementById('txtFechaFin').value;
+
+            // Validar fechas
+            if (fechaInicio && fechaFin) {
+                if (new Date(fechaInicio) > new Date(fechaFin)) {
+                    alert('La fecha de inicio no puede ser mayor a la fecha fin');
+                    return false;
+                }
+            }
+
+            // Mostrar loading
+            mostrarLoading();
+
+            // Recargar gráficos con los filtros
+            ChartDepartamentos(fechaInicio, fechaFin);
+            ChartMunicipios(fechaInicio, fechaFin);
+            ChartProyectoDepartamento(fechaInicio, fechaFin);
+            ChartBeneficiariosDepartamento(fechaInicio, fechaFin);
+            ChartBeneficiariosProyecto(fechaInicio, fechaFin);
+
+            return false;
+        }
+
+        // Función para limpiar criterios
+        function LimpiarCriterios() {
+            document.getElementById('_frmBusqueda').reset();
+
+            // Establecer fechas por defecto
+            var fechaFin = new Date();
+            var fechaInicio = new Date();
+            fechaInicio.setDate(fechaInicio.getDate() - 30);
+
+            document.getElementById('txtFechaInicio').valueAsDate = fechaInicio;
+            document.getElementById('txtFechaFin').valueAsDate = fechaFin;
+
+            // Recargar gráficos sin filtros
+            ChartDepartamentos();
+            ChartMunicipios();
+            ChartProyectoDepartamento();
+            ChartBeneficiariosDepartamento();
+            ChartBeneficiariosProyecto();
+
+            return false;
+        }
+
+        // Función para mostrar/ocultar loading
+        function mostrarLoading(mostrar = true) {
+            if (mostrar) {
+                $('.card-body div[id^="chart_"]').html('<div class="text-center"><div class="spinner-border" role="status"><span class="sr-only">Cargando...</span></div></div>');
+            }
+        }
+
+        function ChartDepartamentos(fechaInicio = null, fechaFin = null) {
+            mostrarLoading(true);
+
+            // Construir URL con parámetros
+            let url = '/TableroDeDatosAPA/ChartSolicitudDepartamento';
+            const params = new URLSearchParams();
+
+            if (fechaInicio) params.append('fechaInicio', fechaInicio);
+            if (fechaFin) params.append('fechaFin', fechaFin);
+
+            if (params.toString()) {
+                url += '?' + params.toString();
+            }
+
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Error en la respuesta del servidor');
+                    }
+                    return response.json();
+                })
+                .then(datos => {
+                    // Crear DataTable para pie chart
+                    var data = new google.visualization.DataTable();
+                    data.addColumn('string', 'Departamento');
+                    data.addColumn('number', 'Total Solicitudes');
+
+                    // Agregar datos
+                    datos.forEach(function (item) {
+                        data.addRow([item.departamento, item.total]);
+                    });
+
+                    var options = {
+                        title: 'Distribución de Solicitudes por Departamento',
+                        pieHole: 0.4,
+                        height: 500,
+                        legend: {
+                            position: 'labeled',
+                            textStyle: { fontSize: 12 }
+                        },
+                        chartArea: {
+                            width: '90%',
+                            height: '80%',
+                            top: 50,
+                            bottom: 50
+                        },
+
+                        pieSliceText: 'value',
+                        tooltip: { text: 'percentage' }
+                    };
+
+                    var chart = new google.visualization.PieChart(document.getElementById('chart_departamento'));
+                    chart.draw(data, options);
+                    mostrarLoading(false);
+                })
+                .catch(error => {
+                    console.error('Error al obtener datos de departamentos:', error);
+                    mostrarLoading(false);
+                });
+        }
+
+        function ChartMunicipios(fechaInicio = null, fechaFin = null) {
+            mostrarLoading(true);
+
+            // Construir URL con parámetros
+            let url = '/TableroDeDatosAPA/ChartSolicitudMunicipio';
+            const params = new URLSearchParams();
+
+            if (fechaInicio) params.append('fechaInicio', fechaInicio);
+            if (fechaFin) params.append('fechaFin', fechaFin);
+
+            if (params.toString()) {
+                url += '?' + params.toString();
+            }
+
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Error en la respuesta del servidor');
+                    }
+                    return response.json();
+                })
+                .then(datos => {
+                    // Crear DataTable para pie chart
+                    var data = new google.visualization.DataTable();
+                    data.addColumn('string', 'Municipio');
+                    data.addColumn('number', 'Total Solicitudes');
+
+                    // Ordenar datos y tomar los top 8 para mejor visualización
+                    datos.sort((a, b) => b.total - a.total);
+                    var topMunicipios = datos.slice(0, 8);
+
+                    // Agrupar el resto como "Otros"
+                    if (datos.length > 8) {
+                        var otrosTotal = datos.slice(8).reduce((sum, item) => sum + item.total, 0);
+                        topMunicipios.push({ municipio: 'Otros', total: otrosTotal });
+                    }
+
+                    topMunicipios.forEach(function (item) {
+                        data.addRow([item.municipio, item.total]);
+                    });
+
+                    var options = {
+                        title: 'Distribución de Solicitudes por Municipio',
+                        pieHole: 0.4,
+                        height: 500,
+                        legend: {
+                            position: 'labeled',
+                            textStyle: { fontSize: 11 }
+                        },
+                        chartArea: {
+                            width: '90%',
+                            height: '80%',
+                            top: 50,
+                            bottom: 50
+                        },
+
+                        pieSliceText: 'value',
+                        tooltip: { text: 'percentage' },
+                        sliceVisibilityThreshold: 0.02 // Mostrar etiquetas solo para slices > 2%
+                    };
+
+                    var chart = new google.visualization.PieChart(document.getElementById('chart_municipio'));
+                    chart.draw(data, options);
+                    mostrarLoading(false);
+                })
+                .catch(error => {
+                    console.error('Error al obtener datos de municipios:', error);
+                    mostrarLoading(false);
+                });
+        }
+
+        // Gráfico de Barras - Proyecto por Departamento
+        function ChartProyectoDepartamento(fechaInicio = null, fechaFin = null) {
+            mostrarLoading(true);
+
+            let url = '/TableroDeDatosAPA/ChartSolicitudProyectoDepartamento';
+            const params = new URLSearchParams();
+
+            if (fechaInicio) params.append('fechaInicio', fechaInicio);
+            if (fechaFin) params.append('fechaFin', fechaFin);
+
+            if (params.toString()) {
+                url += '?' + params.toString();
+            }
+
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) throw new Error('Error en la respuesta del servidor');
+                    return response.json();
+                })
+                .then(datos => {
+                    var data = new google.visualization.DataTable();
+                    data.addColumn('string', 'Proyecto/Departamento');
+                    data.addColumn('number', 'Total Solicitudes');
+
+                    datos.forEach(function (item) {
+                        data.addRow([`${item.proyecto} - ${item.departamento}`, item.total]);
+                    });
+
+                    var options = {
+                        title: 'Solicitudes por Proyecto y Departamento',
+                        height: 500,
+                        legend: { position: 'none' },
+                        chartArea: { width: '80%', height: '70%' },
+                        hAxis: { title: 'Total de Solicitudes', minValue: 0 },
+                        vAxis: { title: 'Proyecto - Departamento' },
+                        colors: ['#1E40AF']
+                    };
+
+                    var chart = new google.visualization.BarChart(document.getElementById('chart_proyecto_departamento'));
+                    chart.draw(data, options);
+                    mostrarLoading(false);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    mostrarLoading(false);
+                });
+        }
+
+        // Gráfico de Pie - Beneficiarios por Departamento
+        function ChartBeneficiariosDepartamento(fechaInicio = null, fechaFin = null) {
+            mostrarLoading(true);
+
+            let url = '/TableroDeDatosAPA/ChartBeneficiarioDepartamento';
+            const params = new URLSearchParams();
+
+            if (fechaInicio) params.append('fechaInicio', fechaInicio);
+            if (fechaFin) params.append('fechaFin', fechaFin);
+
+            if (params.toString()) {
+                url += '?' + params.toString();
+            }
+
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) throw new Error('Error en la respuesta del servidor');
+                    return response.json();
+                })
+                .then(datos => {
+                    var data = new google.visualization.DataTable();
+                    data.addColumn('string', 'Departamento');
+                    data.addColumn('number', 'Total Beneficiarios');
+
+                    datos.forEach(function (item) {
+                        data.addRow([item.departamento, item.total]);
+                    });
+
+                    var options = {
+                        title: 'Beneficiarios por Departamento',
+                        pieHole: 0.4,
+                        height: 500,
+                        legend: { position: 'labeled', textStyle: { fontSize: 11 } },
+                        chartArea: { width: '90%', height: '80%', top: 50, bottom: 50 },
+
+                        pieSliceText: 'value',
+                        tooltip: { text: 'percentage' }
+                    };
+
+                    var chart = new google.visualization.PieChart(document.getElementById('chart_beneficiarios_departamento'));
+                    chart.draw(data, options);
+                    mostrarLoading(false);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    mostrarLoading(false);
+                });
+        }
+
+        // Gráfico de Pie - Beneficiarios por Proyecto
+        function ChartBeneficiariosProyecto(fechaInicio = null, fechaFin = null) {
+            mostrarLoading(true);
+
+            let url = '/TableroDeDatosAPA/ChartBeneficiarioProyecto';
+            const params = new URLSearchParams();
+
+            if (fechaInicio) params.append('fechaInicio', fechaInicio);
+            if (fechaFin) params.append('fechaFin', fechaFin);
+
+            if (params.toString()) {
+                url += '?' + params.toString();
+            }
+
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) throw new Error('Error en la respuesta del servidor');
+                    return response.json();
+                })
+                .then(datos => {
+                    var data = new google.visualization.DataTable();
+                    data.addColumn('string', 'Proyecto');
+                    data.addColumn('number', 'Total Beneficiarios');
+
+                    // Ordenar y tomar top 10
+                    datos.sort((a, b) => b.total - a.total);
+                    var topProyectos = datos.slice(0, 10);
+
+                    if (datos.length > 10) {
+                        var otrosTotal = datos.slice(10).reduce((sum, item) => sum + item.total, 0);
+                        topProyectos.push({ proyecto: 'Otros Proyectos', total: otrosTotal });
+                    }
+
+                    topProyectos.forEach(function (item) {
+                        data.addRow([item.proyecto, item.total]);
+                    });
+
+                    var options = {
+                        title: 'Beneficiarios por Proyecto',
+                        pieHole: 0.4,
+                        height: 500,
+                        legend: { position: 'labeled', textStyle: { fontSize: 10 } },
+                        chartArea: { width: '90%', height: '80%', top: 50, bottom: 50 },
+
+                        pieSliceText: 'value',
+                        tooltip: { text: 'percentage' },
+                        sliceVisibilityThreshold: 0.02
+                    };
+
+                    var chart = new google.visualization.PieChart(document.getElementById('chart_beneficiarios_proyecto'));
+                    chart.draw(data, options);
+                    mostrarLoading(false);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    mostrarLoading(false);
+                });
+        }
+
+        // Redibujar gráficos cuando cambie el tamaño de la ventana
+        $(window).resize(function () {
+            ChartDepartamentos();
+            ChartMunicipios();
+            ChartProyectoDepartamento();
+            ChartBeneficiariosDepartamento();
+            ChartBeneficiariosProyecto();
+        });
+    </script>
+}
